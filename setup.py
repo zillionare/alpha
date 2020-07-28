@@ -26,7 +26,8 @@ requirements = [
     'zillionare-omicron>=0.1.2',
     'psutil==5.7.0',
     'termcolor==1.1.0',
-    'arrow==0.15.5'
+    'arrow==0.15.5',
+    'aiohttp==3.6.2'
 ]
 
 setup_requirements = [ ]

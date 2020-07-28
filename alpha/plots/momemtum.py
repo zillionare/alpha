@@ -22,6 +22,7 @@ from omicron.models.securities import Securities
 from omicron.models.security import Security
 from pyemit import emit
 
+from alpha.core.enums import CurveType
 from alpha.core.signal import moving_average, polyfit
 from config import get_config_dir
 from config.cfg4py_auto_gen import Config
@@ -49,13 +50,17 @@ class MomentumPlot:
 
         """
         ma5 = moving_average(bars['close'], 5)[-5:]
-        ma10 = moving_average(bars['close'], 10)[-10:]
-        ma20 = moving_average(bars['close'], 20)[-10:]
+        ma10 = moving_average(bars['close'], 10)[-5:]
+        ma20 = moving_average(bars['close'], 20)[-5:]
 
         fit = []
         for ts in [ma5, ma10, ma20]:
-            err, curve, coef = polyfit(ts)
-            fit.extend([coef[0], err, curve.value])
+            try:
+                err, curve, coef = polyfit(ts, CurveType.PARABOLA)
+                # 取系数a和b。对于一次函数，a=0;对于二次函数和指数函数，a,b都存在。c为截距，忽略
+                fit.extend([coef[0], coef[1], err])
+            except Exception as e:
+                pass
 
         return fit
 
@@ -85,38 +90,42 @@ class MomentumPlot:
         Returns:
 
         """
-        watch_win = 5
+        watch_win = 2
         max_curve_len = 10
         max_ma_win = 20
 
+        #y_stop = arrow.get('2020-7-24').date()
         y_stop = arrow.now().date()
         y_start = tf.day_shift(y_stop, -watch_win + 1)
         x_stop = tf.day_shift(y_start, -1)
         x_start = tf.day_shift(x_stop, -(max_curve_len + max_ma_win - 1))
         data = []
-        while n > 0:
+        while len(data) < n:
             for code in Securities().choose(['stock']):
+            #for code in ['000982.XSHE']:
                 try:
                     sec = Security(code)
                     x_bars = await sec.load_bars(x_start, x_stop, FrameType.DAY)
                     y_bars = await sec.load_bars(y_start, y_stop, FrameType.DAY)
                     x = self.extract_features(x_bars)
-                    if np.isnan(x[0]):
+                    if len(x) == 0 or np.isnan(x[0]):
                         continue
                     y = np.max(y_bars['close'])/x_bars[-1]['close'] - 1
-                    x.extend([y, code])
-                    # [a, err, curve] * 3 + y
-                    data.append(x)
+                    x.append(y)
+
+                    feature = [code, tf.date2int(x_stop)]
+                    feature.extend(x)
+                    # [a, b, err] * 3 + y
+                    data.append(feature)
                 except Exception as e:
                     logger.warning("Failed to extract features for %s (%s)",
                                    code,
                                    x_stop)
                     logger.exception(e)
-                n -= 1
-                if n <= 0:
+                if len(data) >= n:
                     break
-                if n % 500 == 0:
-                    logger.info("%s records remained.")
+                if len(data) % 500 == 0:
+                    logger.info("got %s records.")
             y_stop = tf.day_shift(y_stop, -1)
             y_start = tf.day_shift(y_start, -1)
             x_stop = tf.day_shift(y_start, -1)
@@ -129,11 +138,11 @@ class MomentumPlot:
     async def build_train_data(self, save_to:str, n=10):
         await self.init()
         data = await self._build_train_data(n)
-        date = arrow.now().date()
+        date = tf.date2int(arrow.now().date())
         path = os.path.abspath(save_to)
         path = os.path.join(path, f"momemtum.{date}.tsv")
         with open(path, "w") as f:
-            cols = "a5,err5,curve5,a10,err10,curve10,a20,err20,curve20,y".split(",")
+            cols = "code,date,a5,b5,err5,a10,b10,err10,a20,b20,err20,y".split(",")
             f.writelines("\t".join(cols))
             f.writelines("\n")
             for item in data:

@@ -14,7 +14,7 @@ from alpha.core.enums import CurveType
 logger = logging.getLogger(__name__)
 
 
-def polyfit(ts, curve: str = None, decimals=4):
+def polyfit(ts, curve: CurveType = CurveType.PARABOLA, decimals=4):
     """
     对给定的时间序列进行二次曲线或者指数曲线拟合。拟合的曲线种类分别为：
 
@@ -41,12 +41,8 @@ def polyfit(ts, curve: str = None, decimals=4):
         y_hat = np.array([a * xi ** 2 + b * xi + c for xi in x])
         std_err_1 = round(np.sqrt(sum(np.square(y_hat / ts - 1)) / len(ts)) * 100, decimals)
 
-        if abs(a) < 1e-4:
-            curve_1 = CurveType.LINE
-            coef_1 = (b, c)
-        else:
-            curve_1 = CurveType.PARABOLA
-            coef_1 = (a, b, c)
+        curve_1 = CurveType.PARABOLA
+        coef_1 = (a, b, c)
 
         if curve == CurveType.PARABOLA:
             return std_err_1, curve_1, coef_1
