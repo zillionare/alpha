@@ -27,7 +27,8 @@ requirements = [
     'psutil==5.7.0',
     'termcolor==1.1.0',
     'arrow==0.15.5',
-    'aiohttp==3.6.2'
+    'aiohttp==3.6.2',
+    'scikit-learn>=0.23.1'
 ]
 
 setup_requirements = [ ]

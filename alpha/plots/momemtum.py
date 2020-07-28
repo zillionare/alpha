@@ -9,6 +9,7 @@ Contributors:
 import datetime
 import logging
 import os
+from typing import List
 
 import arrow
 import cfg4py
@@ -21,6 +22,7 @@ from omicron.core.types import FrameType
 from omicron.models.securities import Securities
 from omicron.models.security import Security
 from pyemit import emit
+from sklearn import svm
 
 from alpha.core.enums import CurveType
 from alpha.core.signal import moving_average, polyfit
@@ -32,6 +34,8 @@ cfg: Config = cfg4py.get_instance()
 
 
 class MomentumPlot:
+    def __init__(self):
+        self.model = None
     async def init(self):
         os.environ[cfg4py.envar] = 'DEV'
         self.config_dir = get_config_dir()
@@ -111,6 +115,7 @@ class MomentumPlot:
                     if len(x) == 0 or np.isnan(x[0]):
                         continue
                     y = np.max(y_bars['close'])/x_bars[-1]['close'] - 1
+                    if np.isnan(y): continue
                     x.append(y)
 
                     feature = [code, tf.date2int(x_stop)]
@@ -135,7 +140,7 @@ class MomentumPlot:
 
 
     @async_run
-    async def build_train_data(self, save_to:str, n=10):
+    async def build_train_data(self, save_to:str, n=10)->List:
         await self.init()
         data = await self._build_train_data(n)
         date = tf.date2int(arrow.now().date())
@@ -149,38 +154,8 @@ class MomentumPlot:
                 f.writelines("\t".join(map(lambda x:str(x), item)))
                 f.writelines("\n")
 
+        return data
 
-    async def build_dataset(self):
-        """
-        构建用于训练的数据集
-        :param
-        """
-        result = await self.find_by_moving_average()
-
-        for (code, day, signal, fit) in result:
-            start = tf.day_shift(day, -1)
-            stop = tf.day_shift(day, 4)
-            sec = Security(code)
-            y = await sec.load_bars(start, stop, FrameType.DAY)
-            y = np.array(list(filter(lambda b: b['close'], y)), dtype=y.dtype)
-            if len(y) == 1:
-                continue
-
-            adv = np.max(y[1:]['close']) / y[0]['close'] - 1
-            down = np.min(y[1:]['close']) / y[0]['close'] - 1
-
-            if signal == 1:
-                adv_mean = adv / (len(y) - 1)
-                if adv_mean >= 0.015:
-                    print(f"R,{code},{day},{adv},{adv_mean}")
-                else:
-                    print(f"W,{code},{day},{adv},{adv_mean}")
-            if signal == -1:
-                down_mean = down / (len(y) - 1)
-                if down_mean <= -0.015:
-                    print(f"R,{code},{day},{down},{down_mean}")
-                else:
-                    print(f"W,{code},{day},{down},{down_mean}")
 
     async def _screen(self):
         pass
@@ -189,12 +164,52 @@ class MomentumPlot:
         """筛选"""
         pass
 
-    def predict(self):
-        pass
+    @async_run
+    async def train(self, dataset:str=None, n:int=100):
+        """
+
+        Args:
+            dataset:
+
+        Returns:
+
+        """
+        x_train, y_train = [], []
+        if os.path.exists(dataset):
+            with open(dataset, 'r') as f:
+                for i, line in enumerate(f.readlines()):
+                    if i == 0: continue # skip header
+                    fields = line.strip("\n").split("\t")
+                    x_train.append(fields[2:-1])
+                    y_train.append(fields[-1])
+        else:
+            data = await self._build_train_data(n)
+            for rec in data:
+                x_train.append(rec[2:-1])
+                y_train.append(rec[-1])
+
+        assert len(x_train) == len(y_train)
+        self.model = svm.SVC()
+        self.model.fit(x_train[:-200], y_train[:-200])
+        score = self.model.score(x_train[-200:], y_train[-200:])
+        logger.info("training score is:%s", score)
+
+
+    async def predict(self, code, x_end_date: datetime.date):
+        sec = Security(code)
+        start = tf.day_shift(x_end_date, -29)
+        bars = await sec.load_bars(start, x_end_date, FrameType.DAY)
+        features = self.extract_features(bars)
+        if len(features) and not np.isnan(features[0]):
+            self.model.predict(features)
+        else:
+            logger.warning("failed to extract feature from %s(%s)", code, x_end_date)
+
 
 
 if __name__ == "__main__":
     m = MomentumPlot()
     fire.Fire({
-        "build_train_data": m.build_train_data
+        "build_train_data": m.build_train_data,
+        "train": m.train
     })
