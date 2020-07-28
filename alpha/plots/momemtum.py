@@ -9,6 +9,7 @@ Contributors:
 import datetime
 import logging
 import os
+import pickle
 from typing import List
 
 import arrow
@@ -165,7 +166,7 @@ class MomentumPlot:
         pass
 
     @async_run
-    async def train(self, dataset:str=None, n:int=100):
+    async def train(self, save_to:str, dataset:str=None, n:int=100):
         """
 
         Args:
@@ -174,6 +175,9 @@ class MomentumPlot:
         Returns:
 
         """
+        save_to = os.path.abspath(save_to)
+        if not os.path.exists(save_to):
+            logger.warning("invalid path: %s", save_to)
         x_train, y_train = [], []
         if os.path.exists(dataset):
             with open(dataset, 'r') as f:
@@ -189,10 +193,14 @@ class MomentumPlot:
                 y_train.append(rec[-1])
 
         assert len(x_train) == len(y_train)
+        logger.info("train data loaded, %s records in total", len(x_train))
         self.model = svm.SVC()
         self.model.fit(x_train[:-200], y_train[:-200])
+        logger.info("model trained")
         score = self.model.score(x_train[-200:], y_train[-200:])
         logger.info("training score is:%s", score)
+        with open(save_to, "wb") as f:
+            pickle.dump(self.model, f, protocol=4)
 
 
     async def predict(self, code, x_end_date: datetime.date):
