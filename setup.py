@@ -10,7 +10,24 @@ with open('README.rst') as readme_file:
 with open('HISTORY.rst') as history_file:
     history = history_file.read()
 
-requirements = [ ]
+requirements = [
+    'apscheduler==3.6.3',
+    'arrow==0.15.5',
+    'cfg4py>=0.6.0',
+    'ruamel.yaml==0.16',
+    'aioredis==1.3.1',
+    'hiredis==1.0.1',
+    'pyemit>=0.4.0',
+    'numpy>=1.18.1',
+    'numba==0.49.1',
+    'aiohttp==3.6.2',
+    'pytz==2020.1',
+    'xxhash==1.4.3',
+    'zillionare-omicron>=0.1.2',
+    'psutil==5.7.0',
+    'termcolor==1.1.0',
+    'arrow==0.15.5'
+]
 
 setup_requirements = [ ]
 
