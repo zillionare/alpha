@@ -178,6 +178,10 @@ class MomentumPlot:
         save_to = os.path.abspath(save_to)
         if not os.path.exists(save_to):
             logger.warning("invalid path: %s", save_to)
+            return
+        date = arrow.now().date()
+        save_to = f"{save_to}/momemtum.{date}.svm"
+
         x_train, y_train = [], []
         if os.path.exists(dataset):
             with open(dataset, 'r') as f:
