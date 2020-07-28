@@ -125,7 +125,7 @@ class MomentumPlot:
                 if len(data) >= n:
                     break
                 if len(data) % 500 == 0:
-                    logger.info("got %s records.")
+                    logger.info("got %s records.", len(data))
             y_stop = tf.day_shift(y_stop, -1)
             y_start = tf.day_shift(y_start, -1)
             x_stop = tf.day_shift(y_start, -1)
