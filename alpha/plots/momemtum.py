@@ -9,8 +9,7 @@ Contributors:
 import datetime
 import logging
 import os
-import pickle
-from typing import List
+from typing import List, Optional
 
 import arrow
 import cfg4py
@@ -23,13 +22,13 @@ from omicron.core.types import FrameType
 from omicron.models.securities import Securities
 from omicron.models.security import Security
 from pyemit import emit
-from sklearn import svm
+from sklearn import svm, metrics
 from joblib import dump, load
 
 from alpha.core.enums import CurveType
-from alpha.core.signal import moving_average, polyfit
-from config import get_config_dir
-from config.cfg4py_auto_gen import Config
+from alpha.core.signal import moving_average, polyfit, mean_sqrt_error
+from alpha.config import get_config_dir
+from alpha.config.cfg4py_auto_gen import Config
 
 logger = logging.getLogger(__name__)
 cfg: Config = cfg4py.get_instance()
@@ -39,7 +38,7 @@ class MomentumPlot:
     def __init__(self):
         self.model = None
 
-    async def init(self, model_file:str):
+    async def init(self, model_file:Optional[str]=None):
         os.environ[cfg4py.envar] = 'DEV'
         self.config_dir = get_config_dir()
 
@@ -148,7 +147,7 @@ class MomentumPlot:
 
     @async_run
     async def build_train_data(self, save_to:str, n=10)->List:
-        await self.init(None)
+        await self.init()
         data = await self._build_train_data(n)
         date = tf.date2int(arrow.now().date())
         path = os.path.abspath(save_to)
@@ -187,10 +186,12 @@ class MomentumPlot:
         Returns:
 
         """
+        await self.init()
         save_to = os.path.abspath(save_to)
         if not os.path.exists(save_to):
             logger.warning("invalid path: %s", save_to)
             return
+
         date = tf.date2int(arrow.now().date())
         save_to = f"{save_to}/momemtum.{date}.svm"
 
@@ -200,6 +201,7 @@ class MomentumPlot:
                 for i, line in enumerate(f.readlines()):
                     if i == 0: continue # skip header
                     fields = line.strip("\n").split("\t")
+                    fields = list(map(lambda x: float(x), fields))
                     x_train.append(fields[2:-1])
                     y_train.append(fields[-1])
         else:
@@ -210,14 +212,14 @@ class MomentumPlot:
 
         assert len(x_train) == len(y_train)
         logger.info("train data loaded, %s records in total", len(x_train))
-        self.model = svm.SVR(kernel='poly', C=100, gamma='auto', degree=3)
-        self.model.fit(x_train[:-200], y_train[:-200])
+        self.model = svm.SVR(kernel='poly', gamma='auto', degree=3)
+        self.model.fit(x_train, y_train)
         logger.info("model trained")
-        score = self.model.score(x_train[-200:], y_train[-200:])
+        y_pred = self.model.predict(x_train[-100:])
+        score = mean_sqrt_error(y_train[-100:], y_pred)
         logger.info("training score is:%s", score)
         with open(save_to, "wb") as f:
             dump(self.model, f)
-
 
     async def predict(self, code, x_end_date: datetime.date):
         sec = Security(code)

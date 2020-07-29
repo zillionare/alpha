@@ -13,6 +13,17 @@ from alpha.core.enums import CurveType
 
 logger = logging.getLogger(__name__)
 
+def mean_sqrt_error(y_pred, y_true):
+    """
+    返回预测序列相对于真值序列的标准差。
+    Args:
+        y_pred:
+        y_true:
+
+    Returns:
+
+    """
+    return np.sqrt(sum(np.square(y_pred - y_true) / len(y_pred)))
 
 def polyfit(ts, curve: CurveType = CurveType.PARABOLA, decimals=4):
     """

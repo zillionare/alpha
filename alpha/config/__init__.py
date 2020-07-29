@@ -22,7 +22,7 @@ def get_config_dir():
     elif os.environ[cfg4py.envar] == 'TEST':
         _dir = path.expanduser('~/.zillionare/alpha/config')
     else:
-        _dir = path.normpath(path.join(path.dirname(__file__), '../config'))
+        _dir = path.normpath(path.dirname(__file__))
 
     sys.path.insert(0, _dir)
     return _dir
