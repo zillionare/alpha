@@ -201,9 +201,8 @@ class MomentumPlot:
                 for i, line in enumerate(f.readlines()):
                     if i == 0: continue # skip header
                     fields = line.strip("\n").split("\t")
-                    fields = list(map(lambda x: float(x), fields))
-                    x_train.append(fields[2:-1])
-                    y_train.append(fields[-1])
+                    x_train.append(list(map(lambda x: float(x), fields[2:-1])))
+                    y_train.append(float(fields[-1]))
         else:
             data = await self._build_train_data(n)
             for rec in data:
