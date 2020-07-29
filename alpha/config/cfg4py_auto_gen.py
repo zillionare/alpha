@@ -30,6 +30,7 @@ class Config(object):
 
     def __init__(self):
         raise TypeError('Do NOT instantiate this class')
+    tz: Optional[str] = None
 
     class redis:
         dsn: Optional[str] = None
