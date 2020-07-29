@@ -58,7 +58,7 @@ class MomentumPlot:
     async def exit(self):
         await emit.stop()
 
-    def extract_features(self, bars):
+    def extract_features(self, bars, max_error):
         """
 
         Args:
@@ -71,16 +71,19 @@ class MomentumPlot:
         ma10 = moving_average(bars['close'], 10)[-5:]
         ma20 = moving_average(bars['close'], 20)[-5:]
 
-        fit = []
+        feat = []
         for ts in [ma5, ma10, ma20]:
             try:
                 err, curve, coef = polyfit(ts, CurveType.PARABOLA)
                 # 取系数a和b。对于一次函数，a=0;对于二次函数和指数函数，a,b都存在。c为截距，忽略
-                fit.extend([coef[0], coef[1], err])
-            except Exception as e:
-                pass
+                a, b = coef[0], coef[1]
+                if np.isnan(a) or np.isnan(b) or np.isnan(err) or err > max_error:
+                    raise ValueError
+                feat.extend([a, b, -b/(2*a)])
+            except Exception:
+                return feat
 
-        return fit
+        return feat
 
     async def find_by_moving_average(self):
         result = []
@@ -99,7 +102,7 @@ class MomentumPlot:
 
         return result
 
-    async def _build_train_data(self, n: int):
+    async def _build_train_data(self, n: int, max_error:float=0.01):
         """
         从最近的符合条件的日期开始，遍历股票，提取特征和标签，生成数据集。
         Args:
@@ -108,8 +111,8 @@ class MomentumPlot:
         Returns:
 
         """
-        watch_win = 2
-        max_curve_len = 10
+        watch_win = 1
+        max_curve_len = 5
         max_ma_win = 20
 
         #y_stop = arrow.get('2020-7-24').date()
@@ -119,22 +122,20 @@ class MomentumPlot:
         x_start = tf.day_shift(x_stop, -(max_curve_len + max_ma_win - 1))
         data = []
         while len(data) < n:
-            for code in Securities().choose(['stock']):
-            #for code in ['000982.XSHE']:
+            #for code in Securities().choose(['stock']):
+            for code in ['000601.XSHE']:
                 try:
                     sec = Security(code)
                     x_bars = await sec.load_bars(x_start, x_stop, FrameType.DAY)
                     y_bars = await sec.load_bars(y_start, y_stop, FrameType.DAY)
-                    x = self.extract_features(x_bars)
-                    if len(x) == 0 or any([np.isnan(xi) for xi in x]):
-                        continue
+                    # [a, b, axis] * 3
+                    x = self.extract_features(x_bars, max_error)
+                    if len(x) == 0: continue
                     y = np.max(y_bars['close'])/x_bars[-1]['close'] - 1
                     if np.isnan(y): continue
-                    x.append(y)
 
                     feature = [code, tf.date2int(x_stop)]
                     feature.extend(x)
-                    # [a, b, err] * 3 + y
                     data.append(feature)
                 except Exception as e:
                     logger.warning("Failed to extract features for %s (%s)",
@@ -154,7 +155,7 @@ class MomentumPlot:
 
 
     @async_run
-    async def build_train_data(self, save_to:str, n=10)->List:
+    async def build_train_data(self, save_to:str, n=100)->List:
         await self.init()
         data = await self._build_train_data(n)
         date = tf.date2int(arrow.now().date())
@@ -248,21 +249,23 @@ class MomentumPlot:
         y_pred = self.model.predict(x_test)
         score = rmse(y_test, y_pred)
         logger.info("training score is:%s", score)
+        print("y_true, y_pred")
+        for yt, yp in zip(y_test[:20], y_pred[:20]):
+            print(yt, yp)
         with open(save_to, "wb") as f:
             dump(self.model, f)
 
         await self.exit()
 
-    async def predict(self, code, x_end_date: datetime.date):
+    async def predict(self, code, x_end_date: datetime.date, max_error:float=0.01):
         sec = Security(code)
         start = tf.day_shift(x_end_date, -29)
         bars = await sec.load_bars(start, x_end_date, FrameType.DAY)
-        features = self.extract_features(bars)
-        print(features)
-        if len(features) and not np.isnan(features[0]):
-            return self.model.predict([features])
+        features = self.extract_features(bars, max_error)
+        if len(features) == 0:
+            logger.warning("cannot extract features from %s(%s)", code, x_end_date)
         else:
-            logger.warning("failed to extract feature from %s(%s)", code, x_end_date)
+            return self.model.predict([features])
 
 
 

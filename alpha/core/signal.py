@@ -6,26 +6,30 @@ Author: Aaron-Yang [code@jieyu.ai]
 Contributors: 
 
 """
-import numpy as np
 import logging
-#import matplotlib.pyplot as plt
+
+import numpy as np
+
+# import matplotlib.pyplot as plt
 from alpha.core.enums import CurveType
 
 logger = logging.getLogger(__name__)
 
-def rmse(y_pred, y_true):
+
+def rmse(y, y_hat):
     """
     返回预测序列相对于真值序列的标准差。
     Args:
-        y_pred:
-        y_true:
+        y:
+        y_hat:
 
     Returns:
 
     """
-    return np.sqrt(sum(np.square(y_pred - y_true) / len(y_pred)))
+    return np.sqrt(np.mean(np.square(y - y_hat)))
 
-def polyfit(ts, curve: CurveType = CurveType.PARABOLA, decimals=4):
+
+def polyfit(ts, curve: CurveType = CurveType.PARABOLA):
     """
     对给定的时间序列进行二次曲线或者指数曲线拟合。拟合的曲线种类分别为：
 
@@ -41,54 +45,54 @@ def polyfit(ts, curve: CurveType = CurveType.PARABOLA, decimals=4):
     """
     x = np.array(list(range(len(ts))))
 
-    std_err_1, curve_1, coef_1, a, b, c = [None] * 6
+    error_1, curve_1, coef_1, a, b, c = [None] * 6
 
     # 1. 先尝试按二次曲线拟合。二次曲线可以拟合到反生反转的行情，如圆弧底、圆弧顶；也可以拟合到上述趋势中的单边走势，即其中一段曲线。
     try:
         z = np.polyfit(x, ts, deg=2)
-        a, b, c = round(z[0], decimals), round(z[1], decimals), round(z[2], decimals)
+        a, b, c = z[0], z[1], z[2]
         # polyfit给出的残差是各项残差的平方和，这里返回相对于单项的误差比。对股票行情而言，最大可接受的std_err也许是小于1%
         p1 = np.poly1d((a, b, c))
-        y_hat = np.array([a * xi ** 2 + b * xi + c for xi in x])
-        std_err_1 = round(np.sqrt(sum(np.square(y_hat / ts - 1)) / len(ts)) * 100, decimals)
+        ts_hat = np.array([a * xi ** 2 + b * xi + c for xi in x])
+        error_1 = rmse(ts, ts_hat) / np.sqrt(np.mean(np.square(ts)))
 
         curve_1 = CurveType.PARABOLA
         coef_1 = (a, b, c)
 
         if curve == CurveType.PARABOLA:
-            return std_err_1, curve_1, coef_1
+            return error_1, curve_1, coef_1
     except Exception as e:
-        std_err_1 = 1e9
+        error_1 = 1e9
         logger.warning("ts %s caused calculation error.")
         logger.exception(e)
 
-    std_err = None
+    error_2 = None
     # 2. 尝试按指数曲线进行拟合。指数曲线只能拟合到单边上涨或者下跌的行情，不能拟合出带反转的行情。但是对单边行情，有可能拟合的比抛物线
     # 更好。
     try:
         y = np.log(ts)
         # https://stackoverflow.com/a/3433503/13395693 设置权重可以对small values更友好。
         z = np.polyfit(x, y, deg=1, w=np.sqrt(np.abs(y)))
-        a, b = round(z[0], decimals), round(z[1], decimals)
+        a, b = z[0], z[1]
 
         # 此处需要自行计算std_error，polyfit返回的errors不能使用
         p = np.poly1d((a, b))
 
-        y_hat = np.array([np.exp(a * x) * np.exp(b) for x in range(len(ts))])
-        std_err = round(np.sqrt(sum(np.square(y_hat / ts - 1)) / len(ts)) * 100, decimals)
+        ts_hat = np.array([np.exp(a * x) * np.exp(b) for x in range(len(ts))])
+        error_2 = rmse(ts, ts_hat) / np.sqrt(np.mean(np.square(ts)))
 
         if curve == CurveType.EXP:
-            return std_err, curve, (a, b)
+            return error_2, curve, (a, b)
     except Exception as e:
-        std_err = 1e9
+        error_2 = 1e9
         logger.warning("ts %s caused calculation error", ts)
         logger.exception(e)
 
     # 未指定曲线类型，取std_err小的
-    if std_err_1 < std_err:
-        return std_err_1, curve_1, coef_1
+    if error_1 < error_2:
+        return error_1, curve_1, coef_1
     else:
-        return std_err, CurveType.EXP, (a, b)
+        return error_2, CurveType.EXP, (a, b)
 
 
 def moving_average(ts, win):
@@ -97,6 +101,7 @@ def moving_average(ts, win):
 
 def pma(bars):
     return bars['money'] / bars['volume']
+
 
 def predict_moving_average(ts, win: int, n: int = 1):
     """
@@ -124,8 +129,8 @@ def predict_moving_average(ts, win: int, n: int = 1):
 def parallel_show(ts, figsize=None):
     """形态比较"""
     figsize = figsize or (20, 20 // len(ts))
-    #fig, axes = plt.subplots(nrows=1, ncols=len(ts), figsize=figsize)
-    #fig.tight_layout()  # Or equivalently,  "plt.tight_layout()"
+    # fig, axes = plt.subplots(nrows=1, ncols=len(ts), figsize=figsize)
+    # fig.tight_layout()  # Or equivalently,  "plt.tight_layout()"
 
     # for i, _ts in enumerate(ts):
     #     axes[i].plot(_ts)
