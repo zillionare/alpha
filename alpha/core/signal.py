@@ -13,7 +13,7 @@ from alpha.core.enums import CurveType
 
 logger = logging.getLogger(__name__)
 
-def mean_sqrt_error(y_pred, y_true):
+def rmse(y_pred, y_true):
     """
     返回预测序列相对于真值序列的标准差。
     Args:

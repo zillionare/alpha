@@ -6,9 +6,12 @@ Author: Aaron-Yang [code@jieyu.ai]
 Contributors: 
 
 """
+import asyncio
+import atexit
 import datetime
 import logging
 import os
+import random
 from typing import List, Optional
 
 import arrow
@@ -24,9 +27,10 @@ from omicron.models.security import Security
 from pyemit import emit
 from sklearn import svm, metrics
 from joblib import dump, load
+from sklearn.model_selection import GridSearchCV
 
 from alpha.core.enums import CurveType
-from alpha.core.signal import moving_average, polyfit, mean_sqrt_error
+from alpha.core.signal import moving_average, polyfit, rmse
 from alpha.config import get_config_dir
 from alpha.config.cfg4py_auto_gen import Config
 
@@ -43,12 +47,16 @@ class MomentumPlot:
         self.config_dir = get_config_dir()
 
         cfg4py.init(self.config_dir, False)
-        await emit.start(engine=emit.Engine.REDIS, dsn=cfg.redis.dsn, start_server=True)
+        await emit.start(engine=emit.Engine.REDIS, dsn=cfg.redis.dsn,
+                          start_server=True)
         await omicron.init()
 
         if model_file is not None:
             with open(model_file, "rb") as f:
                 self.model = load(f)
+
+    async def exit(self):
+        await emit.stop()
 
     def extract_features(self, bars):
         """
@@ -118,7 +126,7 @@ class MomentumPlot:
                     x_bars = await sec.load_bars(x_start, x_stop, FrameType.DAY)
                     y_bars = await sec.load_bars(y_start, y_stop, FrameType.DAY)
                     x = self.extract_features(x_bars)
-                    if len(x) == 0 or np.isnan(x[0]):
+                    if len(x) == 0 or any([np.isnan(xi) for xi in x]):
                         continue
                     y = np.max(y_bars['close'])/x_bars[-1]['close'] - 1
                     if np.isnan(y): continue
@@ -196,29 +204,52 @@ class MomentumPlot:
         save_to = f"{save_to}/momemtum.{date}.svm"
 
         x_train, y_train = [], []
+        x_test, y_test = [], []
         if os.path.exists(dataset):
             with open(dataset, 'r') as f:
-                for i, line in enumerate(f.readlines()):
-                    if i == 0: continue # skip header
+                data = f.readlines()[1:]
+                random.shuffle(data)
+                for line in data[:-200]:
                     fields = line.strip("\n").split("\t")
                     x_train.append(list(map(lambda x: float(x), fields[2:-1])))
                     y_train.append(float(fields[-1]))
+
+                for line in data[-200:]:
+                    fields = line.strip("\n").split("\t")
+                    x_test.append(list(map(lambda x: float(x), fields[2:-1])))
+                    y_test.append(float(fields[-1]))
+
         else:
             data = await self._build_train_data(n)
-            for rec in data:
+            random.shuffle(data)
+            n_train = int(len(data) * 0.8)
+            for rec in data[:n_train]:
                 x_train.append(rec[2:-1])
                 y_train.append(rec[-1])
+            for rec in data[n_train:]:
+                x_test.append(rec[2:-1])
+                y_test.append(rec[-1])
 
         assert len(x_train) == len(y_train)
         logger.info("train data loaded, %s records in total", len(x_train))
-        self.model = svm.SVR(kernel='poly', gamma='auto', degree=3)
-        self.model.fit(x_train, y_train)
-        logger.info("model trained")
-        y_pred = self.model.predict(x_train[-100:])
-        score = mean_sqrt_error(y_train[-100:], y_pred)
+        params = {
+            'C': [1e-3, 1e-2, 1e-1, 1, 10],
+            'kernel': ('linear', 'rbf', 'poly'),
+            'gamma': [0.001,0.005,0.1,0.15,0.20,0.23,0.27],
+            'epsilon': [1e-4, 1e-3, 1e-2,1e-1,1,10]
+        }
+        clf = GridSearchCV(svm.SVR(), params, n_jobs=-1)
+        clf.fit(x_train, y_train)
+        logger.info("Best: %s, %s, %s", clf.best_estimator_, clf.best_score_,
+                    clf.best_params_)
+        self.model = clf.best_estimator_
+        y_pred = self.model.predict(x_test)
+        score = rmse(y_test, y_pred)
         logger.info("training score is:%s", score)
         with open(save_to, "wb") as f:
             dump(self.model, f)
+
+        await self.exit()
 
     async def predict(self, code, x_end_date: datetime.date):
         sec = Security(code)
