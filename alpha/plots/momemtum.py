@@ -207,14 +207,15 @@ class MomentumPlot:
         x_test, y_test = [], []
         if os.path.exists(dataset):
             with open(dataset, 'r') as f:
-                data = f.readlines()[1:]
+                data = f.readlines()[1:n+1]
                 random.shuffle(data)
-                for line in data[:-200]:
+                n_train = int(len(data) * 0.8)
+                for line in data[:n_train]:
                     fields = line.strip("\n").split("\t")
                     x_train.append(list(map(lambda x: float(x), fields[2:-1])))
                     y_train.append(float(fields[-1]))
 
-                for line in data[-200:]:
+                for line in data[n_train:]:
                     fields = line.strip("\n").split("\t")
                     x_test.append(list(map(lambda x: float(x), fields[2:-1])))
                     y_test.append(float(fields[-1]))
@@ -234,11 +235,12 @@ class MomentumPlot:
         logger.info("train data loaded, %s records in total", len(x_train))
         params = {
             'C': [1e-3, 1e-2, 1e-1, 1, 10],
-            'kernel': ('linear', 'rbf', 'poly'),
+            'kernel': ('linear', 'poly'),
             'gamma': [0.001,0.005,0.1,0.15,0.20,0.23,0.27],
-            'epsilon': [1e-4, 1e-3, 1e-2,1e-1,1,10]
+            'epsilon': [1e-4, 1e-3, 1e-2,1e-1,1,10],
+            'degree': [2,3]
         }
-        clf = GridSearchCV(svm.SVR(), params, n_jobs=-1)
+        clf = GridSearchCV(svm.SVR(verbose=True), params, n_jobs=-1)
         clf.fit(x_train, y_train)
         logger.info("Best: %s, %s, %s", clf.best_estimator_, clf.best_score_,
                     clf.best_params_)
