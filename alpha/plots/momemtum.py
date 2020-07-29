@@ -24,6 +24,7 @@ from omicron.models.securities import Securities
 from omicron.models.security import Security
 from pyemit import emit
 from sklearn import svm
+from joblib import dump, load
 
 from alpha.core.enums import CurveType
 from alpha.core.signal import moving_average, polyfit
@@ -37,13 +38,18 @@ cfg: Config = cfg4py.get_instance()
 class MomentumPlot:
     def __init__(self):
         self.model = None
-    async def init(self):
+
+    async def init(self, model_file:str):
         os.environ[cfg4py.envar] = 'DEV'
         self.config_dir = get_config_dir()
 
         cfg4py.init(self.config_dir, False)
         await emit.start(engine=emit.Engine.REDIS, dsn=cfg.redis.dsn, start_server=True)
         await omicron.init()
+
+        if model_file is not None:
+            with open(model_file, "rb") as f:
+                self.model = load(f)
 
     def extract_features(self, bars):
         """
@@ -142,7 +148,7 @@ class MomentumPlot:
 
     @async_run
     async def build_train_data(self, save_to:str, n=10)->List:
-        await self.init()
+        await self.init(None)
         data = await self._build_train_data(n)
         date = tf.date2int(arrow.now().date())
         path = os.path.abspath(save_to)
@@ -161,9 +167,15 @@ class MomentumPlot:
     async def _screen(self):
         pass
 
-    def screen(self):
+    @async_run
+    async def screen(self, model_file:str):
         """筛选"""
-        pass
+        await self.init(model_file)
+        for date in ['2020-7-21', '2020-7-22', '2020-7-23', '2020-7-24']:
+            date = arrow.get(date).date()
+            for code in ['000982.XSHE']:
+                result = await self.predict(code, date)
+                print(result)
 
     @async_run
     async def train(self, save_to:str, dataset:str=None, n:int=100):
@@ -179,7 +191,7 @@ class MomentumPlot:
         if not os.path.exists(save_to):
             logger.warning("invalid path: %s", save_to)
             return
-        date = arrow.now().date()
+        date = tf.date2int(arrow.now().date())
         save_to = f"{save_to}/momemtum.{date}.svm"
 
         x_train, y_train = [], []
@@ -198,13 +210,13 @@ class MomentumPlot:
 
         assert len(x_train) == len(y_train)
         logger.info("train data loaded, %s records in total", len(x_train))
-        self.model = svm.SVC()
+        self.model = svm.SVR(kernel='poly', C=100, gamma='auto', degree=3)
         self.model.fit(x_train[:-200], y_train[:-200])
         logger.info("model trained")
         score = self.model.score(x_train[-200:], y_train[-200:])
         logger.info("training score is:%s", score)
         with open(save_to, "wb") as f:
-            pickle.dump(self.model, f, protocol=4)
+            dump(self.model, f)
 
 
     async def predict(self, code, x_end_date: datetime.date):
@@ -212,8 +224,9 @@ class MomentumPlot:
         start = tf.day_shift(x_end_date, -29)
         bars = await sec.load_bars(start, x_end_date, FrameType.DAY)
         features = self.extract_features(bars)
+        print(features)
         if len(features) and not np.isnan(features[0]):
-            self.model.predict(features)
+            return self.model.predict([features])
         else:
             logger.warning("failed to extract feature from %s(%s)", code, x_end_date)
 
@@ -223,5 +236,6 @@ if __name__ == "__main__":
     m = MomentumPlot()
     fire.Fire({
         "build_train_data": m.build_train_data,
-        "train": m.train
+        "train": m.train,
+        "screen": m.screen
     })

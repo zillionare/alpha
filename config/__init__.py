@@ -18,9 +18,9 @@ logger = logging.getLogger(__name__)
 
 def get_config_dir():
     if os.environ[cfg4py.envar] == 'PRODUCTION':
-        _dir = path.expanduser('~/zillionare/omega/config')
+        _dir = path.expanduser('~/zillionare/alpha/config')
     elif os.environ[cfg4py.envar] == 'TEST':
-        _dir = path.expanduser('~/.zillionare/omega/config')
+        _dir = path.expanduser('~/.zillionare/alpha/config')
     else:
         _dir = path.normpath(path.join(path.dirname(__file__), '../config'))
 

@@ -28,7 +28,8 @@ requirements = [
     'termcolor==1.1.0',
     'arrow==0.15.5',
     'aiohttp==3.6.2',
-    'scikit-learn>=0.23.1'
+    'scikit-learn>=0.23.1',
+    'joblib==0.16.0'
 ]
 
 setup_requirements = [ ]
