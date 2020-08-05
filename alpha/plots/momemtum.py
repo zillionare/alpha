@@ -72,7 +72,7 @@ class MomentumPlot:
         feat = []
         for ts in [ma5, ma10, ma20]:
             try:
-                err, curve, coef = polyfit(ts, CurveType.PARABOLA)
+                err, coef = polyfit(ts)
                 # 取系数a和b。对于一次函数，a=0;对于二次函数和指数函数，a,b都存在。c为截距，忽略
                 a, b = coef[0], coef[1]
                 if np.isnan(a) or np.isnan(b) or np.isnan(err) or err > max_error:

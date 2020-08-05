@@ -29,47 +29,42 @@ def rmse(y, y_hat):
     return np.sqrt(np.mean(np.square(y - y_hat)))
 
 
-def polyfit(ts, curve: CurveType = CurveType.PARABOLA):
+def polyfit(ts):
     """
-    对给定的时间序列进行二次曲线或者指数曲线拟合。拟合的曲线种类分别为：
+    对给定的时间序列进行二次曲线拟合。二次曲线可以拟合到反生反转的行情，如圆弧底、圆弧顶；也可
+    以拟合到上述趋势中的单边走势，即其中一段曲线。
 
-    'line':     y = ax + b
-    'parabola': y = ax^2 + bx + c
-    'exp':      y = ax^b
+    返回的结果为 error, coef, vertex (axis_x, axis_y)
 
-    返回的结果为 std_err, curve, coef
-    其中std_err归一化为相对于输入序列最小值的百分比。对证券分析而言，可以接受的最大的std_err也许是小于1%，序列越长，标准差越低越好。
-    curve为'line', 'parabola'或者'exp(onential)'
+    为方便比较，error取值为标准差除以时间序列ts的均值，即每个拟合项相对于真值均值的误差比例
 
-    如果拟合出来的二次项系数a小于1e-5，则认为该曲线为直线，返回'line’和系数(b,c),而不是(a,b,c)
+
     """
     x = np.array(list(range(len(ts))))
 
-    error_1, curve_1, coef_1, a, b, c = [None] * 6
-
-    # 1. 先尝试按二次曲线拟合。二次曲线可以拟合到反生反转的行情，如圆弧底、圆弧顶；也可以拟合到上述趋势中的单边走势，即其中一段曲线。
     try:
         z = np.polyfit(x, ts, deg=2)
         a, b, c = z[0], z[1], z[2]
         # polyfit给出的残差是各项残差的平方和，这里返回相对于单项的误差比。对股票行情而言，最大可接受的std_err也许是小于1%
-        p1 = np.poly1d((a, b, c))
-        ts_hat = np.array([a * xi ** 2 + b * xi + c for xi in x])
-        error_1 = rmse(ts, ts_hat) / np.sqrt(np.mean(np.square(ts)))
+        p = np.poly1d((a, b, c))
+        ts_hat = np.array([p(xi) for xi in x])
+        error = rmse(ts, ts_hat) / np.sqrt(np.mean(np.square(ts)))
 
-        curve_1 = CurveType.PARABOLA
-        coef_1 = (a, b, c)
+        coef = (a, b, c)
+        axis_x = -b / (2 * a)
+        axis_y = (4 * a * c - b * b) / (4 * a)
 
-        if curve == CurveType.PARABOLA:
-            return error_1, curve_1, coef_1
+        return error, coef, (axis_x, axis_y)
     except Exception as e:
-        error_1 = 1e9
+        error = 1e9
         logger.warning("ts %s caused calculation error.")
         logger.exception(e)
+        return error, (np.nan, np.nan, np.nan), (np.nan, np.nan)
 
-    error_2 = None
-    # 2. 尝试按指数曲线进行拟合。指数曲线只能拟合到单边上涨或者下跌的行情，不能拟合出带反转的行情。但是对单边行情，有可能拟合的比抛物线
-    # 更好。
+def exp_fit(ts):
+    """"""
     try:
+        x = list(range(len(ts)))
         y = np.log(ts)
         # https://stackoverflow.com/a/3433503/13395693 设置权重可以对small values更友好。
         z = np.polyfit(x, y, deg=1, w=np.sqrt(np.abs(y)))
@@ -79,21 +74,14 @@ def polyfit(ts, curve: CurveType = CurveType.PARABOLA):
         p = np.poly1d((a, b))
 
         ts_hat = np.array([np.exp(a * x) * np.exp(b) for x in range(len(ts))])
-        error_2 = rmse(ts, ts_hat) / np.sqrt(np.mean(np.square(ts)))
+        error = rmse(ts, ts_hat) / np.sqrt(np.mean(np.square(ts)))
 
-        if curve == CurveType.EXP:
-            return error_2, curve, (a, b)
+        return error, (a, b)
     except Exception as e:
-        error_2 = 1e9
+        error= 1e9
         logger.warning("ts %s caused calculation error", ts)
         logger.exception(e)
-
-    # 未指定曲线类型，取std_err小的
-    if error_1 < error_2:
-        return error_1, curve_1, coef_1
-    else:
-        return error_2, CurveType.EXP, (a, b)
-
+        return error, (None, None)
 
 def moving_average(ts, win):
     return np.convolve(ts, np.ones(win), 'valid') / win
