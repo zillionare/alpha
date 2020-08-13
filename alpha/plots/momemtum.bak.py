@@ -24,12 +24,9 @@ from omicron.core.types import FrameType
 from omicron.models.securities import Securities
 from omicron.models.security import Security
 from pyemit import emit
-from sklearn import svm
-from sklearn.model_selection import GridSearchCV
 
 from alpha.config import get_config_dir
 from alpha.config.cfg4py_auto_gen import Config
-from alpha.core.enums import CurveType
 from alpha.core.signal import moving_average, polyfit, rmse
 
 logger = logging.getLogger(__name__)

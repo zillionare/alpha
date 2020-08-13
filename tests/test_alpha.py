@@ -9,7 +9,7 @@ import arrow
 import jqdatasdk as jq
 from pandas import DataFrame
 
-from alpha import alpha
+from alpha import app
 import numpy as np
 from alpha.core.signal import moving_average, polyfit
 

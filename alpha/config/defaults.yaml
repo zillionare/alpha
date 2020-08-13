@@ -27,3 +27,7 @@ redis:
 omega:
   urls:
     quotes_server: 'http://192.168.3.78:7080'
+alpha:
+  server:
+    port: 7081
+    workers: 1

@@ -28,8 +28,9 @@ requirements = [
     'termcolor==1.1.0',
     'arrow==0.15.5',
     'aiohttp==3.6.2',
-    'scikit-learn>=0.23.1',
-    'joblib==0.16.0'
+    'scikit-learn==0.23.1',
+    'joblib==0.16.0',
+    'zillionare-omicron>=0.1.2'
 ]
 
 setup_requirements = [ ]
@@ -65,4 +66,7 @@ setup(
     url='https://github.com/zillionare/alpha',
     version='0.1.0',
     zip_safe=False,
+    entry_points={
+        'console_scripts': ['alpha=alpha.cli:main']
+    }
 )
