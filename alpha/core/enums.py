@@ -15,3 +15,7 @@ class CurveType(enum.IntEnum):
     LINE = 0
     PARABOLA = 1
     EXP = 1
+
+class Events:
+    sig_long = "alpha/signals/long"
+    sig_short = "alpha/signals/short"

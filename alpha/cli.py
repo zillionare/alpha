@@ -12,10 +12,13 @@ import signal
 import subprocess
 import sys
 import time
+import pprint
 
+import aiohttp
 import cfg4py
 import fire
 import psutil
+from omicron.core.lang import async_run
 from sanic import Sanic
 from termcolor import colored
 
@@ -38,14 +41,7 @@ def find_alpha_process():
 
 def start():
     print(f"正在启动{colored('zillionare-alpha', 'green')}...")
-    server_roles = ['PRODUCTION', 'TEST', 'DEV']
-    if os.environ.get(cfg4py.envar) not in ['PRODUCTION', 'TEST', 'DEV']:
-        print(f"请设置环境变量{colored(cfg4py.envar, 'red')}为["
-              f"{colored(server_roles, 'red')}]之一。")
-        sys.exit(-1)
-
-    config_dir = get_config_dir()
-    cfg4py.init(config_dir, False)
+    init()
 
     proc = find_alpha_process()
     if proc is not None:
@@ -68,15 +64,68 @@ def stop():
 
 
 def restart():
+    init()
     stop()
     start()
+
+
+@async_run
+async def scan(plot_name: str, **params):
+    init()
+    params['plot'] = plot_name
+    params['cmd'] = 'scan'
+    url = f"{cfg.alpha.urls.service}/plot"
+    async with aiohttp.ClientSession() as client:
+        try:
+            async with client.post(url, json=params) as resp:
+                if resp.status != 200:
+                    print(colored('failed to execute scan', 'red'))
+                else:
+                    print(await resp.json())
+        except Exception as e:
+            print(e)
+
+
+@async_run
+async def monitor(cmd, *args, **kwargs):
+    init()
+
+    url = f"{cfg.alpha.urls.service}/monitor/{cmd}"
+
+    async with aiohttp.ClientSession() as client:
+        try:
+            async with client.post(url, json=kwargs) as resp:
+                if resp.status != 200:
+                    print(colored('failed to execute scan', 'red'))
+                else:
+                    result = await resp.json()
+                    if isinstance(result, list):
+                        for item in result:
+                            print(item)
+                    else:
+                        print(result)
+        except Exception as e:
+            print(e)
+
+
+def init():
+    server_roles = ['PRODUCTION', 'TEST', 'DEV']
+    if os.environ.get(cfg4py.envar) not in ['PRODUCTION', 'TEST', 'DEV']:
+        print(f"请设置环境变量{colored(cfg4py.envar, 'red')}为["
+              f"{colored(server_roles, 'red')}]之一。")
+        sys.exit(-1)
+
+    config_dir = get_config_dir()
+    cfg4py.init(config_dir, False)
 
 
 def main():
     fire.Fire({
         "start":   start,
         "restart": restart,
-        "stop":    stop
+        "stop":    stop,
+        "scan":    scan,
+        "monitor": monitor
     })
 
 

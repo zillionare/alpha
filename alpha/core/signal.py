@@ -7,6 +7,7 @@ Contributors:
 
 """
 import logging
+from typing import Union
 
 import numpy as np
 
@@ -213,6 +214,7 @@ def cross(f, g):
     """
     判断序列f是否与g相交。如果两个序列有且仅有一个交点，则返回1表明f上交g；-1表明f下交g
     returns:
+        (flag, index), 其中flag取值为：
         0 无效
         -1 f向下交叉g
         1 f向上交叉g
@@ -231,3 +233,84 @@ def cross(f, g):
         return -1, idx
     else:
         return np.sign(g[idx - 1] - f[idx - 1]), idx
+
+
+def vcross(f, g):
+    """
+    判断序列f是否与g存在类型v型的相交。即存在两个交点，第一个交点为向下相交，第二个交点为向上
+    相交。一般反映为洗盘拉升的特征。
+    Args:
+        f:
+        g:
+
+    Returns:
+
+    """
+    indices = np.argwhere(np.diff(np.sign(f - g))).flatten()
+    if len(indices) == 2:
+        idx0, idx1 = indices
+        if f[idx0] > g[idx0] and f[idx1] < g[idx1]:
+            return True, (idx0, idx1)
+
+    return False, (None, None)
+
+
+def is_curve_up(momentum: float, vx: Union[float, int], win: int):
+    """
+    在一个起始点为1.0（即已标准化）的时间序列中，如果经过signal.polyfit以后，
+        1）a > 0, b > 0， 向上开口抛物线，最低点在序列左侧（vx < 0)
+        2) a > 0, b < 0, 向上开口抛物线，序列从vx之后开始向上。即如果vx>=win，则还要等待
+            win - vx + 1个周期才能到最低点，然后序列开始向上
+        3）a < 0, b > 0, 向下开口抛物线，序列从vx之后开始向下。即如果vx>win，则序列还将向上
+            运行一段时间（vx-win+1个frame)后再向下
+        4） a < 0, b < 0，向下开口抛物线，最高点在序列左侧(vx < 0)
+
+    观察a,b与曲线顶关系：
+        def test_abc(a,b):
+        p = np.poly1d((a,b,1))
+        x = [i for i in range(10)]
+        y = [p(i) for i in range(10)]
+
+        plt.plot(x,y)
+
+        err, (a,b,c),(vx,_) = signal.polyfit(y)
+        print(np.round([a,b,c,vx],4))
+
+    由于a,b,c和vx相互决定，c==1.0，因此只需要a和vx两个变量就可以决定曲线未来走向。
+    Args:
+        momentum: 即二次曲线的系数a
+        vx:
+        win:
+
+    Returns:
+
+    """
+    return (momentum > 0 and vx < win - 1) or (momentum < 0 and vx > win)
+
+def find_runs(x):
+    """Find runs of consecutive items in an array."""
+
+    # ensure array
+    x = np.asanyarray(x)
+    if x.ndim != 1:
+        raise ValueError('only 1D array supported')
+    n = x.shape[0]
+
+    # handle empty array
+    if n == 0:
+        return np.array([]), np.array([]), np.array([])
+
+    else:
+        # find run starts
+        loc_run_start = np.empty(n, dtype=bool)
+        loc_run_start[0] = True
+        np.not_equal(x[:-1], x[1:], out=loc_run_start[1:])
+        run_starts = np.nonzero(loc_run_start)[0]
+
+        # find run values
+        run_values = x[loc_run_start]
+
+        # find run lengths
+        run_lengths = np.diff(np.append(run_starts, n))
+
+        return run_values, run_starts, run_lengths

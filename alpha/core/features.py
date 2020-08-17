@@ -7,6 +7,7 @@ Contributors:
 
 """
 import logging
+from typing import List
 
 import arrow
 import matplotlib.pyplot as plt
@@ -153,3 +154,28 @@ def count_long_lines(bars: np.array):
     """
     return np.count_nonzero((bars['close'] - bars['open']) / bars['open'] >= 0.07), \
            np.count_nonzero((bars['open'] - bars['close']) / bars['open'] >= 0.07)
+
+
+def ma_lines_trend(bars:np.array, ma_wins:List[int]):
+    """
+    从bars数据中提取均线的走势特征
+    Args:
+        bars:
+        ma_wins:
+
+    Returns:
+
+    """
+    features = {}
+    for win in ma_wins:
+        ma = signal.moving_average(bars['close'], win)
+        fit_win = 7 if win == 5 else 10
+        err, (a, b, c), (vx, _) = signal.polyfit(ma[-fit_win:] / ma[-fit_win])
+        p = np.poly1d((a,b,c))
+
+        # 预测一周后均线涨幅
+        war = p(fit_win + 5 - 1)/p(fit_win-1) - 1
+
+        features[f"ma{win}"] = [ma, (err, a, b, vx, fit_win, war)]
+
+    return features
