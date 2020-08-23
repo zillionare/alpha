@@ -12,6 +12,7 @@ from typing import Union
 import numpy as np
 
 # import matplotlib.pyplot as plt
+from alpha.core.enums import CurveType
 
 logger = logging.getLogger(__name__)
 
@@ -286,6 +287,13 @@ def is_curve_up(momentum: float, vx: Union[float, int], win: int):
 
     """
     return (momentum > 0 and vx < win - 1) or (momentum < 0 and vx > win)
+
+def curve_type(err:float, a:float, b:float, vx:Union[float, int], win:int):
+    if err > 3e-4:
+        return CurveType.UNKNOWN
+    if abs(a) < 1e-6:
+        assert abs(vx) > 100 * win
+        return CurveType.LINE_UP if b > 0 else CurveType.LINE_DOWN
 
 def find_runs(x):
     """Find runs of consecutive items in an array."""

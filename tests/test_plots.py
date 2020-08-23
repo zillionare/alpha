@@ -9,6 +9,7 @@ from omicron.models.securities import Securities
 
 from alpha.plots.longparallel import LongParallel
 from alpha.plots.momentum import Momentum
+from alpha.plots.nine import NinePlot
 from tests.base import AbstractTestCase
 
 cfg = cfg4py.get_instance()
@@ -71,9 +72,17 @@ class MyTestCase(AbstractTestCase):
 
     @async_run
     async def test_momentum(self):
-        plot = Momentum(mom=1e-4)
-        dt = arrow.get('2020-8-14 15:00:00')
-        await plot.evaluate('000001.XSHG', FrameType.MIN30, dt, win=5)
+        plot = Momentum()
+        dt = '2020-8-18 14:50:00'
+        await plot.evaluate('000001.XSHG', '30m', dt, win=5,mom=1e-4,flag='both')
+
+    @async_run
+    async def test_nine(self):
+        nine = NinePlot()
+        end = arrow.get('2020-8-17')
+        await nine.copy('002036.XSHE', FrameType.DAY, end, 5)
+        #await nine.scan(5, FrameType.DAY, end=end)
+        await nine.scan(arrow.get('2020-8-21').date())
 
 
 if __name__ == '__main__':

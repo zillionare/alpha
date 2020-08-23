@@ -1,12 +1,11 @@
 import unittest
-from unittest.mock import Mock, patch
+from unittest.mock import patch
 
 import cfg4py
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from omicron.core.lang import async_run
-from omicron.core.types import FrameType
 
-from alpha.core.monitor import Monitor
+from alpha.monitor.manager import Monitor
 from tests.base import AbstractTestCase
 
 cfg = cfg4py.get_instance()
@@ -33,7 +32,7 @@ class MyTestCase(AbstractTestCase):
                                 code=code, flag=flag, mom=mom,frame_type=frame_type)
             job_id = ":".join((plot,code,frame_type,flag))
             self.assertEqual(3,len(sched.get_jobs()))
-            recs = await monitor.load_watch_list()
+            recs = await monitor.resume_monitors()
             self.assertDictEqual({job_id: {
                 "jobinfo": {
                     "freq": 3,

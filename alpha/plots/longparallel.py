@@ -19,13 +19,13 @@ from omicron.core.types import FrameType, Frame
 from omicron.models.security import Security
 
 from alpha.core import features, signal
-from alpha.plots.base import AbstractPlot
+from alpha.plots.baseplot import BasePlot
 
 logger = logging.getLogger(__name__)
 cfg = cfg4py.get_instance()
 
 
-class LongParallel(AbstractPlot):
+class LongParallel(BasePlot):
     """
     均线多头策略。在均线多头刚刚形成之初（粘合，当天一阳穿多线）发出信号
     """

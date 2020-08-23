@@ -11,10 +11,12 @@ import logging
 
 logger = logging.getLogger(__name__)
 
-class CurveType(enum.IntEnum):
-    LINE = 0
-    PARABOLA = 1
-    EXP = 1
+class CurveType:
+    UNKNOWN = -1
+    LINE_UP = 0
+    LINE_DOWN = 1
+    PARA_UP = 2
+    PARA_DOWN = 3
 
 class Events:
     sig_long = "alpha/signals/long"

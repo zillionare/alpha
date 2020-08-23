@@ -12,7 +12,6 @@ import signal
 import subprocess
 import sys
 import time
-import pprint
 
 import aiohttp
 import cfg4py
@@ -81,7 +80,9 @@ async def scan(plot_name: str, **params):
                 if resp.status != 200:
                     print(colored('failed to execute scan', 'red'))
                 else:
-                    print(await resp.json())
+                    results = await resp.json()
+                    for rec in results:
+                        print(rec)
         except Exception as e:
             print(e)
 
@@ -96,7 +97,8 @@ async def monitor(cmd, *args, **kwargs):
         try:
             async with client.post(url, json=kwargs) as resp:
                 if resp.status != 200:
-                    print(colored('failed to execute scan', 'red'))
+                    desc = await resp.content.read()
+                    print(colored(f'failed to execute {cmd}:{desc}', 'red'))
                 else:
                     result = await resp.json()
                     if isinstance(result, list):

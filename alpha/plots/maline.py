@@ -18,7 +18,7 @@ from pyemit import emit
 
 from alpha.core import features
 from alpha.core.enums import Events
-from alpha.core.monitor import Monitor
+from alpha.monitor.manager import Monitor
 
 logger = logging.getLogger(__name__)
 
@@ -26,6 +26,13 @@ logger = logging.getLogger(__name__)
 class MALinePlot():
     """
     根据均线支撑（反压）发出买入或者卖出信号
+
+    超频三， 2020-8-14，周线,8/20触达周线，买入后上涨20%
+    ------------------------------
+    ma5, err=0.007,a=-0.0003,b=0.0269,vx=50.6	slp3:0.06
+    ma10, err=0.003,a=0.0006,b=0.0081,vx=-6.4	slp3:0.05
+    ma20, err=0.003,a=0.0002,b=-0.0017,vx=5.4	slp3:0.00
+
     """
 
     adj_60 = 0.015  # 股价接近60日均线，价差不超过1.5%
