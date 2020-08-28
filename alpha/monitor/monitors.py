@@ -66,7 +66,7 @@ class BaseMonitor:
             "code":       code,
             "flag":       flag,
             "fire_on":    fire_on,
-            "frame_type": frame_type
+            "frame_type": frame_type.value
         })
         await emit.emit(event, kwargs)
         d = {

@@ -71,10 +71,20 @@ class MyTestCase(AbstractTestCase):
                     plot.fitslp_ma20)
 
     @async_run
-    async def test_momentum(self):
+    async def test_momentum_scan(self):
         plot = Momentum()
-        dt = '2020-8-18 14:50:00'
-        await plot.evaluate('000001.XSHG', '30m', dt, win=5,mom=1e-4,flag='both')
+        end = arrow.get('2020-8-27').date()
+        await plot.scan(FrameType.DAY, end, ['603659.XSHG'])
+
+    @async_run
+    async def test_momentum_visualize(self):
+        plot = Momentum()
+
+        end = arrow.get('2020-8-28')
+        frame_type = FrameType.DAY
+        await plot.visualize(
+                ['300129.XSHE', '300859.XSHE', '300729.XSHE', '300612.XSHE',
+                 '300589.XSHE'], end, frame_type, col=3)
 
     @async_run
     async def test_nine(self):

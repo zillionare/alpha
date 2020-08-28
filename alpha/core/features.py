@@ -143,7 +143,7 @@ async def plot_ma(code: str, groups=None, end: Frame = None,
         plt.plot(ma[-20:])
 
 
-def count_long_lines(bars: np.array):
+def count_long_body(bars: np.array):
     """
     计算序列bars中的大阳线和大阴线。实体幅度在7%以上的即为大阳线、大阴线。
     Args:
@@ -154,6 +154,35 @@ def count_long_lines(bars: np.array):
     """
     return np.count_nonzero((bars['close'] - bars['open']) / bars['open'] >= 0.07), \
            np.count_nonzero((bars['open'] - bars['close']) / bars['open'] >= 0.07)
+
+def is_up_shadow(bar,ratio=0.6):
+    """
+    计算是否为长上影线
+    Args:
+        bar
+
+    Returns:
+
+    """
+    o,h,l,c = bar['open'], bar['high'], bar['low'], bar['close']
+    return (h - max(o,c))/(1e-7 + abs(o-c)) > ratio
+
+def is_down_shadow(bar, ratio=0.6):
+    """
+    计算是否为下影线
+    Args:
+        o:
+        h:
+        l:
+        c:
+        ratio:
+
+    Returns:
+
+    """
+    o,h,l,c = bar['open'], bar['high'], bar['low'], bar['close']
+
+    return abs(l - min(o,c))/(1e-7 + abs(o-c)) > ratio
 
 
 def ma_lines_trend(bars:np.array, ma_wins:List[int]):

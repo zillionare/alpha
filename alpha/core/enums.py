@@ -21,3 +21,5 @@ class CurveType:
 class Events:
     sig_long = "alpha/signals/long"
     sig_short = "alpha/signals/short"
+    self_test = "alpha/signals/self_test"
+    plot_pool = "alpha/plots/pool"

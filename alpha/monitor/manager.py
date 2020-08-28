@@ -10,11 +10,13 @@ import logging
 import pickle
 
 import cfg4py
+from alpha.core.enums import Events
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from omicron.core.frametrigger import FrameTrigger
 from omicron.core.tradetimeintervaltrigger import TradeTimeIntervalTrigger
 from omicron.core.types import FrameType
 from omicron.dal import cache
+from pyemit import emit
 
 from alpha.monitor.monitors import create_monitor
 
@@ -39,8 +41,12 @@ class Monitor:
     def init(self, scheduler=None):
         self.sched = scheduler or AsyncIOScheduler(timezone=cfg.tz)
         self.sched.add_job(self.resume_monitors, 'date')
+        self.sched.add_job(self.self_test, 'cron', day_of_week='1-5', hour=9, minute=20)
         if not self.sched.running:
             self.sched.start()
+
+    async def self_test(self):
+        await emit.emit(Events.self_test)
 
     def _add_watch(self, name: str, job_name: str, trigger: str, **func_args):
         """

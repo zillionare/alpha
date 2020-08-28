@@ -13,6 +13,8 @@ from alpha.config import get_config_dir
 from alpha.core.features import count_buy_limit_event
 
 cfg = cfg4py.get_instance()
+
+
 class MyTestCase(unittest.TestCase):
     @async_run
     async def setUp(self) -> None:
@@ -23,8 +25,16 @@ class MyTestCase(unittest.TestCase):
 
         await omicron.init()
 
-    def test_something(self):
-        self.assertEqual(True, False)
+    @async_run
+    async def test_something(self):
+        end = arrow.get('2020-8-27 10:00:00').datetime
+        async for code, bars in Security.load_bars_batch(
+                ['300589.XSHE'], end, 26,
+                FrameType.DAY):
+            print(code, bars[-1])
+        # g = Glance('000001.XSHE')
+        # result = await g.desc_market_trend()
+        # print(result)
 
     @async_run
     async def test_buy_limit_events(self):
@@ -40,6 +50,7 @@ class MyTestCase(unittest.TestCase):
         start = tf.day_shift(end, -29)
         bars = await sec.load_bars(start, end, FrameType.DAY)
         count_buy_limit_event(sec, bars)
+
 
 if __name__ == '__main__':
     unittest.main()
