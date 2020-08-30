@@ -5,7 +5,7 @@ import cfg4py
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from omicron.core.lang import async_run
 
-from alpha.monitor.manager import Monitor
+from alpha.core.monitor import Monitor
 from tests.base import AbstractTestCase
 
 cfg = cfg4py.get_instance()

@@ -6,6 +6,7 @@ Author: Aaron-Yang [code@jieyu.ai]
 Contributors: 
 
 """
+import asyncio
 import logging
 import os
 import signal
@@ -68,7 +69,6 @@ def restart():
     start()
 
 
-@async_run
 async def scan(plot_name: str, **params):
     init()
     params['plot'] = plot_name
@@ -87,7 +87,6 @@ async def scan(plot_name: str, **params):
             print(e)
 
 
-@async_run
 async def monitor(cmd, *args, **kwargs):
     init()
 
@@ -110,6 +109,15 @@ async def monitor(cmd, *args, **kwargs):
             print(e)
 
 
+def status():
+    proc = find_alpha_process()
+    if proc is None:
+        print("zillionare-alpha未启动")
+    else:
+        print("     应   用      |    进程     ")
+        print(f"zillionare-alpha  |   {proc}")
+
+
 def init():
     server_roles = ['PRODUCTION', 'TEST', 'DEV']
     if os.environ.get(cfg4py.envar) not in ['PRODUCTION', 'TEST', 'DEV']:
@@ -126,8 +134,9 @@ def main():
         "start":   start,
         "restart": restart,
         "stop":    stop,
-        "scan":    scan,
-        "monitor": monitor
+        "scan":    async_run(scan),
+        "monitor": async_run(monitor),
+        "status":  status
     })
 
 

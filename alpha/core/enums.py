@@ -6,10 +6,10 @@ Author: Aaron-Yang [code@jieyu.ai]
 Contributors: 
 
 """
-import enum
 import logging
 
 logger = logging.getLogger(__name__)
+
 
 class CurveType:
     UNKNOWN = -1
@@ -18,8 +18,8 @@ class CurveType:
     PARA_UP = 2
     PARA_DOWN = 3
 
+
 class Events:
-    sig_long = "alpha/signals/long"
-    sig_short = "alpha/signals/short"
+    sig_trade = "alpha/signals/trade"
     self_test = "alpha/signals/self_test"
     plot_pool = "alpha/plots/pool"

@@ -8,7 +8,6 @@ from omicron.core.types import FrameType
 from omicron.models.securities import Securities
 
 from alpha.plots.longparallel import LongParallel
-from alpha.plots.momentum import Momentum
 from alpha.plots.nine import NinePlot
 from tests.base import AbstractTestCase
 
@@ -69,22 +68,6 @@ class MyTestCase(AbstractTestCase):
         # self.assertAlmostEqual(8.15e-3, plot.max_distance, places=5)
         logger.info("%s,%s,%s,%s", code, plot.max_distance, plot.fiterr_ma20,
                     plot.fitslp_ma20)
-
-    @async_run
-    async def test_momentum_scan(self):
-        plot = Momentum()
-        end = arrow.get('2020-8-27').date()
-        await plot.scan(FrameType.DAY, end, ['603659.XSHG'])
-
-    @async_run
-    async def test_momentum_visualize(self):
-        plot = Momentum()
-
-        end = arrow.get('2020-8-28')
-        frame_type = FrameType.DAY
-        await plot.visualize(
-                ['300129.XSHE', '300859.XSHE', '300729.XSHE', '300612.XSHE',
-                 '300589.XSHE'], end, frame_type, col=3)
 
     @async_run
     async def test_nine(self):

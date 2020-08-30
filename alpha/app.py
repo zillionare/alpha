@@ -10,7 +10,7 @@ from pyemit import emit
 from sanic import Sanic, response
 
 from alpha.config import get_config_dir
-from alpha.monitor.manager import monitor
+from alpha.core.monitor import monitor
 from alpha.plots.crossyear import CrossYear
 
 cfg = cfg4py.get_instance()
@@ -47,7 +47,7 @@ class Application(object):
         """
         params = request.json
         code = params.get("code")
-        name = params.get("name")
+        plot = params.get("plot")
         frame_type = params.get("frame_type")
         flag = params.get("flag")
         codes = params.get("code_list")
@@ -56,15 +56,15 @@ class Application(object):
         if all((code is None, codes is None)):
             return response.json("必须指定要监控的股票代码", status=401)
 
-        if not all((name, frame_type, flag, trigger)):
-            return response.json("name, frame_type, flag, trigger are required",
+        if not all((plot, frame_type, flag, trigger)):
+            return response.json("plot, frame_type, flag, trigger are required",
                                  status=401)
         try:
             if codes:
-                await monitor.add_batch(**params)
+                result = await monitor.add_batch(**params)
             else:
-                await monitor.watch(**params)
-            return response.json('done', status=200)
+                result = await monitor.watch(**params)
+            return response.json(result, status=200)
         except Exception as e:
             return response.text(e, status=500)
 
@@ -72,19 +72,20 @@ class Application(object):
         params = request.json
 
         code = params.get("code")
-        name = params.get("name")
+        plot = params.get("plot")
         frame_type = params.get("frame_type")
         flag = params.get("flag")
         _remove_all = params.get("all")
 
-        if _remove_all or any((code, name)):
+        if _remove_all or any((code, plot)):
             try:
-                await monitor.remove(name, code, frame_type, flag, _remove_all)
-                return response.json('done', status=200)
+                removed = await monitor.remove(plot, code, frame_type, flag,
+                                               _remove_all)
+                return response.json(removed, status=200)
             except Exception as e:
                 return response.text(e, status=500)
         else:
-            return response.json("code, name are required",
+            return response.json("code, plot are required",
                                  status=401)
 
     async def monitor_list_watch(self, request):

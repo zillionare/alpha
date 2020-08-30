@@ -17,7 +17,7 @@ from omicron.models.security import Security
 from pyemit import emit
 
 from alpha.core import features, signal
-from alpha.monitor.manager import Monitor
+from alpha.core.monitor import Monitor
 
 logger = logging.getLogger(__name__)
 cfg = cfg4py.get_instance()
