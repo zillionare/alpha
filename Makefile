@@ -1,4 +1,4 @@
-.PHONY: clean clean-test clean-pyc clean-build docs help
+.PHONY: clean clean-test_signal clean-pyc clean-build docs help
 .DEFAULT_GOAL := help
 
 define BROWSER_PYSCRIPT
@@ -26,7 +26,7 @@ BROWSER := python -c "$$BROWSER_PYSCRIPT"
 help:
 	@python -c "$$PRINT_HELP_PYSCRIPT" < $(MAKEFILE_LIST)
 
-clean: clean-build clean-pyc clean-test ## remove all build, test, coverage and Python artifacts
+clean: clean-build clean-pyc clean-test_signal ## remove all build, test_signal, coverage and Python artifacts
 
 clean-build: ## remove build artifacts
 	rm -fr build/
@@ -41,7 +41,7 @@ clean-pyc: ## remove Python file artifacts
 	find . -name '*~' -exec rm -f {} +
 	find . -name '__pycache__' -exec rm -fr {} +
 
-clean-test: ## remove test and coverage artifacts
+clean-test_signal: ## remove test_signal and coverage artifacts
 	rm -fr .tox/
 	rm -f .coverage
 	rm -fr htmlcov/
@@ -50,14 +50,14 @@ clean-test: ## remove test and coverage artifacts
 lint: ## check style with flake8
 	flake8 alpha tests
 
-test: ## run tests quickly with the default Python
-	python setup.py test
+test_signal: ## run tests quickly with the default Python
+	python setup.py test_signal
 
-test-all: ## run tests on every Python version with tox
+test_signal-all: ## run tests on every Python version with tox
 	tox
 
 coverage: ## check code coverage quickly with the default Python
-	coverage run --source alpha setup.py test
+	coverage run --source alpha setup.py test_signal
 	coverage report -m
 	coverage html
 	$(BROWSER) htmlcov/index.html

@@ -7,6 +7,11 @@ import unittest
 
 import arrow
 import jqdatasdk as jq
+import omicron
+from omicron.core.lang import async_run
+from omicron.core.timeframe import tf
+from omicron.core.types import FrameType
+from omicron.models.security import Security
 from pandas import DataFrame
 
 from alpha import app
@@ -18,7 +23,7 @@ class TestAlpha(unittest.TestCase):
     """Tests for `alpha` package."""
 
     def setUp(self):
-        """Set up test fixtures, if any."""
+        """Set up evaluate fixtures, if any."""
         jq.auth('18694978299', '8Bu8tcDpEAHJRn')
         self.secs = jq.get_all_securities()
 
@@ -56,7 +61,7 @@ class TestAlpha(unittest.TestCase):
 
         return (c + 0.01) / c1 - 1 > limit
     def tearDown(self):
-        """Tear down test fixtures, if any."""
+        """Tear down evaluate fixtures, if any."""
 
     def test_000_something(self):
         """Test something."""
@@ -103,7 +108,23 @@ class TestAlpha(unittest.TestCase):
                   f",{axis_y:.2f}")
 
 
+    @async_run
+    async def test_screen(self):
+        import cfg4py
+        import os
+        from alpha.config import get_config_dir
+        os.environ[cfg4py.envar] = 'PRODUCTION'
+        cfg4py.init(get_config_dir())
 
-    def test_screen(self):
-        results = self.screen('1d', end_dt='2020-08-05 15:00:00')
-        print(results)
+        await omicron.init()
+        code = '300023.XSHE'
+        sec = Security(code)
+        stop = arrow.now().datetime
+        start = tf.day_shift(stop, -3)
+
+        bars = await sec.load_bars(start, stop, FrameType.DAY)
+        print(bars)
+
+        if np.all(bars['close'] > bars['open']):
+            print(sec.display_name, "\t",
+                  100 * (bars[-1]['close'] / bars[-2]['close'] - 1))

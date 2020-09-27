@@ -11,7 +11,7 @@ from omicron.core.types import FrameType
 from omicron.models.securities import Securities
 
 from alpha.plots.duck import DuckPlot
-from alpha.plots.maline import MALinePlot
+from alpha.plots.maline import MaLine
 from tests.base import AbstractTestCase
 
 cfg = cfg4py.get_instance()

@@ -7,7 +7,7 @@ Contributors:
 
 """
 import logging
-from typing import Union
+from typing import Union, Optional
 
 import numpy as np
 
@@ -30,7 +30,7 @@ def rmse(y, y_hat):
     return np.sqrt(np.mean(np.square(y - y_hat)))
 
 
-def polyfit(ts, deg=2):
+def polyfit(ts, deg=2,decimals:Optional[tuple]=None):
     """
     对给定的时间序列进行二次曲线拟合。二次曲线可以拟合到反生反转的行情，如圆弧底、圆弧顶；也可
     以拟合到上述趋势中的单边走势，即其中一段曲线。
@@ -39,6 +39,7 @@ def polyfit(ts, deg=2):
 
     为方便比较，error取值为标准差除以时间序列ts的均值，即每个拟合项相对于真值均值的误差比例
 
+    decimals: tuple of three, decimals for err, coef and vertex
 
     """
     x = np.array(list(range(len(ts))))
@@ -56,9 +57,16 @@ def polyfit(ts, deg=2):
             axis_x = -b / (2 * a)
             axis_y = (4 * a * c - b * b) / (4 * a)
 
-            return error, z, (axis_x, axis_y)
+            if decimals:
+                return round(error, decimals[0]), np.round(z, decimals[1]), np.round(
+                        (axis_x, axis_y), decimals[2])
+            else:
+                return error, z, (axis_x, axis_y)
         elif deg == 1:
-            return error, z
+            if decimals:
+                return round(error, decimals[0]), np.round(z, decimals[1])
+            else:
+                return error, z
     except Exception as e:
         error = 1e9
         logger.warning("ts %s caused calculation error.")

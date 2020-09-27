@@ -8,18 +8,23 @@ from omicron.core.timeframe import tf
 from omicron.core.types import FrameType
 from pyemit import emit
 
-from alpha.core.monitor import monitor
+from alpha.core.monitors import monitor
 from alpha.plots.momentum import Momentum
 from tests.base import AbstractTestCase
 
 
 class MyTestCase(AbstractTestCase):
     @async_run
-    async def test_momentum_pooling(self):
+    async def test_momentum_scan(self):
         plot = Momentum()
-        end = arrow.get('2020-8-26').date()
+        # end = arrow.get('2020-8-26').date()
         monitor.init()
-        await plot.pooling(FrameType.DAY, end)
+        # await plot.scan(FrameType.DAY, end, codes=['300606.XSHE'])
+        #
+        # end = arrow.get('2020-8-28 15:00').datetime
+        # await plot.scan(FrameType.MIN30, end, codes=['300095.XSHE'])
+
+        await plot.scan(FrameType.MIN30)
 
     @async_run
     async def test_momentum_visualize(self):
@@ -32,7 +37,7 @@ class MyTestCase(AbstractTestCase):
                  '300589.XSHE'], end, frame_type)
 
     @async_run
-    async def test_evaluate(self):
+    async def test_test_signal(self):
         plot = Momentum()
 
         results = {}

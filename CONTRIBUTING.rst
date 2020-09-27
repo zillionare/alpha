@@ -80,7 +80,7 @@ Ready to contribute? Here's how to set up `alpha` for local development.
    tests, including testing other Python versions with tox::
 
     $ flake8 alpha tests
-    $ python setup.py test or pytest
+    $ python setup.py test_signal or pytest
     $ tox
 
    To get flake8 and tox, just pip install them into your virtualenv.

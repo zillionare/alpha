@@ -17,7 +17,7 @@ from omicron.models.security import Security
 from pyemit import emit
 
 from alpha.core import features, signal
-from alpha.core.monitor import Monitor
+from alpha.core.monitors import MonitorManager
 
 logger = logging.getLogger(__name__)
 cfg = cfg4py.get_instance()
@@ -31,7 +31,7 @@ class DuckPlot:
     war_20 = 3e-2
     def __init__(self, scheduler, trade_time_only=True):
         self.name = self.__class__.__name__
-        self.monitor = Monitor(scheduler, self, trade_time_only)
+        self.monitor = MonitorManager(scheduler, self, trade_time_only)
 
     def watch(self, freq=3, **params):
         self.monitor.watch(freq, params)

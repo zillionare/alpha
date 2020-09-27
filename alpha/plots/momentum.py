@@ -7,6 +7,7 @@ Contributors:
 
 """
 import datetime
+import json
 import logging
 from typing import List, Union
 
@@ -15,10 +16,12 @@ import cfg4py
 import numpy as np
 from omicron.core.timeframe import tf
 from omicron.core.types import FrameType, Frame
+from omicron.dal import cache
 from omicron.models.securities import Securities
 from omicron.models.security import Security
 
 from alpha.core import signal
+from alpha.core.monitors import mm
 from alpha.plots.baseplot import BasePlot
 
 logger = logging.getLogger(__name__)
@@ -33,89 +36,90 @@ class Momentum(BasePlot):
     """
 
     def __init__(self):
-        super().__init__("动量策略")
+        super().__init__("动能策略")
         self.fit_win = 7
         self.baselines = {
-            "up_limit": {
-                "30m": 0.01,
-                "1d":  0.035
-            },
-            "ma5":      {
-                "30m": {
-                    "err": 3e-3,
-                    "a":   3e-4,
-                    "vx":  (3, 6),
-                    "y":   3e-2
-                },
-                "1d":  {
-                    "err": 6e-3,
-                    "a":   3e-3,
-                    "vx":  (3, 6),
-                    "y":   5e-2
-                }
-            },
-            "ma10":     {
-                "1d": {
-                    "err": 3e-3
-                },
-                "30m": {
-                    "err": 3e-4,
-                    "a": 1e-4,
-                    "b": 1e-3
-                }
-            },
-            "ma20":     {
-                "1d": {
-                    "err": 3e-3
-                },
-                "30m": {
-                    "err": 3e-4,
-                    "a": 1e-4,
-                    "b": 1e-3
-                }
-            }
+            "up_limit":     0.015,
+
+            "ma5:30m:err":  3e-3,
+            "ma5:30m:a":    3e-4,
+            "ma5:30m:vx":   (2, 5),
+            "ma5:30m:y":    3e-2,
+
+            "ma5:1d:err":   6e-3,
+            "ma5:1d:a":     3e-3,
+            "ma5:1d:vx":    (3, 5),
+            "ma5:1d:y":     5e-2,
+
+            "ma10:1d:err":  3e-3,
+
+            "ma10:30m:err": 3e-4,
+            "ma10:30m:a":   1e-4,
+            "ma10:30m:b":   1e-3,
+
+            "ma20:1d:err":  3e-3,
+
+            "ma20:30m:err": 3e-4,
+            "ma20:30m:a":   13 - 4,
+            "ma20:30m:b":   1e-3
         }
 
-    async def pooling(self, frame_type: FrameType = FrameType.DAY, end: Frame = None,
-                      codes: List[str] = None):
+    async def scan(self, frame_type: Union[str, FrameType] = FrameType.DAY,
+                   end: Frame = None,
+                   codes: List[str] = None):
+        logger.info("running momentum scan at %s level", frame_type)
         if end is None:
             end = arrow.now(cfg.tz).datetime
 
         assert type(end) in (datetime.date, datetime.datetime)
 
+        frame_type = FrameType(frame_type)
+        ft = frame_type.value
         codes = codes or Securities().choose(['stock'])
+        day_bars = {}
+        async for code, bars in Security.load_bars_batch(codes, end, 2, FrameType.DAY):
+            day_bars[code] = bars
+
+        if len(day_bars) == 0:
+            return
+
         async for code, bars in Security.load_bars_batch(codes, end, 11, frame_type):
-            ma5 = signal.moving_average(bars['close'], 5)
-            if len(ma5) < 7:
+            if len(bars) < 11:
                 continue
+
+            fired = bars[-1]['frame']
+            day_bar = day_bars.get(code)
+            if day_bar is None:
+                continue
+
+            c1, c0 = day_bars.get(code)[-2:]['close']
+            cmin = min(bars['close'])
+
+            # 还处在下跌状态、或者涨太多
+            if c0 == cmin or (c0 / c1 - 1) > self.baseline(f"up_limit"):
+                continue
+
+            ma5 = signal.moving_average(bars['close'], 5)
 
             err, (a, b, c), (vx, _) = signal.polyfit(ma5[-7:] / ma5[-7])
             # 无法拟合，或者动能不足
-            if err > self.baseline("err", frame_type, "ma5") or a < self.baseline(
-                    "a", frame_type, "ma5"):
+            if err > self.baseline(f"ma5:{ft}:err") or a < self.baseline(f"ma5:{ft}:a"):
                 continue
 
             # 时间周期上应该是信号刚出现，还在窗口期内
-            vx_range = self.baseline("vx", frame_type, "ma5")
+            vx_range = self.baseline(f"ma5:{ft}:vx")
             if not vx_range[0] < vx < vx_range[1]:
-                continue
-
-            c1, c0 = bars[-2:]['close']
-            cmin = min(bars['close'][-7:-1])
-
-            # 还处在下跌状态、或者涨太多
-            if c0 <= cmin or (c0 / c1 - 1) > self.baseline("up_limit", frame_type):
                 continue
 
             p = np.poly1d((a, b, c))
             y = p(9) / p(6) - 1
             # 如果预测未来三周期ma5上涨幅度不够
-            if y < self.baseline("y", frame_type, "ma5"):
+            if y < self.baseline(f"ma5:{ft}:y"):
                 continue
 
             sec = Security(code)
 
-            if frame_type in tf.day_level_frames:
+            if frame_type == FrameType.DAY:
                 start = tf.shift(tf.floor(end, frame_type), -249, frame_type)
                 bars250 = await sec.load_bars(start, end, frame_type)
                 ma60 = signal.moving_average(bars250['close'], 60)
@@ -126,13 +130,15 @@ class Momentum(BasePlot):
                 if (c0 > ma60[-1]) and (c0 > ma120[-1]) and (c0 > ma250[-1]):
                     logger.info("%s, %s, %s, %s, %s, %s", sec, round(a, 4), round(b, 4),
                                 round(vx, 1), round(c0 / c1 - 1, 3), round(y, 3))
-                    await self.enter_stock_pool(code, frame_type, end, {
-                        "a":   a,
-                        "b":   b,
-                        "err": err,
-                        "y":   y,
-                        "vx":  vx
-                    })
+                    await self.enter_stock_pool(code, fired, frame_type,
+                                                a=a, b=b, err=err, y=y,
+                                                vx=self.fit_win - vx)
+            elif frame_type == FrameType.WEEK:
+                await self.enter_stock_pool(code, fired, frame_type, a=a, b=b, err=err,
+                                            y=y, vx=self.fit_win - vx)
+            elif frame_type == FrameType.MIN30:
+                await self.fire_trade_signal('long', code, fired, frame_type, a=a, b=b,
+                                             err=err, y=y, vx=self.fit_win - vx)
 
     async def visualize(self, code: Union[str, List[str]],
                         frame: Union[str, Frame],
@@ -188,7 +194,7 @@ class Momentum(BasePlot):
                 if win == 5:
                     text = f"{_code} a:{a:.4f} b:{b:.4f} vx:{vx:.1f} y:{y:.2f}"
 
-                if err < self.baseline("err", frame_type, f"ma{win}"):
+                if err < self.baseline(f"ma{win}:{frame_type.value}:err"):
                     # 如果拟合在误差范围内，则画出拟合线
                     plt.plot([p(i) for i in range(len(_ma))], "--",
                              color=colors[f"{win}"])
@@ -201,6 +207,37 @@ class Momentum(BasePlot):
             plt.plot(0, y_lim * 1.035)
             plt.text(0.1, y_lim * 1.02, text, color='r')
 
+    def parse_monitor_settings(self, **params):
+        """
+
+        Args:
+            **params:
+
+        Returns:
+
+        """
+        code = params.get("code")
+        trigger = params.get("trigger")
+        frame_type = params.get("frame_type")
+        win = params.get("win")
+        flag = params.get("flag")
+
+        title_keys = ("plot", "code", "frame_type", "flag", "win")
+        job_info = {
+            "plot":            self.name,
+            "trigger":         trigger,
+            "title_keys":      title_keys,
+            "executor":        'evaluate',
+            "executor_params": {
+                "code":       code,
+                "frame_type": frame_type,
+                "win": win,
+                "flag":       flag
+            }
+        }
+
+        return title_keys, job_info
+
     async def evaluate(self, code: str, frame_type: str = '30m',
                        dt: str = None,
                        win=5,
@@ -211,7 +248,7 @@ class Momentum(BasePlot):
         策略是，在新的趋势未形成之前，只报一次
         Args:
             code:
-            frame_type:
+            frame_type: frame_type
             dt:
             win:
             flag:
@@ -221,14 +258,16 @@ class Momentum(BasePlot):
         """
         stop = arrow.get(dt, tzinfo=cfg.tz) if dt else arrow.now(tz=cfg.tz)
         frame_type = FrameType(frame_type)
+        ft = frame_type.value
 
         bars = await self.get_bars(code, win + self.fit_win, frame_type, stop)
 
         ma = signal.moving_average(bars['close'], win)
         _ma = ma[-self.fit_win:]
         err, (a, b, c), (vx, _) = signal.polyfit(_ma / _ma[0])
+
         logger.debug("%s, %s, %s, %s, %s", code, err, a, b, vx)
-        if err > self.baseline("err", frame_type, f"ma{win}"):
+        if err > self.baseline(f"ma{win}:{ft}:err"):
             self.remember(code, frame_type, "trend", "dunno")
             return
 
@@ -249,17 +288,20 @@ class Momentum(BasePlot):
 
         t1 = int(vx) < self.fit_win - 1
 
-        t2 = a > self.baseline("a", frame_type, f"ma{win}")
+        # 判断是否为看多信号
+        t2 = a > self.baseline(f"ma{win}:{ft}:a")
         if t1 and t2 and previous_status != "long" and flag in ["long", "both"]:
             await self.fire_trade_signal('long', code, stop, frame_type, err=err,
                                          a=a, b=b, y=y)
-        t2 = a < -self.baseline("a", frame_type, f"ma{win}")
+
+        # 判断是否为看空信号
+        t2 = a < -self.baseline(f"ma{win}:{ft}:a")
         if t1 and t2 and previous_status != "short" and flag in ["short", "both"]:
             await self.fire_trade_signal('short', code, stop, frame_type, err=err,
                                          a=a, b=b, y=y)
 
-    async def copy(self, code:str, frame_type:Union[str,FrameType],
-                   frame: Union[str,Frame],
+    async def copy(self, code: str, frame_type: Union[str, FrameType],
+                   frame: Union[str, Frame],
                    ma_wins=None):
         frame_type = FrameType(frame_type)
         frame = arrow.get(frame, tzinfo=cfg.tz)
@@ -278,9 +320,129 @@ class Momentum(BasePlot):
                 raise ValueError(f"{sec.display_name} doesn't have enough bars for "
                                  f"extracting features")
 
-            err, (a, b, c), (vx, _) = signal.polyfit(ma[-fit_win:]/ma[-fit_win])
-            features.append((err, (a,b,c), vx))
+            err, (a, b, c), (vx, _) = signal.polyfit(ma[-fit_win:] / ma[-fit_win])
+            features.append((err, (a, b, c), vx))
 
         return features
 
+    async def list_stock_pool(self, frames: int, frame_types: List[FrameType] = None):
+        key = "plots.momentum.pool"
 
+        recs = await cache.sys.hgetall(key)
+        items = []
+        now = arrow.now()
+        for k, v in recs.items():
+            frame, code = k.split(":")
+
+            sec = Security(code)
+            v = json.loads(v)
+
+            frame_type = FrameType(v.get("frame_type"))
+
+            if frame_type not in frame_types:
+                continue
+
+            latest_frame = tf.floor(now, frame_type)
+            start = tf.shift(latest_frame, -frames, frame_type)
+
+            fired = tf.int2time(frame) if frame_type in tf.minute_level_frames else \
+                tf.int2date(frame)
+
+            if fired < start:
+                continue
+
+            items.append({
+                "name":  sec.display_name,
+                "code":  code,
+                "fired": str(fired),
+                "frame": frame_type.value,
+                "y":     round(v.get("y"), 2),
+                "vx":    round(v.get("vx"), 1),
+                "a":     round(v.get("a"), 4),
+                "b":     round(v.get("b"), 4),
+                "err":   round(v.get("err"), 4)
+            })
+
+        return {
+            "name":    self.display_name,
+            "plot":    self.name,
+            "items":   items,
+            "headers": [
+                {
+                    "text":  '名称',
+                    "value": 'name'
+                },
+                {
+                    "text":  '代码',
+                    "value": 'code'
+                },
+                {
+                    "text":  '信号时间',
+                    "value": 'fired'
+                },
+                {
+                    "text":  '预测涨幅',
+                    "value": 'y'
+                },
+
+                {
+                    "text":  '动能',
+                    "value": 'a'
+                },
+                {
+                    "text":  '势能',
+                    "value": 'b'
+                },
+                {
+                    "text":  '周期',
+                    "value": 'frame'
+                },
+                {
+                    "text":  '底部距离(周期)',
+                    "value": 'vx'
+                },
+                {
+                    "text":  '拟合误差',
+                    "value": 'err'
+                }
+            ]
+        }
+
+    def translate_monitor(self, job_name, params: dict, trigger: dict):
+        _flag_map = {
+            "both":  "双向监控",
+            "long":  "做多信号",
+            "short": "做空信号"
+        }
+
+        _frame_type_map = {
+            "1d":   "日线",
+            "1w":   "周线",
+            "1M":   "月线",
+            "30m":  "30分钟线",
+            "60m":  "60分钟线",
+            "120m": "120分钟线"
+        }
+
+        items = {
+            "key": job_name
+        }
+
+        try:
+            for k, v in params.items():
+                if k == "flag":
+                    items['监控方向'] = _flag_map[v]
+                elif k == "code":
+                    items['代码'] = v.split(".")[0]
+                    items['名称'] = Security(v).display_name
+                elif k == "frame_type":
+                    items['周期'] = _frame_type_map[v]
+                elif k == "win":
+                    items['均线'] = f"MA{v}"
+
+            items['监控计划'] = mm.translate_trigger(trigger)
+
+            return items
+        except Exception as e:
+            logger.exception(e)
+            return None

@@ -31,7 +31,7 @@ requirements = [
     'scikit-learn==0.23.1',
     'joblib==0.16.0',
     'zillionare-omicron>=0.1.2',
-    'websocket-client==0.57.0'
+    'websocket-client==0.57.0', 'pandas'
 ]
 
 setup_requirements = [ ]

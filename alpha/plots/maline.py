@@ -6,18 +6,24 @@ Author: Aaron-Yang [code@jieyu.ai]
 Contributors: 
 
 """
+import datetime
 import logging
 from typing import Union
 
-from alpha.plots.baseplot import BasePlot
+import arrow
+from omicron.models.security import Security
+
+from alpha.core.monitors import mm
+from omicron.core.timeframe import tf
 from omicron.core.types import FrameType
 
 from alpha.core import signal
+from alpha.plots.baseplot import BasePlot
 
 logger = logging.getLogger(__name__)
 
 
-class MALinePlot(BasePlot):
+class MaLine(BasePlot):
     """
     根据均线支撑（反压）发出买入或者卖出信号
 
@@ -37,18 +43,39 @@ class MALinePlot(BasePlot):
     fit_win = 7
 
     def __init__(self):
-        super().__init__("均线")
+        super().__init__("均线支撑/压力策略")
+        self.fired_times = {}
+        self.max_fire_time = 5  # 达到最大信号次数后，监控将被取消
 
-    async def evaluate(self, code: str, frame_type: Union[str,FrameType], flag:str,
-                       win:int, slip:float=0.015):
+    async def check_job_status(self, flag: str, code: str, frame_type: FrameType,
+                               win:int):
+        key = f"{code}:{frame_type.value}:{flag}"
+        count = self.fired_times.get(key, 0)
+        count += 1
+        self.fired_times[key] = count
+
+        job = mm.find_job(self.name, code, flag, frame_type, win)
+        if job is None:
+            logger.warning("job not found:%s, %s,%s,%s", self.name, code, flag,
+                           frame_type)
+        if count >= self.max_fire_time:
+            mm.remove(job_name=job.name)
+            del self.fired_times[key]
+            logger.info("remove job %s due to reach max_fire_time(%s)", job.name, count)
+
+        # disable job for code today, since it's fired
+        start = tf.day_shift(arrow.now(), 1)
+        start = datetime.datetime(start.year, start.month, start.day, 9, 31)
+        mm.reschedule_job(start, job.name)
+
+    async def evaluate(self, code: str, frame_type:Union[str, FrameType]='30m',
+                       win:int=5, flag: str='both', slip: float = 0.015):
         """
         测试当前股价是否达到均线(frame_type和win指定）附近
         Args:
             code:
-            frame_type:
-            flag:
-            win:
             slip:
+            params: frame_type, win, flag
 
         Returns:
 
@@ -60,7 +87,8 @@ class MALinePlot(BasePlot):
         c0 = bars[-1]['close']
         if abs(c0 / ma[-1] - 1) <= slip:
             await self.fire_trade_signal(flag, code, bars[-1]['frame'], frame_type,
-                                         slip=slip,win=win)
+                                         slip=slip, win=win)
+            #await self.check_job_status(flag, code, frame_type, win)
 
     # async def test_ma60_long(self, code: str, bars: np.array):
     #     """
@@ -136,3 +164,74 @@ class MALinePlot(BasePlot):
     #             not self.is_curve_up(a60, b60, vx, fit_win, 60):
     #         logger.debug("%s %s 60日均线无法拟合为符合斜率要求的向上直线", sec, end_dt)
     #         return
+
+    def parse_monitor_settings(self, **params):
+        """
+
+        Args: params contains these keys:
+            code:
+            frame_type:
+            flag:
+            win:
+            trigger:
+
+        Returns:
+
+        """
+        code = params.get("code")
+        trigger = params.get("trigger")
+        frame_type = params.get("frame_type")
+        win = params.get("win")
+        flag = params.get("flag")
+
+        title_keys = ("plot", "code", "frame_type", "flag", "win")
+        job_info = {
+            "plot": self.name,
+            "trigger": trigger,
+            "title_keys": title_keys,
+            "executor": 'evaluate',
+            "executor_params": {
+                "code": code,
+                "frame_type": frame_type,
+                "win": win,
+                "flag": flag
+            }
+        }
+
+        return title_keys, job_info
+
+    def translate_monitor(self, job_name, params: dict, trigger: dict):
+        _flag_map = {
+            "both":  "双向监控",
+            "long":  "做多信号",
+            "short": "做空信号"
+        }
+
+        _frame_type_map = {
+            "1d":   "日线",
+            "1w":   "周线",
+            "1M":   "月线",
+            "30m":  "30分钟线",
+            "60m":  "60分钟线",
+            "120m": "120分钟线"
+        }
+
+        items = {
+            "key": job_name
+        }
+
+        for k, v in params.items():
+            if k == "flag":
+                items['flag'] = _flag_map[v]
+            elif k == "code":
+                items['代码'] = v.split(".")[0]
+                items['名称'] = Security(v).display_name
+            elif k == "frame_type":
+                items['周期'] = _frame_type_map[v]
+            elif k == "win":
+                items['均线'] = f"MA{v}"
+
+        items['监控计划'] = mm.translate_trigger(trigger)
+
+        return items
+

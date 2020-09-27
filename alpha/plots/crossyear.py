@@ -6,7 +6,6 @@ Author: Aaron-Yang [code@jieyu.ai]
 Contributors: 
 
 """
-import asyncio
 import json
 import logging
 
@@ -128,10 +127,10 @@ class CrossYear(BasePlot):
                 "ma":    ma[-5:]
             })
 
-    async def pooling(self, end: Frame = None,
-                      frame_type: FrameType = FrameType.DAY,
-                      codes=None,
-                      adv_limit=0.3):
+    async def scan(self, end: Frame = None,
+                   frame_type: FrameType = FrameType.DAY,
+                   codes=None,
+                   adv_limit=0.3):
         """
         Args:
             end:
