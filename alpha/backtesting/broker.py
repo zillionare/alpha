@@ -4,12 +4,12 @@ from math import copysign
 from typing import List
 
 import numpy as np
-from omicron.models.security import Security
 
 from alpha.backtesting.errors import OutOfMoneyError
 from alpha.backtesting.order import Order
 from alpha.backtesting.position import Position
 from alpha.backtesting.trade import Trade
+from omicron.models.security import Security
 
 logger = logging.getLogger(__name__)
 

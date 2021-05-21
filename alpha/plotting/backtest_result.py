@@ -9,6 +9,8 @@ from typing import Callable, List, Union
 
 import numpy as np
 import pandas as pd
+
+from alpha.backtesting import _EQUITY_AGG, OHLCV_AGG, TRADES_AGG
 from backtesting._util import _as_list, _data_period, _Indicator
 from bokeh.colors import RGB
 from bokeh.colors.named import lime as BULL_COLOR
@@ -32,8 +34,6 @@ from bokeh.models import (
 from bokeh.palettes import Category10
 from bokeh.plotting import figure as _figure
 from bokeh.transform import factor_cmap
-
-from alpha.backtesting import _EQUITY_AGG, OHLCV_AGG, TRADES_AGG
 
 
 def set_bokeh_output(notebook=False):

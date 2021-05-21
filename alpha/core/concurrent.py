@@ -1,6 +1,5 @@
-from omicron.core.types import FrameType
-
 from alpha.core import strategyfactory
+from omicron.core.types import FrameType
 
 # aync multi processing
 

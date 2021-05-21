@@ -1,10 +1,9 @@
 import unittest
 
 import omicron
-from omicron.core import lib
-
 from alpha.backtesting.backtest import Backtest
 from alpha.backtesting.strategy import Strategy
+from omicron.core import lib
 from tests import EURUSD, init_test_env
 
 

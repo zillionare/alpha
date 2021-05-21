@@ -17,13 +17,13 @@ from typing import Callable, Dict, List, Sequence, Tuple, Type, Union
 
 import numpy as np
 import pandas as pd
-from omicron.models.security import Security
 
 from alpha.backtesting.broker import Broker
 from alpha.backtesting.errors import OutOfMoneyError
 from alpha.backtesting.indicator import Indicator
 from alpha.backtesting.strategy import Strategy
 from alpha.plotting.backtest_result import plot
+from omicron.models.security import Security
 
 logger = logging.getLogger(__name__)
 

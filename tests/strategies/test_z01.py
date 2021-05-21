@@ -3,14 +3,14 @@ import unittest
 
 import arrow
 import cfg4py
-import omicron
 import pandas as pd
+
+import omicron
+from alpha.config import get_config_dir
+from alpha.strategies.z01 import Z01Strategy
 from backtesting.backtesting import Backtest
 from omicron.core.types import FrameType
 from omicron.models.security import Security
-
-from alpha.config import get_config_dir
-from alpha.strategies.z01 import Z01Strategy
 
 cfg = cfg4py.get_instance()
 logging.basicConfig(level=logging.INFO)

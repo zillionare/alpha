@@ -8,10 +8,11 @@ import subprocess
 import sys
 from contextlib import closing
 
-import aiohttp
 import cfg4py
-import omicron
 import pandas as pd
+
+import aiohttp
+import omicron
 from omicron.models.security import Security
 
 cfg = cfg4py.get_instance()

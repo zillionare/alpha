@@ -6,13 +6,13 @@ from typing import Callable, Tuple
 
 import numpy as np
 import pandas as pd
-from omicron.models.security import Security
 
 from alpha.backtesting.broker import Broker
 from alpha.backtesting.indicator import Indicator
 from alpha.backtesting.order import Order
 from alpha.backtesting.position import Position
 from alpha.backtesting.trade import Trade
+from omicron.models.security import Security
 
 
 def _as_str(value) -> str:

@@ -4,6 +4,7 @@ import asyncio
 import sys
 
 import fire
+
 import psutil
 from omicron import cache
 from omicron.models.securities import Securities
