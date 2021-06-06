@@ -146,8 +146,8 @@ class Broker:
 
     def _process_orders(self):
         data = self._data
-        open, high, low = data.Open[-1], data.High[-1], data.Low[-1]
-        prev_close = data.Close[-2]
+        open, high, low = data.open[-1], data.high[-1], data.low[-1]
+        prev_close = data.close[-2]
         reprocess_orders = False
 
         # Process orders

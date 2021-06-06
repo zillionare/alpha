@@ -83,7 +83,7 @@ class Backtest:
 
         self._results = None
 
-    def run(self, **kwargs) -> pd.Series:
+    async def run(self, **kwargs) -> pd.Series:
         """
         Run the backtest. Returns `pd.Series` with results and statistics.
 
@@ -122,8 +122,9 @@ class Backtest:
             _trades                       Size  EntryB...
             dtype: object
         """
-        broker: Broker = self._broker(data=self._sec)
+        broker: Broker = self._broker
         strategy: Strategy = self._strategy
+        await strategy.init()
 
         # Indicators used in Strategy.next()
         indicator_attrs = {
@@ -148,7 +149,7 @@ class Backtest:
 
             for i in range(start, len(self._sec)):
                 # Prepare data and indicators for `next` call
-                self._sec._set_length(i + 1)
+                self._sec.set_size(i + 1)
                 for attr, indicator in indicator_attrs:
                     # Slice indicator on the last dimension (case of 2d indicator)
                     setattr(strategy, attr, indicator[..., : i + 1])
@@ -160,7 +161,7 @@ class Backtest:
                     break
 
                 # Next tick, a moment before bar close
-                strategy.next()
+                await strategy.next()
             else:
                 # Close any remaining open trades so they produce some stats
                 for trade in broker.trades:
@@ -176,7 +177,7 @@ class Backtest:
 
             # Set data back to full length
             # for future `indicator._opts['data'].index` calls to work
-            self._sec.reset_length()
+            self._sec.reset_size()
 
             self._results = self._compute_stats(broker, strategy)
         return self._results

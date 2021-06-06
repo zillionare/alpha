@@ -115,7 +115,7 @@ class Strategy(metaclass=ABCMeta):
         For example, using simple moving average function from TA-Lib:
 
             def init():
-                self.sma = self.I(ta.SMA, self.data.Close, self.n_sma)
+                self.sma = self.I(ta.SMA, self.data.close, self.n_sma)
         """
         if name is None:
             params = ",".join(filter(None, map(_as_str, chain(args, kwargs.values()))))
@@ -132,34 +132,18 @@ class Strategy(metaclass=ABCMeta):
         except Exception as e:
             raise RuntimeError(f'Indicator "{name}" errored with exception: {e}')
 
-        if isinstance(value, pd.DataFrame):
-            value = value.values.T
-
-        if value is not None:
-            try:
-                value = np.asarray(value, order="C"), None
-            except Exception:
-                value = None
-
-        is_arraylike = value is not None
-
-        # Optionally flip the array if the user returned e.g. `df.values`
-        if is_arraylike and np.argmax(value.shape) == 0:
-            value = value.T
-
         if (
-            not is_arraylike
-            or not 1 <= value.ndim <= 2
-            or value.shape[-1] != len(self._data.Close)
+            not 1 <= value.ndim <= 2
+            or value.shape[-1] != len(self._data.close)
         ):
             raise ValueError(
                 "Indicators must return (optionally a tuple of) numpy.arrays of same "
-                f'length as `data` (data shape: {self._data.Close.shape}; indicator "{name}"'
+                f'length as `data` (data shape: {self._data.close.shape}; indicator "{name}"'
                 f'shape: {getattr(value, "shape" , "")}, returned value: {value})'
             )
 
         if plot and overlay is None and np.issubdtype(value.dtype, np.number):
-            x = value / self._data.Close
+            x = value / self._data.close
             # By default, overlay if strong majority of indicator values
             # is within 30% of Close
             with np.errstate(invalid="ignore"):
@@ -173,7 +157,7 @@ class Strategy(metaclass=ABCMeta):
             color=color,
             scatter=scatter,
             # _Indicator.s Series accessor uses this:
-            index=self.data.index,
+            index=self.data.frame,
         )
         self._indicators.append(value)
         return value

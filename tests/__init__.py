@@ -8,11 +8,9 @@ import subprocess
 import sys
 from contextlib import closing
 
+import aiohttp
 import cfg4py
 import pandas as pd
-
-import aiohttp
-import omicron
 from omicron.models.security import Security
 
 cfg = cfg4py.get_instance()
@@ -97,28 +95,19 @@ async def start_omega(timeout=60):
     raise subprocess.SubprocessError("Omega server malfunction.")
 
 
-def _read_file(filename):
-    from os.path import dirname, join
-
-    df = pd.read_csv(
-        join(dirname(__file__), filename),
-        index_col=0,
-        parse_dates=True,
-        infer_datetime_format=True,
-    )
-
-    code = ".".join(filename.split(".")[:2])
-    sec = Security(code)
-    sec.load_bars_from_dataframe(df)
+def load_bars_from_file(sec: str, frame_type: str, ext: str = "csv", sep="\t"):
+    file = os.path.join(os.path.dirname(__file__), f"{sec}.{frame_type}.{ext}")
+    df = pd.read_csv(file, sep=sep)
+    df["frame"] = pd.to_datetime(df["frame"])
+    return df
 
 
-sh_index = _read_file("000001.XSHG.1d.csv")
-"""DataFrame of sh index from 2012 to 2020"""
 
 # async def main():
+#     import omicron
 #     init_test_env()
 #     await omicron.init()
-#     sh_index = _read_file("000001.XSHG.1d.csv")
+#     sh_index = load_bars_from_file("000001.XSHG", "1d")
 
 
 # if __name__ == '__main__':

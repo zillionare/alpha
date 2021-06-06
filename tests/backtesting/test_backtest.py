@@ -3,8 +3,9 @@ import unittest
 import omicron
 from alpha.backtesting.backtest import Backtest
 from alpha.backtesting.strategy import Strategy
-from omicron.core import lib
-from tests import EURUSD, init_test_env
+from omicron.core import talib
+from omicron.models.security import Security
+from tests import init_test_env, load_bars_from_file
 
 
 class SmaCross(Strategy):
@@ -13,14 +14,14 @@ class SmaCross(Strategy):
 
     async def init(self):
         self.sma1 = await self.declare_indicator(
-            lib.moving_average, self.data.close, self.fast
+            talib.moving_average, self.data.close, self.fast
         )
         self.sma2 = await self.declare_indicator(
-            lib.moving_average, self.data.close, self.slow
+            talib.moving_average, self.data.close, self.slow
         )
 
     async def next(self):
-        flag, index = lib.cross(self.sma1, self.sma2)
+        flag, index = talib.cross(self.sma1, self.sma2)
 
         # 刚刚发生上穿
         if flag == 1 and index >= len(self.sma1) - 1:
@@ -35,6 +36,9 @@ class TestBacktest(unittest.IsolatedAsyncioTestCase):
         await omicron.init()
         return await super().asyncSetUp()
 
-    def test_run(self):
-        bt = Backtest(EURUSD, SmaCross)
-        bt.run()
+    async def test_run(self):
+        df = load_bars_from_file('000001.XSHG', '1d')
+        sec = Security('000001.XSHG')
+        sec.load_bars_from_dataframe(df)
+        bt = Backtest(sec, SmaCross)
+        await bt.run()
