@@ -5,6 +5,7 @@ from typing import List
 
 import numpy as np
 
+import aioredis
 from alpha.backtesting.errors import OutOfMoneyError
 from alpha.backtesting.order import Order
 from alpha.backtesting.position import Position
@@ -17,23 +18,32 @@ logger = logging.getLogger(__name__)
 class Broker:
     def __init__(
         self,
-        *,
         data,
         cash,
         commission,
-        margin,
-        trade_on_close,
-        hedging,
-        exclusive_orders,
-        index,
+        margin=1,
+        trade_on_close=False,
+        hedging=False,
+        exclusive_orders=True
     ):
+        """[summary]
+
+        Args:
+            data ([type]): [description]
+            cash ([type]): [description]
+            commission ([type]): [description]
+            margin ([type]): 保证金比率, 介于 (0,1]
+            trade_on_close ([type]): [description]
+            hedging ([type]): [description]
+            exclusive_orders ([type]): [description]
+        """
         assert 0 < cash, f"cash should be >0, is {cash}"
         assert -0.1 <= commission < 0.1, (
             "commission should be between -10% "
             f"(e.g. market-maker's rebates) and 10% (fees), is {commission}"
         )
         assert 0 < margin <= 1, f"margin should be between 0 and 1, is {margin}"
-        self._data: Security = data
+        self._data = data
         self._cash = cash
         self._commission = commission
         self._leverage = 1 / margin
@@ -41,7 +51,7 @@ class Broker:
         self._hedging = hedging
         self._exclusive_orders = exclusive_orders
 
-        self._equity = np.tile(np.nan, len(index))
+        self._equity = np.tile(np.nan, data.size)
         self.orders: List[Order] = []
         self.trades: List[Trade] = []
         self.position = Position(self)
@@ -62,6 +72,8 @@ class Broker:
     ):
         """
         Argument size indicates whether the order is long or short
+
+        see also @https://www.investopedia.com/ask/answers/050515/what-difference-between-buy-limit-and-sell-stop-order.asp
         """
         size = float(size)
         stop = stop and float(stop)
@@ -108,7 +120,7 @@ class Broker:
     @property
     def last_price(self) -> float:
         """ Price at the last (current) close. """
-        return self._data.Close[-1]
+        return self._data.close[-1]
 
     def _adjusted_price(self, size=None, price=None) -> float:
         """
@@ -139,7 +151,7 @@ class Broker:
         if equity <= 0:
             assert self.margin_available <= 0
             for trade in self.trades:
-                self._close_trade(trade, self._data.Close[-1], i)
+                self._close_trade(trade, self._data.close[-1], i)
             self._cash = 0
             self._equity[i:] = 0
             raise OutOfMoneyError

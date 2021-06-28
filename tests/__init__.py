@@ -12,6 +12,7 @@ import aiohttp
 import cfg4py
 import pandas as pd
 from omicron.models.security import Security
+from omicron.core.numpy_extensions import dataframe_to_structured_array
 
 cfg = cfg4py.get_instance()
 logger = logging.getLogger()
@@ -99,7 +100,11 @@ def load_bars_from_file(sec: str, frame_type: str, ext: str = "csv", sep="\t"):
     file = os.path.join(os.path.dirname(__file__), f"{sec}.{frame_type}.{ext}")
     df = pd.read_csv(file, sep=sep)
     df["frame"] = pd.to_datetime(df["frame"])
-    return df
+
+    # frame	open	high	low	close	volume
+    dtypes = [('frame', 'O'), ('open', '<f4'), ('high', '<f4'), ('low', '<f4'), ('close', '<f4'), ('volume', '<f8')]
+
+    return dataframe_to_structured_array(df, dtypes=dtypes)
 
 
 
