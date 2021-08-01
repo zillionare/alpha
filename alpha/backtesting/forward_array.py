@@ -1,11 +1,11 @@
-
 from typing import Any
 from numpy.typing import ArrayLike
 import numpy as np
 from omicron.core.numpy_extensions import numpy_append_fields
 
+
 class ForwardArray:
-    def __init__(self, features: ArrayLike, start_pos: int=1, name:str=None):
+    def __init__(self, features: ArrayLike, start_pos: int = 1, name: str = None):
         """A forward array that reveals data step by step, work with `alpha.backtesting.Strategy`
 
         `features` is revealing along with `next` is called. You can add feature by calling `add_feature`, and these feature will be revealed incrementally too.
@@ -17,8 +17,10 @@ class ForwardArray:
             start_pos (int): [description]
             name (str): the name of the features
         """
-        if (not hasattr(features, 'dtype')) or features.dtype.names is None:
-            raise TypeError("parameter `features` should be numpy structured arrays type")
+        if (not hasattr(features, "dtype")) or features.dtype.names is None:
+            raise TypeError(
+                "parameter `features` should be numpy structured arrays type"
+            )
 
         self._features = features
 
@@ -29,7 +31,7 @@ class ForwardArray:
 
         self._cur = start_pos
 
-    def __str__(self)->str:
+    def __str__(self) -> str:
         n_row = min(3, len(self._features))
         rows = self._features[:n_row]
 
@@ -47,16 +49,16 @@ class ForwardArray:
 
     def __getattr__(self, name: str) -> Any:
         if name in self._features.dtype.names:
-            return self._features[name][:self._cur]
+            return self._features[name][: self._cur]
 
     def __getitem__(self, subscript):
-        return self._features[:self._cur][subscript]
+        return self._features[: self._cur][subscript]
 
     def __setitem__(self, subscript, item):
-        self._features[:self._cur][subscript] = item
+        self._features[: self._cur][subscript] = item
 
     def __delitem__(self, subscript):
-        del self._features[:self._cur][subscript]
+        del self._features[: self._cur][subscript]
 
     @property
     def size(self):
@@ -74,11 +76,11 @@ class ForwardArray:
     def reset(self):
         self._cur = 0
 
-    def set_pos(self, i:int):
+    def set_pos(self, i: int):
         assert 0 <= i < len(self._features)
         self._cur = i
 
-    def add_feature(self, name: str, data: np.array, dtype:str, valid_pos:int=0):
+    def add_feature(self, name: str, data: np.array, dtype: str, valid_pos: int = 0):
         """add new feature
 
         Args:

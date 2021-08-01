@@ -1,4 +1,3 @@
-
 from alpha.backtesting.forward_array import ForwardArray
 import unittest
 import numpy as np
@@ -39,7 +38,7 @@ class TestForwardArray(unittest.TestCase):
         fa = ForwardArray(data, start_pos=3)
 
         fa[:2] = fa[1:3]
-        self.assertListEqual([(1,),(2,),(2,)], fa[:3].tolist())
+        self.assertListEqual([(1,), (2,), (2,)], fa[:3].tolist())
 
     def test_reveal(self):
         data = np.array([i for i in range(3)], dtype=[("seq", "<i4")])
@@ -67,6 +66,5 @@ class TestForwardArray(unittest.TestCase):
         feature = [np.nan, np.nan, 1]
         fa.add_feature("mean", feature, dtype="<f4", valid_pos=2)
 
-        expected = [(0, np.nan), (1, np.nan), (2, 1.)]
+        expected = [(0, np.nan), (1, np.nan), (2, 1.0)]
         np.testing.assert_allclose(expected, fa.data.tolist())
-

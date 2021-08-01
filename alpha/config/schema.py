@@ -27,3 +27,7 @@ class Config(object):
 
     class postgres:
         enabled: Optional[bool] = None
+
+    class omega:
+        class urls:
+            quotes_server: Optional[str] = None

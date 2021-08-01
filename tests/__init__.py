@@ -102,10 +102,16 @@ def load_bars_from_file(sec: str, frame_type: str, ext: str = "csv", sep="\t"):
     df["frame"] = pd.to_datetime(df["frame"])
 
     # frame	open	high	low	close	volume
-    dtypes = [('frame', 'O'), ('open', '<f4'), ('high', '<f4'), ('low', '<f4'), ('close', '<f4'), ('volume', '<f8')]
+    dtypes = [
+        ("frame", "O"),
+        ("open", "<f4"),
+        ("high", "<f4"),
+        ("low", "<f4"),
+        ("close", "<f4"),
+        ("volume", "<f8"),
+    ]
 
     return dataframe_to_structured_array(df, dtypes=dtypes)
-
 
 
 # async def main():

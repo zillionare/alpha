@@ -24,7 +24,7 @@ class Broker:
         margin=1,
         trade_on_close=False,
         hedging=False,
-        exclusive_orders=True
+        exclusive_orders=True,
     ):
         """[summary]
 

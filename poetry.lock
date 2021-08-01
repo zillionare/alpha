@@ -1137,6 +1137,17 @@ optional = false
 python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*"
 
 [[package]]
+name = "sklearn"
+version = "0.0"
+description = "A set of python modules for machine learning and data mining"
+category = "main"
+optional = false
+python-versions = "*"
+
+[package.dependencies]
+scikit-learn = "*"
+
+[[package]]
 name = "snowballstemmer"
 version = "2.1.0"
 description = "This package provides 29 stemmers for 28 languages generated from Snowball algorithms."
@@ -1336,6 +1347,25 @@ optional = true
 python-versions = "*"
 
 [[package]]
+name = "xgboost"
+version = "1.4.2"
+description = "XGBoost Python Package"
+category = "main"
+optional = false
+python-versions = ">=3.6"
+
+[package.dependencies]
+numpy = "*"
+scipy = "*"
+
+[package.extras]
+dask = ["dask", "pandas", "distributed"]
+datatable = ["datatable"]
+pandas = ["pandas"]
+plotting = ["graphviz", "matplotlib"]
+scikit-learn = ["scikit-learn"]
+
+[[package]]
 name = "yarl"
 version = "1.6.3"
 description = "Yet another URL library"
@@ -1394,7 +1424,7 @@ test = ["pytest", "black", "isort", "flake8", "flake8-docstrings", "pytest-cov"]
 [metadata]
 lock-version = "1.1"
 python-versions = ">=3.8,<3.9"
-content-hash = "96e5786c412444ea420bc9cda9c1a7ef911bbc445eba725cbbdc62dc88a307ef"
+content-hash = "9d9170f8fa8a0523b00a6f3cedeb7c7d6ced152b3ad8907e4514971e5f9f3fac"
 
 [metadata.files]
 aiohttp = [
@@ -2279,6 +2309,9 @@ six = [
     {file = "six-1.15.0-py2.py3-none-any.whl", hash = "sha256:8b74bedcbbbaca38ff6d7491d76f2b06b3592611af620f8426e82dddb04a5ced"},
     {file = "six-1.15.0.tar.gz", hash = "sha256:30639c035cdb23534cd4aa2dd52c3bf48f06e5f4a941509c8bafd8ce11080259"},
 ]
+sklearn = [
+    {file = "sklearn-0.0.tar.gz", hash = "sha256:e23001573aa194b834122d2b9562459bf5ae494a2d59ca6b8aa22c85a44c0e31"},
+]
 snowballstemmer = [
     {file = "snowballstemmer-2.1.0-py2.py3-none-any.whl", hash = "sha256:b51b447bea85f9968c13b650126a888aabd4cb4463fca868ec596826325dedc2"},
     {file = "snowballstemmer-2.1.0.tar.gz", hash = "sha256:e997baa4f2e9139951b6f4c631bad912dfd3c792467e2f03d7239464af90e914"},
@@ -2460,6 +2493,13 @@ watchdog = [
 webencodings = [
     {file = "webencodings-0.5.1-py2.py3-none-any.whl", hash = "sha256:a0af1213f3c2226497a97e2b3aa01a7e4bee4f403f95be16fc9acd2947514a78"},
     {file = "webencodings-0.5.1.tar.gz", hash = "sha256:b36a1c245f2d304965eb4e0a82848379241dc04b865afcc4aab16748587e1923"},
+]
+xgboost = [
+    {file = "xgboost-1.4.2-py3-none-macosx_10_14_x86_64.macosx_10_15_x86_64.macosx_11_0_x86_64.whl", hash = "sha256:e8f1a366a403784afd30a56eb99a429cefc45d906943cd362025ccf942208e13"},
+    {file = "xgboost-1.4.2-py3-none-manylinux2010_x86_64.whl", hash = "sha256:ec3f60d53dcd23273a5c7a495ba0f8205656ce750eb2ce7798726a4b2ef4955a"},
+    {file = "xgboost-1.4.2-py3-none-manylinux2014_aarch64.whl", hash = "sha256:15dd5987827030b3f68e741490a8b3a4ead7c6064bd911e36235b84e0a9d0765"},
+    {file = "xgboost-1.4.2-py3-none-win_amd64.whl", hash = "sha256:7c8973204b2c2362012850605e81de5a180513fc08db36d0da9befb77c3d57c8"},
+    {file = "xgboost-1.4.2.tar.gz", hash = "sha256:5a364c152095824445ac56a83fb7f7e75913b4bb128c2fcd99b85877c9f4f8fe"},
 ]
 yarl = [
     {file = "yarl-1.6.3-cp36-cp36m-macosx_10_14_x86_64.whl", hash = "sha256:0355a701b3998dcd832d0dc47cc5dedf3874f966ac7f870e0f3a6788d802d434"},

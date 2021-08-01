@@ -20,6 +20,7 @@ from omicron.models.security import Security
 
 logger = logging.getLogger()
 
+
 def _as_str(value) -> str:
     if isinstance(value, (Number, str)):
         return str(value)
@@ -50,7 +51,7 @@ class Strategy(metaclass=ABCMeta):
 
         Args:
             broker (Broker): [description]
-            features (ForwardArray): 
+            features (ForwardArray):
         """
         self._broker = broker
         self._params = self._check_params(params)
@@ -135,6 +136,7 @@ class Strategy(metaclass=ABCMeta):
         self._results = self._compute_stats()
 
         return self._results
+
     class __FULL_EQUITY(float):
         def __repr__(self):
             return ".9999"
@@ -226,11 +228,13 @@ class Strategy(metaclass=ABCMeta):
 
     def _compute_stats(self):
         broker = self._broker
-        index = self._features['frame']
+        index = self._features["frame"]
 
         equity = pd.Series(broker._equity).bfill().fillna(broker._cash).values
         dd = 1 - equity / np.maximum.accumulate(equity)
-        dd_dur, dd_peaks = self._compute_drawdown_duration_peaks(pd.Series(dd, index=index))
+        dd_dur, dd_peaks = self._compute_drawdown_duration_peaks(
+            pd.Series(dd, index=index)
+        )
 
         equity_df = pd.DataFrame(
             {"Equity": equity, "DrawdownPct": dd, "DrawdownDuration": dd_dur},
@@ -369,7 +373,7 @@ class Strategy(metaclass=ABCMeta):
 
         return s
 
-    def _compute_drawdown_duration_peaks(self, dd:pd.Series):
+    def _compute_drawdown_duration_peaks(self, dd: pd.Series):
         iloc = np.unique(np.r_[(dd == 0).values.nonzero()[0], len(dd) - 1])
         iloc = pd.Series(iloc, index=dd.index[iloc])
         df = iloc.to_frame("iloc").assign(prev=iloc.shift())

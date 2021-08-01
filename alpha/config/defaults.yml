@@ -1,4 +1,7 @@
 redis:
-  dsn: redis://localhost:6379
+  dsn: redis://172.17.0.1:6379
 postgres:
   enabled: false
+omega:
+  urls:
+    quotes_server: http://172.17.0.1:3181
