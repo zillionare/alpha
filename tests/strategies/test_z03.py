@@ -18,22 +18,24 @@ class TestZ03(unittest.IsolatedAsyncioTestCase):
         print(features)
 
     def test_transform(self):
-        bars = np.array(
-            [(i, i * 10) for i in range(1, 260)],
-            dtype=[("close", "<f4"), ("volume", "<f4")],
-        )
-
-        bars = bars.view(np.recarray)
+        close = np.array([i for i in range(1, 266)])
+        volume = np.array([i * 10 for i in range(1, 266)])
 
         z03 = Z03()
-        feat = z03.transform(bars, ts_len=10)
+        feat = z03.transform(close, volume, ts_len=10)
         self.assertEqual(70, len(feat))
 
-        bars = np.array(
-            [(i, i * 10) for i in range(1, 265)],
-            dtype=[("close", "<f4"), ("volume", "<f4")],
-        )
+        close = np.array([i for i in range(1, 265)])
+        volume = np.array([i * 10 for i in range(1, 265)])
 
-        bars = bars.view(np.recarray)
-        feat = z03.transform(bars, ts_len=10, res_win=5)
+        feat = z03.transform(close, volume, ts_len=10, res_win=5)
         self.assertEqual(71, len(feat))
+
+    def test_pred(self):
+        s = Z03("/tmp/z03_model.pkl")
+
+        _, (X_test, y_test) = s.load_train_data("/tmp/z03_train.pkl")
+
+        for i, x in enumerate(X_test):
+            pred = s.predict(x)
+            print(pred, y_test[i])

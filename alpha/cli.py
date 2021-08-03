@@ -62,13 +62,14 @@ async def train(strategy: str, save_to: str):
     if strategy == "z03":
         s = Z03()
         params = {
-            "colsample_bytree": 0.8834541132597041,
-            "gamma": 0.04079709020012018,
-            "learning_rate": 0.035184862773986775,
-            "max_depth": 5,
-            "n_estimators": 144,
-            "subsample": 0.6777095814048169,
+            "colsample_bytree": 0.722213395520227,
+            "gamma": 0.1792328642721363,
+            "learning_rate": 0.1458690595251297,
+            "max_depth": 4,
+            "n_estimators": 108,
+            "subsample": 0.8493192507310232,
         }
+
         model = s.train(**params)
 
         with open(save_to, "wb") as f:

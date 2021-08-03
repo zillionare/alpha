@@ -19,8 +19,12 @@ from sklearn.metrics import mean_squared_error as MSE
 
 
 class Z03:
-    def __init__(self):
-        pass
+    def __init__(self, model_path: str = None):
+        if model_path is not None:
+            with open(model_path, "rb") as f:
+                self.model = pickle.load(f)
+        else:
+            self.model = None
 
     def train(
         self, learning_rate, n_estimators, max_depth, subsample, colsample_bytree, gamma
@@ -39,16 +43,34 @@ class Z03:
         (X_train, y_train), (X_valid, y_valid) = self.load_train_data(
             "/tmp/z03_train.pkl"
         )
-        model.fit(X_train, y_train["ynorm"])
+        model.fit(X_train, y_train["y"])
 
         y_pred = model.predict(X_valid)
-        rmse = np.sqrt(MSE(y_valid["ynorm"], y_pred))
+        rmse = np.sqrt(MSE(y_valid["y"], y_pred))
+        for i in range(10):
+            print(y_pred[i], y_valid[i])
         print("rmse of the model is", rmse)
 
         return model
 
-    def predict(self):
-        pass
+    def predict(self, bars):
+        if hasattr(bars, "close"):
+            close = bars["close"]
+            vol = bars["vol"]
+            close = fillna(close)
+            close = fillna(vol)
+
+            X = self.transform(close, vol)
+            c = bars["close"][-1]
+        else:
+            X = bars.reshape(1, -1)
+            c = None
+
+        pred = self.model.predict(X)
+        if c:
+            return c * pred
+        else:
+            return pred
 
     async def extract_features(
         self, ft: FrameType = FrameType.DAY, total=1000, ts_len=10, result_win=5
@@ -64,21 +86,26 @@ class Z03:
 
         j = 0
         secs = Securities()
-        for code in secs.choose(_types=["stock"]):
+
+        # 生成长度略大于total的随机股票代码列表
+        codes = secs.choose(_types=["stock"])
+        codes = random.sample(codes * int(total / len(codes) + 1), int(total * 1.2))
+        for code in codes:
             sec = Security(code)
 
             # 在过去一年中，随机取一段，以使得分布不依赖于时间
             stop = tf.shift(arrow.now(), -random.randint(result_win, 250), ft)
             start = tf.shift(stop, -n, ft)
 
-            bars = await sec.load_bars(start, stop, ft)
-            if len(bars) < n:
-                continue
-
             try:
-                feature, (y_norm, c0, y_) = self.transform(bars, ts_len, result_win)
+                bars = await sec.load_bars(start, stop, ft)
+                if len(bars) < n:
+                    continue
+                close = fillna(bars["close"])
+                vol = fillna(bars["volume"])
+                feature, (y_, c) = self.transform(close, vol, ts_len, result_win)
                 X.append(feature)
-                y.append((y_norm, code, start, c0, y_))
+                y.append((y_, code, start, c))
             except Exception:
                 continue
 
@@ -94,65 +121,64 @@ class Z03:
             "y": np.array(
                 y,
                 dtype=[
-                    ("ynorm", "<f4"),
+                    ("y", "<f4"),
                     ("sec", "O"),
                     ("start", "O"),
-                    ("c0", "<f4"),
-                    ("ytrue", "<f4"),
+                    ("c", "<f4"),
                 ],
             ),
         }
 
-    def transform(self, bar, ts_len=10, res_win=0) -> np.array:
-        """
-        返回提取的特征（70列）及对应的目标值及参考信息。如果res_win不为0，则目标值存在；否则仅包含`close[0]`和`max(close[-res_win:])`
+    def transform(self, close, vol, ts_len=10, res_win=0) -> np.array:
+        """返回提取的特征（70列）及对应的目标值，如果res_win不为0
+
+
         Args:
-            bar ([type]): [description]
+            close ([type]): [description]
+            vol ([type]): [description]
             ts_len (int, optional): [description]. Defaults to 10.
             res_win (int, optional): [description]. Defaults to 0.
 
         Returns:
             np.array: [description]
         """
-        close = fillna(bar["close"])
-        close = close / close[0]
-
-        volume = fillna(bar["volume"])
-        volume = volume / volume[0]
-
         if res_win == 0:
             close_for_train = close
-            volume_for_train = volume
+            volume_for_train = vol
         else:
             close_for_train = close[:-res_win]
-            volume_for_train = volume[:-res_win]
+            volume_for_train = vol[:-res_win]
 
-        ma5 = moving_average(close_for_train, 5)
-        ma10 = moving_average(close_for_train, 10)
-        ma20 = moving_average(close_for_train, 20)
-        ma30 = moving_average(close_for_train, 30)
-        ma60 = moving_average(close_for_train, 60)
-        ma120 = moving_average(close_for_train, 120)
-        ma250 = moving_average(close_for_train, 250)
+        c = close_for_train[-1]
 
-        features = []
-        for i in range(-ts_len, 0, 1):
-            features.extend(
-                [
-                    ma10[i] - ma5[i],
-                    ma20[i] - ma5[i],
-                    ma30[i] - ma5[i],
-                    ma60[i] - ma5[i],
-                    ma120[i] - ma5[i],
-                    ma250[i] - ma5[i],
-                ]
-            )
-            features.append(volume_for_train[i])
+        close_for_train = close_for_train / c
+        volume_for_train = volume_for_train[1:] / volume_for_train[:-1]
+
+        ma5 = moving_average(close_for_train, 5)[-ts_len:]
+        # ma10 = moving_average(close_for_train, 10)[-ts_len:]
+        # ma20 = moving_average(close_for_train, 20)[-ts_len:]
+        # ma30 = moving_average(close_for_train, 30)[-ts_len:]
+        # ma60 = moving_average(close_for_train, 60)[-ts_len:]
+        # ma120 = moving_average(close_for_train, 120)[-ts_len:]
+        # ma250 = moving_average(close_for_train, 250)[-ts_len:]
+
+        features = [
+            *ma5,
+            # *ma10,
+            # *ma20,
+            # *ma30,
+            # *ma60,
+            # *ma120,
+            # *ma250,
+            *volume_for_train[-ts_len:],
+        ]
 
         if res_win != 0:
-            y = np.tanh(max(close[-res_win:]) / close[0])
+            y = close[-res_win] / c
+        else:
+            c, y = None, None, None
 
-        return np.tanh(features), (y, close[0], max(close[-res_win:]))
+        return features, (y, c)
 
     def load_train_data(self, data_file: str, valid_pct=0.2):
         """加载训练用的数据。
@@ -201,7 +227,7 @@ class Z03:
             "/tmp/z03_train.pkl"
         )
 
-        search.fit(X_train, y_train["ynorm"])
+        search.fit(X_train, y_train["y"])
 
         self._report_best_scores(search.cv_results_)
 
