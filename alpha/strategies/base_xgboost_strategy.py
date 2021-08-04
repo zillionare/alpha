@@ -3,22 +3,27 @@
 from math import fabs
 import os
 import pickle
+from typing import Callable, Union
 from ruamel.yaml import YAML
 from numpy.typing import ArrayLike
 import numpy as np
 from sklearn.model_selection import RandomizedSearchCV
-from xgboost import XGBClassifier, XGBRegressor
+from xgboost import XGBClassifier, XGBModel, XGBRegressor
 
 
 class BaseXGBoostStrategy:
     """
     Base class for XGBoost strategies.
     """
-    def __init__(self, name:str, params:dict, base_model='regressor'):
+    def __init__(self, name:str, base_model='regressor', eval_metric:Union[str, Callable]='rmse', hyper_params:dict=None, early_stopping_rounds=5):
         self.name = name
-        self.params = params
+        self.hyper_params = hyper_params
+
         self.base_model = base_model
-        self.model = None
+        self.eval_metric = eval_metric
+        self.early_stopping_rounds = early_stopping_rounds
+
+        self.model:XGBModel = None
 
         self.data_train = None
         self.data_valid = None
@@ -54,7 +59,7 @@ class BaseXGBoostStrategy:
         with open(meta, "wb") as f:
             yaml = YAML()
             yaml.default_flow_style = False
-            yaml.dump(self.params, f)
+            yaml.dump(self.hyper_params, f)
 
     def transform(self, X):
         """
@@ -73,7 +78,8 @@ class BaseXGBoostStrategy:
         :param y: A numpy array of shape (n,) where n is the number of instances in X.
         :return: self
         """
-        return self.model.fit(X, y)
+        return self.model.fit(X, y, early_stopping_rounds=5, eval_set=[(
+            self.get_X(self.data_valid), self.get_y(self.data_valid))])
 
     def predict(self, X):
         """
