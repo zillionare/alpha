@@ -1,5 +1,3 @@
-
-
 from math import fabs
 import os
 import pickle
@@ -15,7 +13,15 @@ class BaseXGBoostStrategy:
     """
     Base class for XGBoost strategies.
     """
-    def __init__(self, name:str, base_model='regressor', eval_metric:Union[str, Callable]='rmse', hyper_params:dict=None, early_stopping_rounds=5):
+
+    def __init__(
+        self,
+        name: str,
+        base_model="regressor",
+        eval_metric: Union[str, Callable] = "rmse",
+        hyper_params: dict = None,
+        early_stopping_rounds=5,
+    ):
         self.name = name
         self.hyper_params = hyper_params
 
@@ -23,18 +29,18 @@ class BaseXGBoostStrategy:
         self.eval_metric = eval_metric
         self.early_stopping_rounds = early_stopping_rounds
 
-        self.model:XGBModel = None
+        self.model: XGBModel = None
 
         self.data_train = None
         self.data_valid = None
         self.data_test = None
 
     @classmethod
-    def load(cls, path:str, name:str):
+    def load(cls, path: str, name: str):
         """load model and its meta from `path`"""
 
         model = os.path.join(path, f"{name}_model.pkl")
-        with open(model, 'rb') as f:
+        with open(model, "rb") as f:
             model = pickle.load(f)
 
         meta = os.path.join(path, f"{name}_desc.yml")
@@ -48,11 +54,10 @@ class BaseXGBoostStrategy:
 
         return s
 
-
-    def save(self, path:str):
+    def save(self, path: str):
         """save model and its meta info to `path`"""
         model = os.path.join(path, f"{self.name}_model.pkl")
-        with open(model, 'wb') as f:
+        with open(model, "wb") as f:
             pickle.dump(self.model, f)
 
         meta = os.path.join(path, f"{self.name}_desc.yml")
@@ -61,12 +66,20 @@ class BaseXGBoostStrategy:
             yaml.default_flow_style = False
             yaml.dump(self.hyper_params, f)
 
-    def transform(self, X):
+    def x_transform(self, bars):
         """
-        Transform a batch of instances.
+        Transform a batch of instances into train data
 
         :param X: A numpy array of shape (n, m) where n is the number of instances and m is the number of features.
         :return: A numpy array of shape (n, m) where n is the number of instances in X and m is the number of features.
+        """
+        raise NotImplementedError
+
+    def y_transform(self, bars):
+        """tranform bars into target value
+
+        Args:
+            bars ([type]): [description]
         """
         raise NotImplementedError
 
@@ -78,8 +91,12 @@ class BaseXGBoostStrategy:
         :param y: A numpy array of shape (n,) where n is the number of instances in X.
         :return: self
         """
-        return self.model.fit(X, y, early_stopping_rounds=5, eval_set=[(
-            self.get_X(self.data_valid), self.get_y(self.data_valid))])
+        return self.model.fit(
+            X,
+            y,
+            early_stopping_rounds=5,
+            eval_set=[(self.get_X(self.data_valid), self.get_y(self.data_valid))],
+        )
 
     def predict(self, X):
         """
@@ -88,17 +105,28 @@ class BaseXGBoostStrategy:
         :param X: A numpy array of shape (n, m) where n is the number of instances and m is the number of features.
         :return: A numpy array of shape (n,) where n is the number of instances in X.
         """
-        X_ = self.transform(X)
+        X_ = self.x_transform(X)
         return self.model.predict(X_)
 
-    def shuffle(self, data: ArrayLike, seed:int=78)->ArrayLike:
+    def shuffle(self, data: ArrayLike, seed: int = 78) -> ArrayLike:
         """shuffle the `data`"""
         np.random.seed(seed)
-        indice = np.random.choice(len(data), size=len(data), replace=False)
+        dlen = len(data["X"])
+        indice = np.random.choice(dlen, size=dlen, replace=False)
 
-        return data[indice]
+        data["X"] = data["X"][indice]
+        data["y"] = data["y"][indice]
 
-    def load_data(self, data_file:str, shuffle:bool=True, seed:int=78, valid_pct:float=0.2, test_pct:float=0.1):
+        return data
+
+    def load_data(
+        self,
+        data_file: str,
+        shuffle: bool = True,
+        seed: int = 78,
+        valid_pct: float = 0.2,
+        test_pct: float = 0.1,
+    ):
         """load data from `data_file`, then do the shuffle, split and return train, valid and test set
 
         Args:
@@ -107,19 +135,24 @@ class BaseXGBoostStrategy:
             seed: random seed
             valid_pct: percentage of validation set
             test_pct: percentage of test set
-       """
-        data = np.load(data_file)
+        """
+        with open(data_file, "rb") as f:
+            data = pickle.load(f)
+
         if shuffle:
             data = self.shuffle(data, seed)
 
-        n = len(data)
+        n = len(data["X"])
         valid_n = int(valid_pct * n)
         test_n = int(test_pct * n)
         train_n = n - valid_n - test_n
 
-        train = data[:train_n]
-        valid = data[train_n:train_n+valid_n]
-        test = data[train_n+valid_n:]
+        train = (data["X"][:train_n], data["y"][:train_n])
+        valid = (
+            data["X"][train_n : train_n + valid_n],
+            data["y"][train_n : train_n + valid_n],
+        )
+        test = (data["X"][train_n + valid_n :], data["y"][train_n + valid_n :])
 
         self.data_train = train
         self.data_valid = valid
@@ -127,14 +160,14 @@ class BaseXGBoostStrategy:
 
         return train, valid, test
 
-    def get_X(self, dataset:str):
+    def get_X(self, dataset: str):
         """get train data from dataset"""
         raise NotImplementedError
 
-    def get_y(self, dataset:str):
+    def get_y(self, dataset: str):
         """get target from dataset"""
         raise NotImplementedError
-        
+
     def grid_search(self, params, scoring=None):
         """
         Grid search the best parameters.
@@ -142,7 +175,7 @@ class BaseXGBoostStrategy:
         :param params: A dictionary of parameters.
         :return: self
         """
-        if self.base_model == 'regressor':
+        if self.base_model == "regressor":
             model = XGBRegressor()
         else:
             model = XGBClassifier()
@@ -156,11 +189,11 @@ class BaseXGBoostStrategy:
             verbose=1,
             n_jobs=-1,
             return_train_score=True,
-            scoring=scoring
+            scoring=scoring,
         )
 
-        X = self.get_X(dataset='train')
-        y = self.get_y(dataset='train')
+        X = self.get_X(dataset="train")
+        y = self.get_y(dataset="train")
 
         search.fit(X, y)
 
@@ -179,3 +212,6 @@ class BaseXGBoostStrategy:
                 )
                 print("Parameters: {0}".format(results["params"][candidate]))
                 print("")
+
+    async def build_dataset(self, save_to: str):
+        raise NotImplementedError

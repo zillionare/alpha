@@ -1,5 +1,6 @@
-import numpy as np
 import math
+
+import numpy as np
 from numpy.typing import ArrayLike
 
 
@@ -35,7 +36,8 @@ def fillna(ts: np.array):
     np.maximum.accumulate(idx, out=idx)
     return ts[idx]
 
-def pos_encode(stationary: np.array, var: np.array)->float:
+
+def pos_encode(stationary: np.array, var: np.array) -> float:
     """
     用于指标排列的位置编码。比如，均线多头排列为ma5 > ma10 > ma20 > ma30 > ma60 > ma120 > ma250, 空头排列为ma5 < ma10 < ma20 < ma30 < ma60 < ma120 < ma250，在这中间还有很多种排列。通过本编码方案，能为每一种排列确定一个惟一的浮点数。
 
@@ -47,10 +49,10 @@ def pos_encode(stationary: np.array, var: np.array)->float:
     0.53:(10, 20, 5)
     0.9:(20, 5, 10)
     1.0:(20, 10, 5)
-    
+
     如果 5, 10, 20的排列意味着多头排列的话，则最强的多头排列编码值最小，而最强的空头排列编码值最大，并且编码不重复。
     """
-    spectrum = np.sin([1/(3**i) for i in range(len(stationary))])
+    spectrum = np.sin([1 / (3 ** i) for i in range(len(stationary))])
     maxium = (stationary[::-1] - stationary).dot(spectrum)
     diff = var - stationary
     return diff.dot(spectrum) / maxium
