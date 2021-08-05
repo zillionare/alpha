@@ -7,7 +7,7 @@ from numpy.typing import ArrayLike
 import numpy as np
 from sklearn.model_selection import RandomizedSearchCV
 from xgboost import XGBClassifier, XGBModel, XGBRegressor
-
+from sklearn.metrics import classification_report
 
 class BaseXGBoostStrategy:
     """
@@ -184,10 +184,10 @@ class BaseXGBoostStrategy:
             model,
             param_distributions=params,
             random_state=78,
-            n_iter=200,
+            n_iter=50,
             cv=3,
-            verbose=1,
-            n_jobs=-1,
+            verbose=2,
+            n_jobs=1,
             return_train_score=True,
             scoring=scoring,
         )
@@ -197,7 +197,16 @@ class BaseXGBoostStrategy:
 
         search.fit(X, y)
 
-        self._report_best_params(search.best_params_)
+        if self.base_model == "regressor":
+            self._report_best_scores(search.best_params_)
+        else:
+            best_model = search.best_estimator_
+            X_test = self.get_X(dataset="test")
+            y_true = self.get_y(dataset="test")
+
+            y_pred = best_model.predict(X_test)
+
+            print(classification_report(y_true, y_pred))
 
     def _report_best_scores(self, results, n_top=3):
         for i in range(1, n_top + 1):
