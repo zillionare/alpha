@@ -3,7 +3,6 @@ from alpha.strategies.z04 import Z04
 from tests import init_test_env
 import unittest
 import omicron
-from scipy.stats import randint, uniform
 
 
 class TestZ04(unittest.IsolatedAsyncioTestCase):
@@ -20,12 +19,4 @@ class TestZ04(unittest.IsolatedAsyncioTestCase):
         s = Z04()
         s.load_data("/tmp/z04.ds.pkl")
 
-        params = {
-            "colsample_bytree": uniform(0.7, 0.3),
-            "gamma": uniform(0, 0.5),
-            "learning_rate": uniform(0.03, 1),
-            "max_depth": randint(2, 6),
-            "n_estimators": randint(100, 150),
-            "subsample": uniform(0.6, 0.4),
-        }
-        s.grid_search(params)
+        s.grid_search()

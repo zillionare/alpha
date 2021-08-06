@@ -5,3 +5,5 @@ postgres:
 omega:
   urls:
     quotes_server: http://172.17.0.1:3181
+alpha:
+    data_home: ~/alpha/data
