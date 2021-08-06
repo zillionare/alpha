@@ -13,6 +13,7 @@ import psutil
 from omicron import cache
 from omicron.models.securities import Securities
 from xgboost import XGBRegressor
+import importlib.util
 
 from alpha.strategies.z03 import Z03
 
@@ -47,14 +48,22 @@ async def backtest(strategy: str, code: str = None, frame_type: str = "1d"):
         )
 
 
+def create_strategy(strategy: str):
+    spec = importlib.util.find_spec("alpha.strategies.{}".format(strategy.lower()))
+    strategy_module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(strategy_module)
+
+    ctor = getattr(strategy_module, strategy)
+    return ctor()
+
+
 @async_run_command
 async def prepare_train_data(strategy: str, save_to: str, *args, **kwargs):
-    if strategy == "z03":
-        s = Z03()
-        data = await s.extract_features(*args, **kwargs)
+    s = create_strategy(strategy)
+    data = await s.extract_features(*args, **kwargs)
 
-        with open(save_to, "wb") as f:
-            pickle.dump(data, f)
+    with open(save_to, "wb") as f:
+        pickle.dump(data, f)
 
 
 @async_run_command
@@ -77,11 +86,10 @@ async def train(strategy: str, save_to: str):
 
 
 @async_run_command
-async def gridsearch(strategy: str):
-    if strategy == "z03":
-        s = Z03()
-
-        s.grid_search()
+async def gridsearch(strategy: str, dataset_file: str):
+    s = create_strategy(strategy)
+    s.load_data(dataset_file)
+    s.grid_search()
 
 
 def main():
