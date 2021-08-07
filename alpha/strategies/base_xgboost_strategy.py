@@ -1,15 +1,16 @@
-from math import fabs
+import json
+from alpha.strategies.databunch import DataBunch
 import os
 import pickle
-from tkinter import Y
 from typing import Callable, Union
 from ruamel.yaml import YAML
 from numpy.typing import ArrayLike
 import numpy as np
-from sklearn.model_selection import RandomizedSearchCV
+from sklearn.model_selection import RandomizedSearchCV, RepeatedStratifiedKFold
 from xgboost import XGBClassifier, XGBModel, XGBRegressor
-from sklearn.metrics import classification_report
+from sklearn.metrics import classification_report, mean_squared_error
 from scipy.stats import randint, uniform
+
 
 class BaseXGBoostStrategy:
     """
@@ -19,11 +20,10 @@ class BaseXGBoostStrategy:
     def __init__(
         self,
         name: str,
-        data_home:str,
-        version: str = None,
+        data_home: str,
         base_model="regressor",
-        eval_metric: Union[str, Callable] = "rmse",
-        early_stopping_rounds=5
+        eval_metric: Union[str, Callable] = None,
+        early_stopping_rounds=5,
     ):
         """
 
@@ -36,7 +36,7 @@ class BaseXGBoostStrategy:
             early_stopping_rounds (int, optional): [description]. Defaults to 5.
         """
         self.name = name
-        self.version = version
+        self._version = None
 
         self.base_model = base_model
         self.eval_metric = eval_metric
@@ -48,29 +48,38 @@ class BaseXGBoostStrategy:
 
         os.makedirs(self.data_home, exist_ok=True)
 
+    @property
+    def version(self):
+        return self._version
+
+    @version.setter
+    def version(self, value: str):
+        """
+        set the version of the model
+        """
+        self._version = value
+
     @classmethod
-    def load(cls, path: str, name: str):
+    def load(cls, path: str, name: str, data_home:str):
         """load model and its meta from `path`"""
 
         model = os.path.join(path, f"{name}_model.pkl")
         with open(model, "rb") as f:
             model = pickle.load(f)
 
-        meta = os.path.join(path, f"{name}_desc.yml")
-        with open(meta, "rb") as f:
-            yaml = YAML()
-            yaml.default_flow_style = False
-            params = yaml.load(f)
+        meta_file = os.path.join(path, f"{name}_json.yml")
+        with open(meta_file, "rb") as f:
+            meta = json.load(f)
 
-        s = cls(name, params)
+        params = {k:meta[k] for k in ["base_model", "eval_metric", "early_stopping_rounds"]}
+
+        s = cls(name, **meta)
         s.model = model
 
         return s
 
-    def make_dataset(self,name:str, *args, **kwargs):
+    def make_dataset(self, name: str, *args, **kwargs)-> DataBunch:
         """make dataset
-
-        the dataset should be saved in `self.data_home/self.version`/`name`.pkl
 
         the dataset should be a dict with keys:
 
@@ -83,13 +92,15 @@ class BaseXGBoostStrategy:
         """
         raise NotImplementedError
 
-    def save(self, hyper_params: dict, report: str=None):
+    def save(self, model, report: str, ds: DataBunch):
         """save the model, hyper params, report and reference to the dataset
 
         if version is set, save the model and hyper params under the version directory
 
         Args:
+            model: the model
             report: path to save the report
+            ds: the dataset
 
         Returns:
             path to the saved model
@@ -100,21 +111,20 @@ class BaseXGBoostStrategy:
             path = os.path.join(path, self.version)
             os.makedirs(path, exist_ok=True)
 
-        model = os.path.join(path, f"{self.name}_model.pkl")
-        with open(model, "wb") as f:
-            pickle.dump(self.model, f)
+        model_file = os.path.join(path, f"{self.name}_model.pkl")
+        with open(model_file, "wb") as f:
+            pickle.dump(model, f)
 
-        meta_file = os.path.join(path, f"{self.name}_desc.yml")
+        meta_file = os.path.join(path, f"{self.name}_desc.json")
 
-        hyper_params["report"] = report
-        hyper_params["base_model"] = self.base_model
-        hyper_params["eval_metric"] = self.eval_metric
+        meta = model.get_params()
+        meta["report"] = report
+        meta["base_model"] = self.base_model
+        meta["eval_metric"] = self.eval_metric
+        meta["ds"] = ds.desc
 
-
-        with open(meta_file, "wb") as f:
-            yaml = YAML()
-            yaml.default_flow_style = False
-            yaml.dump(hyper_params, f)
+        with open(meta_file, "w") as f:
+            json.dump(meta, f)
 
     def x_transform(self, *args, **kwargs):
         """
@@ -123,27 +133,52 @@ class BaseXGBoostStrategy:
         raise NotImplementedError
 
     def y_transform(self, *args, **kwargs):
-        """tranform data into target, invoked by `load_data`. Usually get overriden by subclasses.
-        """
+        """tranform data into target, invoked by `load_data`. Usually get overriden by subclasses."""
         raise NotImplementedError
 
-    def fit(self, X, y, X_test=None, y_test=None):
+    def _fit(self, model, X, y, X_test, y_test):
         """
         Fit the model to a batch of training instances.
 
+        Usually called by `fit`.
+
         Args:
+            model: the model to be fit
             X (numpy.ndarray): A numpy array of shape (n, m) where n is the number of instances and m is the number of features.
             y (numpy.ndarray): A numpy array of shape (n,) where n is the number of instances in X.
             X_test (numpy.ndarray, optional): A numpy array of shape (n, m) where n is the number of instances in X_test.
             y_test (numpy.ndarray, optional): A numpy array of shape (n,) where n is the number of instances in y_test.
         """
-        # todo: implement early stopping
-        return self.model.fit(
-            X,
-            y,
-            early_stopping_rounds=5,
-            eval_set=[(X_test, y_test)]
-        )
+        folds = RepeatedStratifiedKFold(n_splits=5, random_state=78)
+
+        i = 1
+        for train_index, valid_index in folds.split(X, y):
+            X_train, X_valid = X[train_index], X[valid_index]
+            y_train, y_valid = y[train_index], y[valid_index]
+
+            model.fit(
+                X_train,
+                y_train,
+                eval_set=[(X_valid, y_valid)],
+                eval_metric=self.eval_metric,
+                early_stopping_rounds=self.early_stopping_rounds,
+            )
+
+            print(f"{i}/{folds.get_n_splits()} iterations: {model.best_score}")
+
+        preds = model.predict(X_test)
+        if self.base_model == "regressor":
+            rmse = np.sqrt(mean_squared_error(y_test, preds))
+            std = np.std(y_test - preds)
+            report = f"rmse: {rmse}, std: {std}"
+        else:
+            report = classification_report(y_test, preds)
+
+        print("final result")
+        print(report)
+
+        return model, report
+
 
     def predict(self, X):
         """
@@ -157,14 +192,14 @@ class BaseXGBoostStrategy:
         X_ = self.x_transform(X)
         return self.model.predict(X_)
 
-    def grid_search(self, params=None, scoring=None):
+    def fit(self, ds: DataBunch, params=None, scoring=None):
         """
-        Grid search the best parameters.
+        use grid search to find the best parameters and finally tune the model, save the model and report
 
         :param params: A dictionary of parameters.
         :return: self
         """
-        params = params or  {
+        params = params or {
             "colsample_bytree": uniform(0.7, 0.3),
             "gamma": uniform(0, 0.5),
             "learning_rate": uniform(0.03, 1),
@@ -174,66 +209,67 @@ class BaseXGBoostStrategy:
         }
 
         if self.base_model == "regressor":
-            self._grid_search_on_regressor(params, scoring)
+            model, report = self._grid_search_on_regressor(ds, params, scoring)
         else:
-            self._grid_search_on_classifier(params, scoring)
+            model, report = self._grid_search_on_classifier(ds, params, scoring)
 
+        self.save(model, report, ds)
 
-    def _grid_search_on_regressor(self, params, scoring=None):
+    def _grid_search_on_regressor(self, ds: DataBunch, params, scoring=None):
         model = XGBRegressor()
 
         search = RandomizedSearchCV(
             model,
             param_distributions=params,
             random_state=78,
-            n_iter=200,
+            n_iter=20,
             cv=3,
             verbose=2,
             n_jobs=1,
             return_train_score=True,
             scoring=scoring,
-            refit=True
+            refit=False,
         )
 
-        X = self.get_X(dataset="train")
-        y = self.get_y(dataset="train")
+        ds.train_test_split()
+        search.fit(ds.X_train, ds.y_train)
 
-        search.fit(X, y)
+        self._report_best_scores(search.best_params_)
 
-        report = self._report_best_scores(search.best_params_)
+        model = XGBRegressor(**search.best_params_)
+        return self._fit(model, ds.X_train, ds.y_train, ds.X_test, ds.y_test)
 
-    def _grid_search_on_classifier(self, params, scoring=None):
-        model = XGBClassifier()
+    def _grid_search_on_classifier(self, ds: DataBunch, params, scoring=None):
+        model = XGBClassifier(eval_metric="mlogloss")
 
         search = RandomizedSearchCV(
             model,
             param_distributions=params,
             random_state=78,
-            n_iter=200,
+            n_iter=100,
             cv=3,
-            verbose=2,
+            verbose=0,
             n_jobs=1,
             return_train_score=True,
             scoring=scoring,
-            refit=True
+            refit=True, # do the refit oursel
         )
 
-        X = self.get_X(dataset="train")
-        y = self.get_y(dataset="train")
-        search.fit(X, y)
+        ds.train_test_split()
+        search.fit(ds.X_train, ds.y_train)
 
-        best_model = search.best_estimator_
-        X_test = self.get_X(dataset="test")
-        y_true = self.get_y(dataset="test")
+        #model = XGBClassifier(eval_metric="mlogloss", **search.best_params_)
+        model = search.best_estimator_
+        # return self._fit(model, ds.X, ds.y, ds.X_test, ds.y_test)
+        preds = model.predict(ds.X_test)
+        report = classification_report(ds.y_test, preds)
 
-        y_pred = best_model.predict(X_test)
-
-        report = classification_report(y_true, y_pred)
+        print("final result")
         print(report)
 
-        self.save(best_model, params, report)
+        return model, report
 
-    def _report_best_scores(self, results, n_top=3)->str:
+    def _report_best_scores(self, results, n_top=3) -> str:
         report = []
         for i in range(1, n_top + 1):
             candidates = np.flatnonzero(results["rank_test_score"] == i)
@@ -250,7 +286,6 @@ class BaseXGBoostStrategy:
 
         report = "\n".join(report)
         print(report)
-        return report
 
     async def build_dataset(self, save_to: str):
         raise NotImplementedError

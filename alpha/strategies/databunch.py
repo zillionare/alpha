@@ -3,15 +3,25 @@ from sklearn.utils import Bunch
 from sklearn.utils import shuffle
 import pickle
 
+
 class DataBunch(Bunch):
     """
     A data bunch is a collection of data sources, which are used to
     bunch up data for training.
     """
-    def __init__(self, name=None, data=None, target=None):
-        self.data = None
-        self.target = None
-        self.name = None
+
+    def __init__(self, name=None, desc:str=None, X = None, y=None, raw=None):
+        self.data = X
+        self.target = y
+        self.name = name
+        self.path = None
+        self.desc = desc
+        self.raw = None
+
+        self.X_train = None
+        self.X_test = None
+        self.y_train = None
+        self.y_test = None
 
     def shuffle(self, random_state=None):
         """shuffle data/target and keeps other keys intact"""
@@ -33,9 +43,6 @@ class DataBunch(Bunch):
     def __len__(self):
         return len(self.data)
 
-    def __getitem__(self, key):
-        return self.data[key], self.target[key]
-
     def train_test_split(self, test_size=0.2, random_state=78):
         """
         Splits data into train and test sets, and returns as numpy arrays.
@@ -43,15 +50,50 @@ class DataBunch(Bunch):
         X = self.data
         y = self.target
 
-        X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=test_size, random_state=random_state)
+        X_train, X_test, y_train, y_test = train_test_split(
+            X, y, test_size=test_size, random_state=random_state,
+            stratify=y
+        )
 
-        return X_train, X_test, y_train, y_test
+        self.X_train = X_train
+        self.X_test = X_test
+        self.y_train = y_train
+        self.y_test = y_test
 
-def load_data(dataset_path:str)->DataBunch:
+    def __get_state__(self):
+        """don't pickle path
+
+        Returns:
+            [type]: [description]
+        """
+        state = self.__dict__
+        del state["path"]
+        return state
+
+    def save(self, path):
+        with open(path, "wb") as f:
+            pickle.dump(self, f)
+
+    @property
+    def X(self):
+        return self.data
+
+    @property
+    def y(self):
+        return self.target
+
+def load_data(dataset_path: str) -> DataBunch:
     """
     Loads data from a given dataset path.
     """
-    with open(dataset_path, 'rb') as f:
+    with open(dataset_path, "rb") as f:
         bunch = pickle.load(f)
+        bunch.path = dataset_path
+
+    if bunch.name is None:
+        bunch.name = dataset_path.split("/")[-1].split(".")[0]
+
+    if bunch.desc is None:
+        bunch.desc = bunch.name
 
     return bunch
