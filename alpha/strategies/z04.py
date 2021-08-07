@@ -1,3 +1,6 @@
+from cProfile import label
+import os
+from alpha.strategies.databunch import DataBunch
 import pickle
 from configparser import NoOptionError
 from ctypes import Union
@@ -13,6 +16,9 @@ from omicron.models.security import Security
 
 from alpha.core.features import fillna, moving_average, pos_encode
 from alpha.strategies.base_xgboost_strategy import BaseXGBoostStrategy
+import cfg4py
+
+cfg = cfg4py.init()
 
 
 class Z04(BaseXGBoostStrategy):
@@ -22,7 +28,7 @@ class Z04(BaseXGBoostStrategy):
     3. 最近10天的价格变化率（0.01~0.2），不做归一化
     4. 30分钟线的均线排列情况，使用5, 10, 20, 30(pos_encode编码）
 
-    target: 如果未来3天出现收盘价大于当日5%，则认为上涨（1）；如果小于当日-5%，则认为下跌（-1），否则为0。
+    target: 如果未来5天出现收盘价大于当日5%，则认为上涨（1）；如果小于当日-5%，则认为下跌（-1），否则为0。
 
 
     Args:
@@ -32,9 +38,10 @@ class Z04(BaseXGBoostStrategy):
     def __init__(self):
         name = "Z04"
         base_model = "classifier"
-        super().__init__(name, base_model=base_model)
+        home = os.path.expanduser(cfg.alpha.data_home)
+        super().__init__(name, home, base_model)
 
-    async def build_dataset(self, code: str, total: int, save_to: str):
+    async def make_dataset(self, code: str, total: int):
         """
 
         Args:
@@ -42,7 +49,9 @@ class Z04(BaseXGBoostStrategy):
         """
         now = arrow.now()
         end = tf.day_shift(now, -30)
-        start = tf.day_shift(end, -total - 260)
+        n_features = 10
+
+        start = tf.day_shift(end, -total -n_features - 260)
 
         sec = Security(code)
         bars = await sec.load_bars(start, end, FrameType.DAY)
@@ -51,46 +60,59 @@ class Z04(BaseXGBoostStrategy):
 
         X = []
         y = []
-        # 均线排列情况 win = 7
-        win = 7
+
+        label_counters = {
+            1: 0,
+            0: 0,
+            -1: 0
+        }
+
         close = fillna(bars["close"].copy())
 
         for i in range(total):
-            train = close[i : i + 250 + win]
-            t_start = i + 250 + win
+            train = close[i : i + 250 + n_features]
+            t_start = i + 250 + n_features
             target = close[t_start - 1 : t_start + 3]
 
-            x = self.x_transform(train)
             y_ = self.y_transform(target)
+            if y_ is None:
+                continue
 
-            if y_ is not None:
-                X.append(x)
-                y.append(y_)
+            # keep all labels balanced
+            label_counters[y_] += 1
+            if label_counters[y_] >= total / 3 + 1:
+                continue
 
-        ds = {"X": np.array(X), "y": np.array(y), "raw": bars, "code": code}
+            x = self.x_transform(train, n_features)
 
-        with open(save_to, "wb") as f:
-            pickle.dump(ds, f)
+            X.append(x)
+            y.append(y_)
 
-    def x_transform(self, close: ArrayLike):
+        desc = f"dataset for strategy Z04. The dataset includes bars from {start}" \
+        f"to {end}, {len(bars)} in total. \n" \
+        f"params: samples {len(X)}, features {n_features}, ma of [5, 10, 20, 30, 60, 120, 250]. Feature labels are balanced."
+
+        ds = DataBunch(name="z04", X = np.array(X), y = np.array(y), raw = bars, desc=desc)
+
+        return ds
+
+    def x_transform(self, close: ArrayLike, n_features: int):
         """
         Args:
             bars (list): [description]
         """
-        assert len(close) == 257
-
-        ma5 = moving_average(close, 5)[-7:]
-        ma10 = moving_average(close, 10)[-7:]
-        ma20 = moving_average(close, 20)[-7:]
-        ma30 = moving_average(close, 30)[-7:]
-        ma60 = moving_average(close, 60)[-7:]
-        ma120 = moving_average(close, 120)[-7:]
-        ma250 = moving_average(close, 250)[-7:]
+        ma5 = moving_average(close, 5)[-n_features:]
+        ma10 = moving_average(close, 10)[-n_features:]
+        ma20 = moving_average(close, 20)[-n_features:]
+        ma30 = moving_average(close, 30)[-n_features:]
+        ma60 = moving_average(close, 60)[-n_features:]
+        ma120 = moving_average(close, 120)[-n_features:]
+        ma250 = moving_average(close, 250)[-n_features:]
 
         stationary = np.array([5, 10, 20, 30, 60, 120, 250])
 
         codes = []
-        for i in range(7):
+        for i in range(n_features):
             ma_list = np.array(
                 [ma5[i], ma10[i], ma20[i], ma30[i], ma60[i], ma120[i], ma250[i]]
             )
@@ -119,19 +141,3 @@ class Z04(BaseXGBoostStrategy):
             return 1
         else:
             return 0
-
-    def get_X(self, dataset: str):
-        if dataset == "train":
-            return self.data_train[0]
-        elif dataset == "valid":
-            return self.data_valid[0]
-        else:
-            return self.data_test[0]
-
-    def get_y(self, dataset: str):
-        if dataset == "train":
-            return self.data_train[1]
-        elif dataset == "valid":
-            return self.data_valid[1]
-        else:
-            return self.data_test[1]

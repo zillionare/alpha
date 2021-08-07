@@ -1,5 +1,7 @@
 """Console script for alpha."""
 
+from warnings import simplefilter
+from alpha.strategies.databunch import load_data
 import asyncio
 import functools
 import pickle
@@ -7,15 +9,13 @@ import sys
 
 import cfg4py
 import fire
-from mergedeep import Strategy
 import omicron
 import psutil
 from omicron import cache
 from omicron.models.securities import Securities
-from xgboost import XGBRegressor
 import importlib.util
+import arrow
 
-from alpha.strategies.z03 import Z03
 
 
 def async_run_command(func):
@@ -58,47 +58,32 @@ def create_strategy(strategy: str):
 
 
 @async_run_command
-async def prepare_train_data(strategy: str, save_to: str, *args, **kwargs):
+async def make_dataset(strategy: str, save_to: str, *args, **kwargs):
     s = create_strategy(strategy)
-    data = await s.extract_features(*args, **kwargs)
+    bunch = await s.make_dataset(*args, **kwargs)
 
     with open(save_to, "wb") as f:
-        pickle.dump(data, f)
+        pickle.dump(bunch, f)
 
 
 @async_run_command
-async def train(strategy: str, save_to: str):
-    if strategy == "z03":
-        s = Z03()
-        params = {
-            "colsample_bytree": 0.722213395520227,
-            "gamma": 0.1792328642721363,
-            "learning_rate": 0.1458690595251297,
-            "max_depth": 4,
-            "n_estimators": 108,
-            "subsample": 0.8493192507310232,
-        }
-
-        model = s.train(**params)
-
-        with open(save_to, "wb") as f:
-            pickle.dump(model, f)
-
-
-@async_run_command
-async def gridsearch(strategy: str, dataset_file: str):
+async def train(strategy: str, data_file:str, version:str=None):
+    version = version or str(arrow.now().date())
     s = create_strategy(strategy)
-    s.load_data(dataset_file)
-    s.grid_search()
+    s.version = version
 
+    ds = load_data(data_file)
+
+    s.fit(ds)
 
 def main():
+    simplefilter("ignore")
+
     fire.Fire(
         {
             "help": help,
-            "train_data": prepare_train_data,
+            "ds": make_dataset,
             "train": train,
-            "gridsearch": gridsearch,
         }
     )
 

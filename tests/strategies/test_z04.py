@@ -13,10 +13,10 @@ class TestZ04(unittest.IsolatedAsyncioTestCase):
 
     async def test_build_dataset(self):
         s = Z04()
-        await s.build_dataset("002176.XSHE", 2500, "/tmp/z04.ds.pkl")
+        await s.make_dataset("002176.XSHE", 2500, "/tmp/z04.ds.pkl")
 
     def test_grid_search(self):
         s = Z04()
         s.load_data("/tmp/z04.ds.pkl")
 
-        s.grid_search()
+        s.fit()
