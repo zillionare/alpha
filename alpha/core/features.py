@@ -1,4 +1,5 @@
 import math
+from typing import List
 
 import numpy as np
 from numpy.typing import ArrayLike
@@ -56,3 +57,40 @@ def pos_encode(stationary: np.array, var: np.array) -> float:
     maxium = (stationary[::-1] - stationary).dot(spectrum)
     diff = var - stationary
     return diff.dot(spectrum) / maxium
+
+def ma_permutation(ts: ArrayLike, n_features: int, ma_groups: List[int]):
+    """
+    Args:
+        bars (list): [description]
+    """
+    mas = np.array([moving_average(ts, n)[-n_features:] for n in ma_groups])
+
+    stationary = np.array(ma_groups)
+
+    codes = []
+    for i in range(n_features):
+        pos = np.argsort(mas[:, i])
+        codes.append(pos_encode(stationary, stationary[pos]))
+
+    return codes
+
+def transform_by_advance(ts: np.array, watermarks: List[float]):
+    """根据涨跌幅转换成为标签
+
+    Args:
+        ts ([type]): [description]
+        bin_cuts ([type]): 用以分类的threshold，必须是长度为2的升序列表，如(0.95, 1.05)
+    """
+    assert len(ts) >= 2
+
+    c0 = ts[0]
+    if c0 == np.NaN or np.all(ts[1:] == np.NaN):
+        return None
+
+    # 止损优先
+    if min(ts[1:]) / c0 <= watermarks[0]:
+        return -1
+    elif max(ts[1:]) / c0 >= watermarks[1]:
+        return 1
+    else:
+        return 0

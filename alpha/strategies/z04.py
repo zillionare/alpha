@@ -14,7 +14,7 @@ from omicron.core.types import FrameType
 from omicron.models.securities import Securities
 from omicron.models.security import Security
 
-from alpha.core.features import fillna, moving_average, pos_encode
+from alpha.core.features import fillna, ma_permutation, moving_average, pos_encode, transform_by_advance
 from alpha.strategies.base_xgboost_strategy import BaseXGBoostStrategy
 import cfg4py
 
@@ -74,7 +74,7 @@ class Z04(BaseXGBoostStrategy):
             t_start = i + 250 + n_features
             target = close[t_start - 1 : t_start + 3]
 
-            y_ = self.y_transform(target)
+            y_ = transform_by_advance(target, (0.95, 1.05))
             if y_ is None:
                 continue
 
@@ -83,7 +83,7 @@ class Z04(BaseXGBoostStrategy):
             if label_counters[y_] >= total / 3 + 1:
                 continue
 
-            x = self.x_transform(train, n_features)
+            x = ma_permutation(train, n_features, [5, 10, 20, 30, 60, 120, 250])
 
             X.append(x)
             y.append(y_)
@@ -95,49 +95,3 @@ class Z04(BaseXGBoostStrategy):
         ds = DataBunch(name="z04", X = np.array(X), y = np.array(y), raw = bars, desc=desc)
 
         return ds
-
-    def x_transform(self, close: ArrayLike, n_features: int):
-        """
-        Args:
-            bars (list): [description]
-        """
-        ma5 = moving_average(close, 5)[-n_features:]
-        ma10 = moving_average(close, 10)[-n_features:]
-        ma20 = moving_average(close, 20)[-n_features:]
-        ma30 = moving_average(close, 30)[-n_features:]
-        ma60 = moving_average(close, 60)[-n_features:]
-        ma120 = moving_average(close, 120)[-n_features:]
-        ma250 = moving_average(close, 250)[-n_features:]
-
-        stationary = np.array([5, 10, 20, 30, 60, 120, 250])
-
-        codes = []
-        for i in range(n_features):
-            ma_list = np.array(
-                [ma5[i], ma10[i], ma20[i], ma30[i], ma60[i], ma120[i], ma250[i]]
-            )
-            pos = np.argsort(ma_list)
-
-            codes.append(pos_encode(stationary, stationary[pos]))
-
-        return codes
-
-    def y_transform(self, close):
-        """取三日内最大涨跌幅（收盘价计）
-
-        Args:
-            bars ([type]): [description]
-        """
-        assert len(close) == 4
-
-        c0 = close[0]
-        if c0 == np.NaN or np.all(close[1:] == np.NaN):
-            return NoOptionError
-
-        # 止损优先
-        if min(close[1:]) / c0 <= 0.95:
-            return -1
-        elif max(close[1:]) / c0 >= 1.05:
-            return 1
-        else:
-            return 0

@@ -1,6 +1,6 @@
 import unittest
 import numpy as np
-from alpha.core.features import fillna
+from alpha.core.features import fillna, ma_permutation, transform_by_advance
 
 
 class TestFeatures(unittest.TestCase):
@@ -30,3 +30,19 @@ class TestFeatures(unittest.TestCase):
             fillna(arr)
         except ValueError:
             self.assertTrue(True)
+
+    def test_ma_permutation(self):
+        ts = np.arange(30)
+        codec = ma_permutation(ts, 10, [5, 10, 20])
+        self.assertEqual(10, len(codec))
+        self.assertTrue(np.all(np.array(codec) == 1.0))
+
+    def test_transform_by_advance(self):
+        ts = [10, 10.1, 10.2, 10.3]
+        self.assertEqual(0, transform_by_advance(ts, (0.95, 1.05)))
+
+        ts = [10, 10.1, 10.2, 10.6]
+        self.assertEqual(1, transform_by_advance(ts, (0.95, 1.05)))
+
+        ts = [10, 10.1, 10.2, 9.5]
+        self.assertEqual(-1, transform_by_advance(ts, (0.95, 1.05)))
