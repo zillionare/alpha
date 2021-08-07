@@ -107,3 +107,4 @@ ENV/
 # mkdocs build dir
 site/
 **/.pyc
+alpha/config/schema.py
