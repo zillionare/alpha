@@ -1,8 +1,13 @@
 import math
-from typing import List
+from typing import Any, List, Tuple, Union
 
 import numpy as np
 from numpy.typing import ArrayLike
+import itertools
+
+argpos_permutations = {
+    n: list(itertools.permutations(range(n))) for n in (2, 3, 4, 5, 6, 7)
+}
 
 
 def moving_average(ts: np.array, win: int):
@@ -58,6 +63,23 @@ def pos_encode(stationary: np.array, var: np.array) -> float:
     diff = var - stationary
     return diff.dot(spectrum) / maxium
 
+
+def pos_encode_v2(pos_len: int, argpos: Union[Tuple, List]) -> float:
+    """v2 outputs encoded linear increase value in [0, 1]
+
+    Args:
+        pos_len (int): [description]
+        argpos (np.array): [description]
+
+    Returns:
+        float: [description]
+    """
+    assert 2 <= pos_len <= 7
+
+    permut = argpos_permutations[pos_len]
+    return permut.index(tuple(argpos)) / (len(permut) - 1)
+
+
 def ma_permutation(ts: ArrayLike, n_features: int, ma_groups: List[int]):
     """
     Args:
@@ -65,32 +87,38 @@ def ma_permutation(ts: ArrayLike, n_features: int, ma_groups: List[int]):
     """
     mas = np.array([moving_average(ts, n)[-n_features:] for n in ma_groups])
 
-    stationary = np.array(ma_groups)
+    stationary = np.arange(len(mas))
 
     codes = []
     for i in range(n_features):
         pos = np.argsort(mas[:, i])
-        codes.append(pos_encode(stationary, stationary[pos]))
+        codes.append(pos_encode_v2(len(stationary), stationary[pos]))
 
     return codes
 
-def transform_by_advance(ts: np.array, watermarks: List[float]):
+
+def transform_y_by_change_pct(ts: np.array, watermarks: List[float], ref: Any):
     """根据涨跌幅转换成为标签
 
     Args:
         ts ([type]): [description]
-        bin_cuts ([type]): 用以分类的threshold，必须是长度为2的升序列表，如(0.95, 1.05)
-    """
-    assert len(ts) >= 2
+        watermarks ([type]): 用以分类的threshold，必须是长度为2的升序列表，如(0.95, 1.05)
 
-    c0 = ts[0]
-    if c0 == np.NaN or np.all(ts[1:] == np.NaN):
+    """
+    c0 = ref
+
+    if c0 == np.NaN or np.all(ts == np.NaN):
         return None
 
     # 止损优先
-    if min(ts[1:]) / c0 <= watermarks[0]:
+    if min(ts) / c0 <= watermarks[0]:
         return -1
-    elif max(ts[1:]) / c0 >= watermarks[1]:
+    elif max(ts) / c0 >= watermarks[1]:
         return 1
     else:
         return 0
+
+
+def transform_to_change_pct(ts: np.array) -> np.array:
+    ts = fillna(ts)
+    return ts[1:] / ts[:-1] - 1
