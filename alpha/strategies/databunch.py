@@ -2,6 +2,7 @@ from sklearn.model_selection import train_test_split
 from sklearn.utils import Bunch
 from sklearn.utils import shuffle
 import pickle
+import numpy as np
 
 
 class DataBunch(Bunch):
@@ -10,9 +11,9 @@ class DataBunch(Bunch):
     bunch up data for training.
     """
 
-    def __init__(self, name=None, desc:str=None, X = None, y=None, raw=None):
-        self.data = X
-        self.target = y
+    def __init__(self, name=None, desc: str = None, X=None, y=None, raw=None):
+        self.data = np.array(X)
+        self.target = np.array(y)
         self.name = name
         self.path = None
         self.desc = desc
@@ -51,8 +52,7 @@ class DataBunch(Bunch):
         y = self.target
 
         X_train, X_test, y_train, y_test = train_test_split(
-            X, y, test_size=test_size, random_state=random_state,
-            stratify=y
+            X, y, test_size=test_size, random_state=random_state, stratify=y
         )
 
         self.X_train = X_train
@@ -81,6 +81,7 @@ class DataBunch(Bunch):
     @property
     def y(self):
         return self.target
+
 
 def load_data(dataset_path: str) -> DataBunch:
     """
