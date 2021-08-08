@@ -122,3 +122,18 @@ def transform_y_by_change_pct(ts: np.array, watermarks: List[float], ref: Any):
 def transform_to_change_pct(ts: np.array) -> np.array:
     ts = fillna(ts)
     return ts[1:] / ts[:-1] - 1
+
+def top_n_argpos(ts: np.array, n:int) -> np.array:
+    """get top n (max->min) elements and return argpos which its value ordered in descent
+
+    Example:
+        >>> top_n_argpos([4, 3, 9, 8, 5, 2, 1, 0, 6, 7])
+        array([2, 3])
+    Args:
+        ts (np.array): [description]
+        n (int): [description]
+
+    Returns:
+        np.array: [description]
+    """
+    return np.argsort(ts)[-n:][::-1]
