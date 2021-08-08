@@ -14,7 +14,13 @@ from omicron.core.types import FrameType
 from omicron.models.securities import Securities
 from omicron.models.security import Security
 
-from alpha.core.features import fillna, ma_permutation, moving_average, pos_encode, transform_by_advance
+from alpha.core.features import (
+    fillna,
+    ma_permutation,
+    moving_average,
+    pos_encode,
+    transform_y_by_change_pct,
+)
 from alpha.strategies.base_xgboost_strategy import BaseXGBoostStrategy
 import cfg4py
 
@@ -51,7 +57,7 @@ class Z04(BaseXGBoostStrategy):
         end = tf.day_shift(now, -30)
         n_features = 10
 
-        start = tf.day_shift(end, -total -n_features - 260)
+        start = tf.day_shift(end, -total - n_features - 260)
 
         sec = Security(code)
         bars = await sec.load_bars(start, end, FrameType.DAY)
@@ -61,11 +67,7 @@ class Z04(BaseXGBoostStrategy):
         X = []
         y = []
 
-        label_counters = {
-            1: 0,
-            0: 0,
-            -1: 0
-        }
+        label_counters = {1: 0, 0: 0, -1: 0}
 
         close = fillna(bars["close"].copy())
 
@@ -74,7 +76,7 @@ class Z04(BaseXGBoostStrategy):
             t_start = i + 250 + n_features
             target = close[t_start - 1 : t_start + 3]
 
-            y_ = transform_by_advance(target, (0.95, 1.05))
+            y_ = transform_y_by_change_pct(target, (0.95, 1.05))
             if y_ is None:
                 continue
 
@@ -88,10 +90,12 @@ class Z04(BaseXGBoostStrategy):
             X.append(x)
             y.append(y_)
 
-        desc = f"dataset for strategy Z04. The dataset includes bars from {start}" \
-        f"to {end}, {len(bars)} in total. \n" \
-        f"params: samples {len(X)}, features {n_features}, ma of [5, 10, 20, 30, 60, 120, 250]. Feature labels are balanced."
+        desc = (
+            f"dataset for strategy Z04. The dataset includes bars from {start}"
+            f"to {end}, {len(bars)} in total. \n"
+            f"params: samples {len(X)}, features {n_features}, ma of [5, 10, 20, 30, 60, 120, 250]. Feature labels are balanced."
+        )
 
-        ds = DataBunch(name="z04", X = np.array(X), y = np.array(y), raw = bars, desc=desc)
+        ds = DataBunch(name="z04", X=np.array(X), y=np.array(y), raw=bars, desc=desc)
 
         return ds

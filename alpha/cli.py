@@ -1,5 +1,7 @@
 """Console script for alpha."""
 
+from genericpath import exists
+import os
 from warnings import simplefilter
 from alpha.strategies.databunch import load_data
 import asyncio
@@ -15,7 +17,6 @@ from omicron import cache
 from omicron.models.securities import Securities
 import importlib.util
 import arrow
-
 
 
 def async_run_command(func):
@@ -58,23 +59,29 @@ def create_strategy(strategy: str):
 
 
 @async_run_command
-async def make_dataset(strategy: str, save_to: str, *args, **kwargs):
+async def make_dataset(strategy: str, version: str, *args, **kwargs):
     s = create_strategy(strategy)
     bunch = await s.make_dataset(*args, **kwargs)
 
+    home = os.path.expanduser(s.data_home)
+    save_to = os.path.join(home, version, f"{s.name.lower()}.{version}.ds")
+    os.makedirs(os.path.dirname(save_to), exist_ok=True)
     with open(save_to, "wb") as f:
         pickle.dump(bunch, f)
 
 
 @async_run_command
-async def train(strategy: str, data_file:str, version:str=None):
+async def train(strategy: str, version: str = None):
     version = version or str(arrow.now().date())
     s = create_strategy(strategy)
     s.version = version
 
+    home = os.path.expanduser(s.data_home)
+    data_file = os.path.join(home, version, f"{s.name.lower()}.{version}.ds")
     ds = load_data(data_file)
 
     s.fit(ds)
+
 
 def main():
     simplefilter("ignore")

@@ -108,4 +108,3 @@ ENV/
 site/
 **/.pyc
 alpha/config/schema.py
-alpha/config/schema.py

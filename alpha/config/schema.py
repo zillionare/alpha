@@ -31,3 +31,6 @@ class Config(object):
     class omega:
         class urls:
             quotes_server: Optional[str] = None
+
+    class alpha:
+        data_home: Optional[str] = None

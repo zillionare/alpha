@@ -1,6 +1,15 @@
+import itertools
 import unittest
+
 import numpy as np
-from alpha.core.features import fillna, ma_permutation, transform_by_advance
+
+from alpha.core.features import (
+    fillna,
+    ma_permutation,
+    moving_average,
+    pos_encode_v2,
+    transform_y_by_change_pct,
+)
 
 
 class TestFeatures(unittest.TestCase):
@@ -37,12 +46,31 @@ class TestFeatures(unittest.TestCase):
         self.assertEqual(10, len(codec))
         self.assertTrue(np.all(np.array(codec) == 1.0))
 
+    def test_pos_encode_v2(self):
+        ts = np.arange(30)
+        mas = np.array([moving_average(ts, n)[-1] for n in (5, 10, 20, 30)])
+
+        argpos = np.argsort(mas)
+        codec = pos_encode_v2(4, argpos)
+        self.assertEqual(1, codec)
+
+        for i in (5, 10, 15, 20):
+            ts[i] = 1200 / i
+
+        mas = np.array([moving_average(ts, n)[-1] for n in (5, 10, 20, 30)])
+        argpos = np.argsort(mas)
+        codec = pos_encode_v2(4, argpos)
+        self.assertAlmostEqual(0.0435, codec, places=3)
+
+        for argpos in itertools.permutations([0, 1, 2, 3]):
+            print(pos_encode_v2(4, tuple(argpos)))
+
     def test_transform_by_advance(self):
         ts = [10, 10.1, 10.2, 10.3]
-        self.assertEqual(0, transform_by_advance(ts, (0.95, 1.05)))
+        self.assertEqual(0, transform_y_by_change_pct(ts, (0.95, 1.05)))
 
         ts = [10, 10.1, 10.2, 10.6]
-        self.assertEqual(1, transform_by_advance(ts, (0.95, 1.05)))
+        self.assertEqual(1, transform_y_by_change_pct(ts, (0.95, 1.05)))
 
         ts = [10, 10.1, 10.2, 9.5]
-        self.assertEqual(-1, transform_by_advance(ts, (0.95, 1.05)))
+        self.assertEqual(-1, transform_y_by_change_pct(ts, (0.95, 1.05)))
