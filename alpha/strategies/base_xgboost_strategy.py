@@ -1,8 +1,11 @@
+import itertools
+import pprint
 import json
+import random
 from alpha.strategies.databunch import DataBunch
 import os
 import pickle
-from typing import Callable, Union
+from typing import Callable, List, Tuple, Union
 from ruamel.yaml import YAML
 from numpy.typing import ArrayLike
 import numpy as np
@@ -10,6 +13,14 @@ from sklearn.model_selection import RandomizedSearchCV, RepeatedStratifiedKFold
 from xgboost import XGBClassifier, XGBModel, XGBRegressor
 from sklearn.metrics import classification_report, mean_squared_error
 from scipy.stats import randint, uniform
+from typing import NewType
+import datetime
+from omicron.models.securities import Securities
+from omicron.core.timeframe import tf
+from omicron.core.types import FrameType
+
+# noqa
+Frame = NewType("Frame", Union[datetime.date, datetime.datetime])
 
 
 class BaseXGBoostStrategy:
@@ -44,7 +55,7 @@ class BaseXGBoostStrategy:
 
         # it's loaded when created from `load`
         self.model: XGBModel = None
-        self.data_home = os.path.join(data_home, name)
+        self.data_home = os.path.join(data_home, name.lower())
 
         os.makedirs(self.data_home, exist_ok=True)
 
@@ -60,25 +71,28 @@ class BaseXGBoostStrategy:
         self._version = value
 
     @classmethod
-    def load(cls, path: str, name: str, data_home:str):
+    def load(cls, name: str, version: str, datahome: str):
         """load model and its meta from `path`"""
 
-        model = os.path.join(path, f"{name}_model.pkl")
+        name = name.lower()
+        model = os.path.join(datahome, f"{name}.{version}.model.pkl")
         with open(model, "rb") as f:
             model = pickle.load(f)
 
-        meta_file = os.path.join(path, f"{name}_json.yml")
-        with open(meta_file, "rb") as f:
+        meta_file = os.path.join(datahome, f"{name}.{version}.meta.json")
+        with open(meta_file, "r") as f:
             meta = json.load(f)
 
-        params = {k:meta[k] for k in ["base_model", "eval_metric", "early_stopping_rounds"]}
+        params = {
+            k: meta[k] for k in ["base_model", "eval_metric", "early_stopping_rounds"]
+        }
 
-        s = cls(name, **meta)
+        s = cls(name, **params)
         s.model = model
 
         return s
 
-    def make_dataset(self, name: str, *args, **kwargs)-> DataBunch:
+    def make_dataset(self, name: str, *args, **kwargs) -> DataBunch:
         """make dataset
 
         the dataset should be a dict with keys:
@@ -111,20 +125,27 @@ class BaseXGBoostStrategy:
             path = os.path.join(path, self.version)
             os.makedirs(path, exist_ok=True)
 
-        model_file = os.path.join(path, f"{self.name}_model.pkl")
+        stem = f"{self.name.lower()}.{self.version}"
+        model_file = os.path.join(path, f"{stem}.model")
         with open(model_file, "wb") as f:
             pickle.dump(model, f)
 
-        meta_file = os.path.join(path, f"{self.name}_desc.json")
+        meta_file = os.path.join(path, f"{stem}.meta")
 
         meta = model.get_params()
-        meta["report"] = report
         meta["base_model"] = self.base_model
         meta["eval_metric"] = self.eval_metric
-        meta["ds"] = ds.desc
 
         with open(meta_file, "w") as f:
-            json.dump(meta, f)
+            json.dump(meta, f, indent=4)
+
+        desc_file = os.path.join(path, f"{stem}.desc")
+        with open(desc_file, "w") as f:
+            f.writelines("the model is trained on the following dataset:\n")
+            f.writelines(ds.desc)
+            f.writelines("\n")
+            f.writelines("final report as following\n")
+            f.writelines(report)
 
     def x_transform(self, *args, **kwargs):
         """
@@ -179,7 +200,6 @@ class BaseXGBoostStrategy:
 
         return model, report
 
-
     def predict(self, X):
         """
         Predict the class of a batch of instances.
@@ -222,7 +242,7 @@ class BaseXGBoostStrategy:
             model,
             param_distributions=params,
             random_state=78,
-            n_iter=20,
+            n_iter=200,
             cv=3,
             verbose=2,
             n_jobs=1,
@@ -252,13 +272,13 @@ class BaseXGBoostStrategy:
             n_jobs=1,
             return_train_score=True,
             scoring=scoring,
-            refit=True, # do the refit oursel
+            refit=True,  # do the refit oursel
         )
 
         ds.train_test_split()
         search.fit(ds.X_train, ds.y_train)
 
-        #model = XGBClassifier(eval_metric="mlogloss", **search.best_params_)
+        # model = XGBClassifier(eval_metric="mlogloss", **search.best_params_)
         model = search.best_estimator_
         # return self._fit(model, ds.X, ds.y, ds.X_test, ds.y_test)
         preds = model.predict(ds.X_test)
@@ -289,3 +309,28 @@ class BaseXGBoostStrategy:
 
     async def build_dataset(self, save_to: str):
         raise NotImplementedError
+
+    def dataset_scope(
+        self, total: int, start: Frame, end: Frame, frame_type: FrameType
+    ) -> List[Tuple[str, Frame]]:
+        """generate sample points for making dataset.
+
+        Use this function to exclude duplicate points.
+
+        Args:
+            start: start frame
+            end: end frame
+            total: total frame
+
+        Returns:
+            A list of (frame, value)
+        """
+        secs = Securities()
+        codes = secs.choose(_types=["stock"])
+        frames = map(lambda x: tf.int2date(x), tf.get_frames(start, end, FrameType.DAY))
+
+        permutations = list(itertools.product(codes, frames))
+        if len(permutations) < total:
+            raise ValueError("there's no enough datapoints")
+
+        return random.sample(permutations, total)
