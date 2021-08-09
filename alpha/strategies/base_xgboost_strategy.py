@@ -2,6 +2,8 @@ import itertools
 import pprint
 import json
 import random
+
+import xgboost
 from alpha.strategies.databunch import DataBunch
 import os
 import pickle
@@ -9,7 +11,7 @@ from typing import Callable, List, Tuple, Union
 from ruamel.yaml import YAML
 from numpy.typing import ArrayLike
 import numpy as np
-from sklearn.model_selection import RandomizedSearchCV, RepeatedStratifiedKFold
+from sklearn.model_selection import GridSearchCV, ParameterGrid, RandomizedSearchCV, RepeatedStratifiedKFold
 from xgboost import XGBClassifier, XGBModel, XGBRegressor
 from sklearn.metrics import classification_report, mean_squared_error
 from scipy.stats import randint, uniform
@@ -242,7 +244,7 @@ class BaseXGBoostStrategy:
             model,
             param_distributions=params,
             random_state=78,
-            n_iter=200,
+            n_iter=200,  # the number of params to try
             cv=3,
             verbose=2,
             n_jobs=1,
@@ -260,14 +262,14 @@ class BaseXGBoostStrategy:
         return self._fit(model, ds.X_train, ds.y_train, ds.X_test, ds.y_test)
 
     def _grid_search_on_classifier(self, ds: DataBunch, params, scoring=None):
-        model = XGBClassifier(eval_metric="mlogloss")
+        model = XGBClassifier()
 
         search = RandomizedSearchCV(
             model,
             param_distributions=params,
             random_state=78,
             n_iter=100,
-            cv=3,
+            cv=10,
             verbose=0,
             n_jobs=1,
             return_train_score=True,
@@ -276,11 +278,15 @@ class BaseXGBoostStrategy:
         )
 
         ds.train_test_split()
-        search.fit(ds.X_train, ds.y_train)
 
-        # model = XGBClassifier(eval_metric="mlogloss", **search.best_params_)
+        fit_params = {
+            "eval_set": [(ds.X_test, ds.y_test)],
+            "early_stopping_rounds": self.early_stopping_rounds
+        }
+        search.fit(ds.X_train, ds.y_train, **fit_params)
+
         model = search.best_estimator_
-        # return self._fit(model, ds.X, ds.y, ds.X_test, ds.y_test)
+
         preds = model.predict(ds.X_test)
         report = classification_report(ds.y_test, preds)
 
