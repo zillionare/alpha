@@ -35,7 +35,7 @@ class Z07(BaseXGBoostStrategy):
         self.target_win = 3
         self.max_ma_win = 250
 
-    async def make_dataset(self, total: int, notes: str=None) -> DataBunch:
+    async def make_dataset(self, total: int, notes: str = None) -> DataBunch:
         now = arrow.now()
 
         bars_len = self.max_ma_win + self.n_features + self.target_win
@@ -111,9 +111,11 @@ class Z07(BaseXGBoostStrategy):
             X.append(row)
             y.append(y_)
 
-            label_counters[y_] +=1
+            label_counters[y_] += 1
             if len(X) % 100 == 0:
-                logger.info("%s/%s samples collected: %s", len(X), total, label_counters)
+                logger.info(
+                    "%s/%s samples collected: %s", len(X), total, label_counters
+                )
 
             if len(X) >= total:
                 break

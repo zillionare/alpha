@@ -123,7 +123,8 @@ def transform_to_change_pct(ts: np.array) -> np.array:
     ts = fillna(ts)
     return ts[1:] / ts[:-1] - 1
 
-def top_n_argpos(ts: np.array, n:int) -> np.array:
+
+def top_n_argpos(ts: np.array, n: int) -> np.array:
     """get top n (max->min) elements and return argpos which its value ordered in descent
 
     Example:
