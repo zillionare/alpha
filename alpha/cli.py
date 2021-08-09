@@ -1,22 +1,23 @@
 """Console script for alpha."""
 
-from genericpath import exists
-import os
-from warnings import simplefilter
-from alpha.strategies.databunch import load_data
 import asyncio
 import functools
+import importlib.util
+import os
 import pickle
 import sys
+from warnings import simplefilter
 
+import arrow
 import cfg4py
 import fire
 import omicron
 import psutil
+from genericpath import exists
 from omicron import cache
 from omicron.models.securities import Securities
-import importlib.util
-import arrow
+
+from alpha.strategies.databunch import load_data
 
 
 def async_run_command(func):
@@ -59,11 +60,13 @@ def create_strategy(strategy: str):
 
 
 @async_run_command
-async def make_dataset(strategy: str, version: str, *args, **kwargs):
+async def make_dataset(strategy: str, version: str = None, *args, **kwargs):
     s = create_strategy(strategy)
     bunch = await s.make_dataset(*args, **kwargs)
 
     home = os.path.expanduser(s.data_home)
+    version = version or str(arrow.now().date())
+
     save_to = os.path.join(home, version, f"{s.name.lower()}.{version}.ds")
     os.makedirs(os.path.dirname(save_to), exist_ok=True)
     with open(save_to, "wb") as f:
@@ -71,13 +74,17 @@ async def make_dataset(strategy: str, version: str, *args, **kwargs):
 
 
 @async_run_command
-async def train(strategy: str, version: str = None):
+async def train(strategy: str, version: str = None, ds: str = None):
     version = version or str(arrow.now().date())
     s = create_strategy(strategy)
     s.version = version
 
-    home = os.path.expanduser(s.data_home)
-    data_file = os.path.join(home, version, f"{s.name.lower()}.{version}.ds")
+    if ds is None:
+        home = os.path.expanduser(s.data_home)
+        data_file = os.path.join(home, version, f"{s.name.lower()}.{version}.ds")
+    else:
+        data_file = ds
+
     ds = load_data(data_file)
 
     s.fit(ds)
