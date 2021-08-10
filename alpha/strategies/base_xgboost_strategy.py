@@ -11,18 +11,26 @@ from typing import Callable, List, Tuple, Union
 from ruamel.yaml import YAML
 from numpy.typing import ArrayLike
 import numpy as np
-from sklearn.model_selection import GridSearchCV, ParameterGrid, RandomizedSearchCV, RepeatedStratifiedKFold
+from sklearn.model_selection import (
+    GridSearchCV,
+    ParameterGrid,
+    RandomizedSearchCV,
+    RepeatedStratifiedKFold,
+)
 from xgboost import XGBClassifier, XGBModel, XGBRegressor
-from sklearn.metrics import classification_report, mean_squared_error
+from sklearn.metrics import classification_report, mean_absolute_error, mean_squared_error
 from scipy.stats import randint, uniform
 from typing import NewType
 import datetime
 from omicron.models.securities import Securities
 from omicron.core.timeframe import tf
 from omicron.core.types import FrameType
+import logging
+
+logger = logging.getLogger(__name__)
 
 # noqa
-Frame = NewType("Frame", Union[datetime.date, datetime.datetime])
+Frame = NewType("Frame", (datetime.date, datetime.datetime))
 
 
 class BaseXGBoostStrategy:
@@ -245,21 +253,31 @@ class BaseXGBoostStrategy:
             param_distributions=params,
             random_state=78,
             n_iter=200,  # the number of params to try
-            cv=3,
-            verbose=2,
+            cv=5,
+            verbose=1,
             n_jobs=1,
             return_train_score=True,
             scoring=scoring,
-            refit=False,
+            refit=True,
         )
 
-        ds.train_test_split()
+        ds.train_test_split(stratified=False)
         search.fit(ds.X_train, ds.y_train)
 
-        self._report_best_scores(search.best_params_)
+        report = self._report_best_scores(search.cv_results_)
+        model = search.best_estimator_
 
-        model = XGBRegressor(**search.best_params_)
-        return self._fit(model, ds.X_train, ds.y_train, ds.X_test, ds.y_test)
+        report += "\n Final test result sample(first 20)\n"
+        report += "True\tPrediction\n"
+        preds = model.predict(ds.X_test)
+        print("True\tPrediction")
+        for i in range(20):
+            console_output = f"{ds.y_test[i] * 100:.1f}\t{preds[i] * 100:.1f}"
+            print(console_output)
+            report += f"{console_output}\n"
+
+        return search.best_estimator_, report
+
 
     def _grid_search_on_classifier(self, ds: DataBunch, params, scoring=None):
         model = XGBClassifier()
@@ -281,7 +299,7 @@ class BaseXGBoostStrategy:
 
         fit_params = {
             "eval_set": [(ds.X_test, ds.y_test)],
-            "early_stopping_rounds": self.early_stopping_rounds
+            "early_stopping_rounds": self.early_stopping_rounds,
         }
         search.fit(ds.X_train, ds.y_train, **fit_params)
 
@@ -312,13 +330,12 @@ class BaseXGBoostStrategy:
 
         report = "\n".join(report)
         print(report)
+        return report
 
     async def build_dataset(self, save_to: str):
         raise NotImplementedError
 
-    def dataset_scope(
-        self, total: int, start: Frame, end: Frame, frame_type: FrameType
-    ) -> List[Tuple[str, Frame]]:
+    def dataset_scope(self, start: Frame, end: Frame) -> List[Tuple[str, Frame]]:
         """generate sample points for making dataset.
 
         Use this function to exclude duplicate points.
@@ -326,17 +343,15 @@ class BaseXGBoostStrategy:
         Args:
             start: start frame
             end: end frame
-            total: total frame
 
         Returns:
             A list of (frame, value)
         """
         secs = Securities()
         codes = secs.choose(_types=["stock"])
-        frames = map(lambda x: tf.int2date(x), tf.get_frames(start, end, FrameType.DAY))
+        frames = [tf.int2date(x) for x in tf.get_frames(start, end, FrameType.DAY)]
 
         permutations = list(itertools.product(codes, frames))
-        if len(permutations) < total:
-            raise ValueError("there's no enough datapoints")
 
-        return random.sample(permutations, total)
+        logger.info("%s permutaions in total", len(codes) * len(frames))
+        return random.sample(permutations, len(codes) * len(frames))

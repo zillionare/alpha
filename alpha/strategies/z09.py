@@ -26,23 +26,23 @@ logger = logging.getLogger(__name__)
 class Z09(BaseXGBoostStrategy):
     """same as z08, but target will have only two value: -1 and 1
 
-    if tomorrow's close is greate than today's close, the target is 1, otherwise, -1
+        if tomorrow's close is greate than today's close, the target is 1, otherwise, -1
 
-    final result
-              precision    recall  f1-score   support
+        final result
+                  precision    recall  f1-score   support
 
-          -1       0.55      0.58      0.57       500
-           1       0.56      0.53      0.54       500
+              -1       0.55      0.58      0.57       500
+               1       0.56      0.53      0.54       500
 
-    accuracy                           0.56      1000
-   macro avg       0.56      0.55      0.55      1000
-weighted avg       0.56      0.56      0.55      1000
+        accuracy                           0.56      1000
+       macro avg       0.56      0.55      0.55      1000
+    weighted avg       0.56      0.56      0.55      1000
 
     """
 
     def __init__(self):
         home = os.path.expanduser(cfg.alpha.data_home)
-        super().__init__("Z09", home, "classifier", eval_metric='binary:logistic')
+        super().__init__("Z09", home, "classifier", eval_metric="binary:logistic")
 
         self.n_features = 10
         self.target_win = 1
@@ -78,7 +78,7 @@ weighted avg       0.56      0.56      0.55      1000
                 y_ = 1 if ybars["close"][0] > xbars["close"][-1] else -1
                 if label_counters[y_] > total / 2 + 1:
                     continue
-            else: # there's no y_ in this case
+            else:  # there's no y_ in this case
                 continue
 
             try:

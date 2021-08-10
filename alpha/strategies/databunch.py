@@ -44,16 +44,21 @@ class DataBunch(Bunch):
     def __len__(self):
         return len(self.data)
 
-    def train_test_split(self, test_size=0.2, random_state=78):
+    def train_test_split(self, test_size=0.2, random_state=78, stratified=True):
         """
         Splits data into train and test sets, and returns as numpy arrays.
         """
         X = self.data
         y = self.target
 
-        X_train, X_test, y_train, y_test = train_test_split(
-            X, y, test_size=test_size, random_state=random_state, stratify=y
-        )
+        if stratified:
+            X_train, X_test, y_train, y_test = train_test_split(
+                X, y, test_size=test_size, random_state=random_state, stratify=y
+            )
+        else:
+            X_train, X_test, y_train, y_test = train_test_split(
+                X, y, test_size=test_size, random_state=random_state
+            )
 
         self.X_train = X_train
         self.X_test = X_test
