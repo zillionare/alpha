@@ -41,7 +41,7 @@ class Z10(BaseXGBoostStrategy):
         X, y = [], []
         y_distribution = [0] * 42
         for code, tail in self.dataset_scope(start, end):
-            sec = Security(code)
+            sec = Security(code
 
             head = tf.day_shift(tail, -day_bars_len + 1)
             bars = await sec.load_bars(head, tail, FrameType.DAY)
@@ -57,7 +57,7 @@ class Z10(BaseXGBoostStrategy):
             except NoTargetError:
                 continue
 
-            if self.has_enough_samples(y_distribution, y_,150):
+            if self.has_enough_samples(y_distribution, y_, 50):
                 continue
 
             try:

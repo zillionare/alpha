@@ -253,7 +253,7 @@ class BaseXGBoostStrategy:
             param_distributions=params,
             random_state=78,
             n_iter=100,  # the number of params to try
-            cv=3,
+            cv=10,
             verbose=2,
             n_jobs=1,
             return_train_score=True,
