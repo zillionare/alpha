@@ -138,3 +138,13 @@ def top_n_argpos(ts: np.array, n: int) -> np.array:
         np.array: [description]
     """
     return np.argsort(ts)[-n:][::-1]
+
+def rsi(ts: np.array, win:int=6)->float:
+    """relative strength indicator"""
+
+    delta = ts[1:] - ts[:-1]
+    
+    up = delta[delta > 0]
+    down = -1 * delta[delta < 0]
+
+

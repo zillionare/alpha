@@ -57,7 +57,7 @@ class Z10(BaseXGBoostStrategy):
             except NoTargetError:
                 continue
 
-            if self.has_enough_samples(y_distribution, y_, total / 40):
+            if self.has_enough_samples(y_distribution, y_,150):
                 continue
 
             try:
@@ -148,5 +148,4 @@ class Z10(BaseXGBoostStrategy):
             return 0
 
     def fit(self, ds: DataBunch, params=None):
-        scoring = make_scorer(max_error, greater_is_better=False)
-        super().fit(ds, params, scoring=scoring)
+        super().fit(ds, params)

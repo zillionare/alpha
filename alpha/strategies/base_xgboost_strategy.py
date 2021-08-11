@@ -232,9 +232,9 @@ class BaseXGBoostStrategy:
         params = params or {
             "colsample_bytree": uniform(0.7, 0.3),
             "gamma": uniform(0, 0.5),
-            "learning_rate": uniform(0.03, 1),
+            "learning_rate": uniform(0.01, 1),
             "max_depth": randint(2, 6),
-            "n_estimators": randint(100, 150),
+            "n_estimators": randint(80, 150),
             "subsample": uniform(0.6, 0.4),
         }
 
@@ -252,9 +252,9 @@ class BaseXGBoostStrategy:
             model,
             param_distributions=params,
             random_state=78,
-            n_iter=200,  # the number of params to try
-            cv=5,
-            verbose=1,
+            n_iter=100,  # the number of params to try
+            cv=3,
+            verbose=2,
             n_jobs=1,
             return_train_score=True,
             scoring=scoring,
@@ -270,6 +270,10 @@ class BaseXGBoostStrategy:
         report += "\n Final test result sample(first 20)\n"
         report += "True\tPrediction\n"
         preds = model.predict(ds.X_test)
+        mae = f"MAE: {mean_absolute_error(ds.y_test, preds):.3f}\n"
+        print(mae)
+        report += mae
+
         print("True\tPrediction")
         for i in range(20):
             console_output = f"{ds.y_test[i] * 100:.1f}\t{preds[i] * 100:.1f}"
@@ -286,9 +290,9 @@ class BaseXGBoostStrategy:
             model,
             param_distributions=params,
             random_state=78,
-            n_iter=100,
+            n_iter=200,
             cv=10,
-            verbose=0,
+            verbose=1,
             n_jobs=1,
             return_train_score=True,
             scoring=scoring,
