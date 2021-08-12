@@ -87,6 +87,8 @@ async def make_dataset(
     if secs is None:
         secs = Securities()
         codes = secs.choose(_types=["stock"])
+    else:
+        codes = secs
 
     main_bars_len = transformers.get(main_frame, {}).get("bars_len", 300)
 
@@ -96,7 +98,7 @@ async def make_dataset(
     bucket_size, capacity, check_full = bucket
     buckets = [0] * bucket_size
     if start is None:
-        samples_per_sec = int(bucket_size * capacity * 100 / len(codes))
+        samples_per_sec = int(bucket_size * capacity / len(codes)) + 1
 
         # for able to collect enough data, we need to loose the scope
         start = tf.shift(end, -samples_per_sec * 10, main_frame)

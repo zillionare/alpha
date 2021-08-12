@@ -1,4 +1,5 @@
 from xml.sax.handler import feature_string_interning
+from omicron.models.securities import Securities
 
 from sklearn.metrics import make_scorer, max_error, mean_absolute_error
 from alpha.core.features import fillna, moving_average
@@ -40,7 +41,7 @@ class Z10(BaseXGBoostStrategy):
         }
         target_transformer = self.y_transform
 
-        bucket_size = 42
+        bucket_size = 21
         capacity = total // 100
 
         ds = await utils.data.make_dataset(
@@ -48,6 +49,7 @@ class Z10(BaseXGBoostStrategy):
             target_transformer,
             target_win,
             (bucket_size, capacity, self.is_sample_enough),
+            secs = self.choose_secs()
         )
 
         ds.desc = desc
@@ -55,6 +57,21 @@ class Z10(BaseXGBoostStrategy):
         ds.version = version
 
         return ds
+
+    def choose_secs(self):
+        secs = Securities()
+
+        result = []
+
+        for code in secs.choose(['stock']):
+            if code.startswith('688'):
+                continue
+            if code.startswith('3'):
+                continue
+
+            result.append(code)
+
+        return result
 
     def y_transform(self, ybars: np.array, xbars: np.array) -> float:
         c1 = ybars[0]["close"]
@@ -96,14 +113,14 @@ class Z10(BaseXGBoostStrategy):
 
     def y_limit(self, code, frame):
         if code.startswith("688") or (
-            code.startswith("3") and frame > datetime.date(2020, 7, 20)
+            code.startswith("3") and frame > datetime.date(2020, 1, 1)
         ):
             return 1
         else:
             return 0
 
     def is_sample_enough(self, buckets, y, capacity):
-        idx = int(y * 100) + 20
+        idx = int(y * 100) + 10
         if buckets[idx] < capacity:
             buckets[idx] += 1
             return False
