@@ -62,10 +62,11 @@ def create_strategy(strategy: str):
 @async_run_command
 async def make_dataset(strategy: str, version: str = None, *args, **kwargs):
     s = create_strategy(strategy)
-    bunch = await s.make_dataset(*args, **kwargs)
+
+    version = version or str(arrow.now().date())
+    bunch = await s.make_dataset(version=version, *args, **kwargs)
 
     home = os.path.expanduser(s.data_home)
-    version = version or str(arrow.now().date())
 
     save_to = os.path.join(home, version, f"{s.name.lower()}.{version}.ds")
     os.makedirs(os.path.dirname(save_to), exist_ok=True)

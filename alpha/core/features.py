@@ -139,6 +139,7 @@ def top_n_argpos(ts: np.array, n: int) -> np.array:
     """
     return np.argsort(ts)[-n:][::-1]
 
+
 def rsi(prices, period=14):
     """
     The Relative Strength Index (RSI) is a momentum oscillator.
@@ -196,11 +197,11 @@ def rsi(prices, period=14):
 
     if num_prices < period:
         # show error message
-        raise SystemExit('Error: num_prices < period')
+        raise SystemExit("Error: num_prices < period")
 
     # this could be named gains/losses to save time/memory in the future
     changes = prices[1:] - prices[:-1]
-    #num_changes = len(changes)
+    # num_changes = len(changes)
 
     rsi_range = num_prices - period
 
@@ -228,10 +229,8 @@ def rsi(prices, period=14):
         rsis[0] = 100 - (100 / (1 + rs))
 
     for idx in range(1, rsi_range):
-        avg_gain = ((avg_gain * (period - 1) + gains[idx + (period - 1)]) /
-                    period)
-        avg_loss = ((avg_loss * (period - 1) + losses[idx + (period - 1)]) /
-                    period)
+        avg_gain = (avg_gain * (period - 1) + gains[idx + (period - 1)]) / period
+        avg_loss = (avg_loss * (period - 1) + losses[idx + (period - 1)]) / period
 
         if avg_loss == 0:
             rsis[idx] = 100
@@ -240,6 +239,7 @@ def rsi(prices, period=14):
             rsis[idx] = 100 - (100 / (1 + rs))
 
     return rsis
+
 
 def bb(prices, period, num_std_dev=2.0):
     """
@@ -353,7 +353,7 @@ def bb(prices, period, num_std_dev=2.0):
 
     if num_prices < period:
         # show error message
-        raise SystemExit('Error: num_prices < period')
+        raise SystemExit("Error: num_prices < period")
 
     bb_range = num_prices - period + 1
 
@@ -363,7 +363,7 @@ def bb(prices, period, num_std_dev=2.0):
     simple_ma = sma(prices, period)
 
     for idx in range(bb_range):
-        std_dev = np.std(prices[idx:idx + period])
+        std_dev = np.std(prices[idx : idx + period])
 
         # upper, middle, lower bands, bandwidth, range and %B
         bbs[idx, 0] = simple_ma[idx] + std_dev * num_std_dev
@@ -374,4 +374,3 @@ def bb(prices, period, num_std_dev=2.0):
         bbs[idx, 5] = (prices[idx] - bbs[idx, 2]) / bbs[idx, 4]
 
     return bbs
-

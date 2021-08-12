@@ -17,6 +17,7 @@ from omicron.core.types import FrameType
 from omicron.models.security import Security
 from alpha.strategies.base_xgboost_strategy import BaseXGBoostStrategy
 
+from alpha import utils
 
 logger = logging.getLogger(__name__)
 
@@ -29,72 +30,36 @@ class Z10(BaseXGBoostStrategy):
         super().__init__("Z10", home)
         self.target_win = 1
 
-    async def make_dataset(self, total: int, note: str = None) -> DataBunch:
+    async def make_dataset(
+        self, total: int, desc: str = None, version: str = None
+    ) -> DataBunch:
+        target_win = 1
+        transformers = {
+            FrameType.DAY: {"bars_len": 260, "func": self.x_transform},
+            FrameType.MIN30: {"bars_len": 40, "func": self.x_transform},
+        }
+        target_transformer = self.y_transform
 
-        day_bars_len = 50
-        count_of_secs = 3000
-        samples_per_sec = int(total / count_of_secs) + 1
+        bucket_size = 42
+        capacity = total // 100
 
-        end = tf.day_shift(arrow.now(), -10)
-        start = tf.day_shift(end, -samples_per_sec * 10)
+        ds = await utils.data.make_dataset(
+            transformers,
+            target_transformer,
+            target_win,
+            (bucket_size, capacity, self.is_sample_enough),
+        )
 
-        X, y = [], []
-        y_distribution = [0] * 42
-        for code, tail in self.dataset_scope(start, end):
-            sec = Security(code
+        ds.desc = desc
+        ds.name = self.__class__.__name__
+        ds.version = version
 
-            head = tf.day_shift(tail, -day_bars_len + 1)
-            bars = await sec.load_bars(head, tail, FrameType.DAY)
-
-            if len(bars) != day_bars_len:
-                continue
-
-            ybars = bars[-self.target_win :]
-            xbars = bars[: -self.target_win]
-
-            try:
-                y_ = self.y_transform(ybars["close"][0], xbars["close"][-1])
-            except NoTargetError:
-                continue
-
-            if self.has_enough_samples(y_distribution, y_, 50):
-                continue
-
-            try:
-                day_features = self.x_transform(xbars)
-            except NoFeaturesError:
-                continue
-
-            try:
-                # handle MIN30 level bars
-                tail = xbars[-1]["frame"]
-                tail = tf.combine_time(tail, hour=15)
-
-                head = tf.shift(tail, -50, FrameType.MIN30)
-                mbars = await sec.load_bars(head, tail, FrameType.MIN30)
-                m_features = self.x_transform(mbars)
-            except NoFeaturesError:
-                continue
-
-            x = day_features
-            x.extend(m_features)
-            x.append(self.y_limit(code, xbars[-1]["frame"]))
-            X.append(x)
-            y.append(y_)
-
-            if len(X) >= total:
-                break
-
-            if len(X) % 100 == 0:
-                logger.info(
-                    "%s/%s samples collected: %s", len(X), total, y_distribution
-                )
-
-        ds = DataBunch(name=self.name.lower(), X=X, y=y, desc=note)
-        logger.info("%s created with %s", ds.name, ds.X.shape)
         return ds
 
-    def y_transform(self, c1: float, c0: float):
+    def y_transform(self, ybars: np.array, xbars: np.array) -> float:
+        c1 = ybars[0]["close"]
+        c0 = xbars[-1]["close"]
+
         if np.all(np.isfinite([c1, c0])) and (c0 != 0):
             return c1 / c0 - 1
         else:
@@ -129,16 +94,6 @@ class Z10(BaseXGBoostStrategy):
 
         return results
 
-    def has_enough_samples(self, y_distribution, y_, count):
-        idx = int(y_ * 100) + 20
-
-        if y_distribution[idx] >= count:
-            return True
-        else:
-            y_distribution[idx] += 1
-            return False
-
-
     def y_limit(self, code, frame):
         if code.startswith("688") or (
             code.startswith("3") and frame > datetime.date(2020, 7, 20)
@@ -147,5 +102,10 @@ class Z10(BaseXGBoostStrategy):
         else:
             return 0
 
-    def fit(self, ds: DataBunch, params=None):
-        super().fit(ds, params)
+    def is_sample_enough(self, buckets, y, capacity):
+        idx = int(y * 100) + 20
+        if buckets[idx] < capacity:
+            buckets[idx] += 1
+            return False
+        else:
+            return True

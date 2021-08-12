@@ -18,7 +18,11 @@ from sklearn.model_selection import (
     RepeatedStratifiedKFold,
 )
 from xgboost import XGBClassifier, XGBModel, XGBRegressor
-from sklearn.metrics import classification_report, mean_absolute_error, mean_squared_error
+from sklearn.metrics import (
+    classification_report,
+    mean_absolute_error,
+    mean_squared_error,
+)
 from scipy.stats import randint, uniform
 from typing import NewType
 import datetime
@@ -281,7 +285,6 @@ class BaseXGBoostStrategy:
             report += f"{console_output}\n"
 
         return search.best_estimator_, report
-
 
     def _grid_search_on_classifier(self, ds: DataBunch, params, scoring=None):
         model = XGBClassifier()
