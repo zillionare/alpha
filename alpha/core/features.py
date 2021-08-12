@@ -140,7 +140,7 @@ def top_n_argpos(ts: np.array, n: int) -> np.array:
     return np.argsort(ts)[-n:][::-1]
 
 
-def rsi(prices, period=14):
+def relative_strength_index(prices, period=14):
     """
     The Relative Strength Index (RSI) is a momentum oscillator.
     It oscillates between 0 and 100.

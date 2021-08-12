@@ -2,7 +2,7 @@ from xml.sax.handler import feature_string_interning
 from omicron.models.securities import Securities
 
 from sklearn.metrics import make_scorer, max_error, mean_absolute_error
-from alpha.core.features import fillna, moving_average
+from alpha.core.features import fillna, moving_average, relative_strength_index
 from typing import List
 from alpha.core.errors import NoFeaturesError, NoTargetError
 from alpha.strategies.databunch import DataBunch
@@ -42,7 +42,7 @@ class Z10(BaseXGBoostStrategy):
         target_transformer = self.y_transform
 
         bucket_size = 21
-        capacity = total // 100
+        capacity = total // 50
 
         ds = await utils.data.make_dataset(
             transformers,
@@ -85,7 +85,17 @@ class Z10(BaseXGBoostStrategy):
     def x_transform(self, bars: np.array, flen: int = 7) -> List:
         x = np.arange(flen)
 
+        close = bars["close"].copy()
+        if np.count_nonzero(np.isfinite(close)) < len(close) * 0.9:
+            raise NoFeaturesError
+
+        close = fillna(close)
+
         results = []
+        # add rsi
+        rsi = relative_strength_index(close, 5)[-flen:]
+        results.extend(rsi/100)
+
         for col in ("open", "close", "high", "low"):
             price = bars[col]
             if np.count_nonzero(np.isfinite(price)) < len(price) * 0.9:
@@ -97,9 +107,6 @@ class Z10(BaseXGBoostStrategy):
             (a, b, _), (err, *_), *_ = np.polyfit(x, price, 2, full=True)
 
             results.extend((a, b, err))
-
-        close = bars["close"].copy()
-        close = fillna(close)
 
         for win in (5, 10, 20, 30):
             ma = moving_average(close, win)
