@@ -42,14 +42,14 @@ class Z10(BaseXGBoostStrategy):
         target_transformer = self.y_transform
 
         bucket_size = 21
-        capacity = total // 50
 
         ds = await utils.data.make_dataset(
             transformers,
             target_transformer,
             target_win,
-            (bucket_size, capacity, self.is_sample_enough),
-            secs = self.choose_secs()
+            total,
+            bucket_size,
+            start=datetime.date(2018,1,1)
         )
 
         ds.desc = desc
@@ -58,27 +58,12 @@ class Z10(BaseXGBoostStrategy):
 
         return ds
 
-    def choose_secs(self):
-        secs = Securities()
-
-        result = []
-
-        for code in secs.choose(['stock']):
-            if code.startswith('688'):
-                continue
-            if code.startswith('3'):
-                continue
-
-            result.append(code)
-
-        return result
-
     def y_transform(self, ybars: np.array, xbars: np.array) -> float:
         c1 = ybars[0]["close"]
         c0 = xbars[-1]["close"]
 
         if np.all(np.isfinite([c1, c0])) and (c0 != 0):
-            return c1 / c0 - 1
+            return c1 / c0 - 1, int((c1/c0-1) * 100)
         else:
             raise NoTargetError
 
@@ -94,7 +79,7 @@ class Z10(BaseXGBoostStrategy):
         results = []
         # add rsi
         rsi = relative_strength_index(close, 5)[-flen:]
-        results.extend(rsi/100)
+        results.extend(rsi / 100)
 
         for col in ("open", "close", "high", "low"):
             price = bars[col]
@@ -102,7 +87,8 @@ class Z10(BaseXGBoostStrategy):
                 raise NoFeaturesError
 
             price = fillna(price.copy())
-            price = (price[1:] / price[:-1] - 1)[-flen:]
+            # price = (price[1:] / price[:-1] - 1)[-flen:]
+            price = (price / price[-1])[-flen:]
 
             (a, b, _), (err, *_), *_ = np.polyfit(x, price, 2, full=True)
 
@@ -110,7 +96,8 @@ class Z10(BaseXGBoostStrategy):
 
         for win in (5, 10, 20, 30):
             ma = moving_average(close, win)
-            ma = (ma[1:] / ma[:-1] - 1)[-flen:]
+            # ma = (ma[1:] / ma[:-1] - 1)[-flen:]
+            ma = (ma / ma[-1])[-flen:]
 
             (a, b, _), (err, *_), *_ = np.polyfit(x, ma, 2, full=True)
 
@@ -125,11 +112,3 @@ class Z10(BaseXGBoostStrategy):
             return 1
         else:
             return 0
-
-    def is_sample_enough(self, buckets, y, capacity):
-        idx = int(y * 100) + 10
-        if buckets[idx] < capacity:
-            buckets[idx] += 1
-            return False
-        else:
-            return True

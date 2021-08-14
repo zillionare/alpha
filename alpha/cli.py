@@ -1,5 +1,6 @@
 """Console script for alpha."""
 
+from alpha.utils.data import even_distributed_dataset
 import asyncio
 import functools
 import importlib.util
@@ -7,6 +8,7 @@ import os
 import pickle
 import sys
 from warnings import simplefilter
+import numpy as np
 
 import arrow
 import cfg4py
@@ -60,11 +62,14 @@ def create_strategy(strategy: str):
 
 
 @async_run_command
-async def make_dataset(strategy: str, version: str = None, *args, **kwargs):
+async def make_dataset(
+    strategy: str, version: str = None, notes: str = "", *args, **kwargs
+):
     s = create_strategy(strategy)
 
     version = version or str(arrow.now().date())
     bunch = await s.make_dataset(version=version, *args, **kwargs)
+    bunch.desc = f"{strategy.lower()}.{version}:{notes}"
 
     home = os.path.expanduser(s.data_home)
 

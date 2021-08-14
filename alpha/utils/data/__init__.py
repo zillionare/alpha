@@ -1,3 +1,5 @@
+import pickle
+from sklearn.inspection import permutation_importance
 from alpha.core.errors import NoFeaturesError, NoTargetError
 from typing import Callable, NewType
 from typing import List
@@ -12,6 +14,7 @@ import random
 import datetime
 from alpha.utils.data.databunch import DataBunch
 import numpy as np
+from omicron import cache
 
 import logging
 
@@ -78,11 +81,13 @@ async def make_dataset(
     transformers: dict,
     target_transformer: Callable,
     target_win: int,
-    bucket: Tuple[int, int, Callable],
+    total:int,
+    bucket_size:int,
     secs: List[str] = None,
     start: Frame = None,
     end: Frame = None,
     main_frame=FrameType.DAY,
+    has_register_ipo=False
 ) -> DataBunch:
     """生成数据集
 
@@ -114,36 +119,33 @@ async def make_dataset(
     Returns:
         a DataBunch
     """
-    if secs is None:
-        secs = Securities()
-        codes = secs.choose(_types=["stock"])
-    else:
-        codes = secs
-
     main_bars_len = transformers.get(main_frame, {}).get("bars_len", 300)
 
     if end is None:
         end = tf.shift(arrow.now(), -target_win - 2, main_frame)
 
-    bucket_size, capacity, check_full = bucket
-    buckets = [0] * bucket_size
-    if start is None:
-        samples_per_sec = int(bucket_size * capacity / len(codes)) + 1
+    start = start or datetime.date(2015, 10, 9)
 
-        # for able to collect enough data, we need to loose the scope
-        start = tf.shift(end, -samples_per_sec * 10, main_frame)
+    buckets = [0] * bucket_size
+    capacity = int(total / bucket_size) + 1
 
     X, y, raw = [], [], []
 
-    permutations = dataset_scope(start, end, codes)
+    permutations = dataset_scope(start, end, secs,has_register_ipo)
 
     main_transformer = transformers.get(main_frame, {}).get("func")
     assert main_transformer is not None, "main_transformer is None"
 
-    for code, tail in permutations:
+    for i, (tail, code) in enumerate(permutations):
         sec = Security(code)
 
         head = tf.shift(tail, -main_bars_len + 1, main_frame)
+
+        # ensure we got bars from cache only
+        _head, _tail = await cache.get_bars_range(code, FrameType.DAY)
+        if _head is None or _tail is None or _head >= head or _tail <= tail:
+            continue
+
         bars = await sec.load_bars(head, tail, main_frame)
 
         if len(bars) != main_bars_len:
@@ -156,11 +158,12 @@ async def make_dataset(
 
         # get the target value
         try:
-            y_ = target_transformer(ybars, xbars)
+            y_, bucket_idx = target_transformer(ybars, xbars)
+            bucket_idx += bucket_size // 2
         except NoTargetError:
             continue
 
-        if check_full(buckets, y_, capacity):
+        if buckets[bucket_idx] >= capacity:
             continue
 
         try:
@@ -202,11 +205,12 @@ async def make_dataset(
         X.append(x_)
         y.append(y_)
         raw.append((code, xbars, ybars))
+        buckets[bucket_idx] += 1
 
-        if len(X) % 100 == 0:
+        if len(X) % (total //100) == 0:
             logger.info("%s samples collected: %s", len(X), buckets)
 
-        if sum(buckets) >= capacity * 0.85 * bucket_size:
+        if len(X) >= total * 0.95 or i >= total * 100:
             break
 
     ds = DataBunch(X, y, raw)
