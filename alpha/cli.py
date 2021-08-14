@@ -91,6 +91,31 @@ async def train(strategy: str, version: str = None, ds: str = None):
     s.fit(ds)
 
 
+@async_run_command
+async def make_even_distributed_dataset(total: int, save_to: str, bars_len: int = 300):
+    buckets_size = 21
+
+    def target_to_bucket(bars):
+        c0, c1 = bars[-2:]["close"]
+
+        if np.all(np.isfinite((c0, c1))):
+            return c1 / c0 - 1, int((c1 / c0 - 1) * 100) + buckets_size // 2
+
+        return None, None
+
+    meta = {"target_win": 1}
+
+    await even_distributed_dataset(
+        total,
+        buckets_size,
+        bars_len,
+        target_to_bucket,
+        save_to,
+        meta=meta,
+        start="2015-10-09",
+    )
+
+
 def main():
     simplefilter("ignore")
 
@@ -99,6 +124,7 @@ def main():
             "help": help,
             "ds": make_dataset,
             "train": train,
+            "make_even_ds": make_even_distributed_dataset,
         }
     )
 

@@ -212,3 +212,85 @@ async def make_dataset(
     ds = DataBunch(X, y, raw)
     logger.info("%s features made", ds.X.shape)
     return ds
+
+
+async def even_distributed_dataset(
+    total: int,
+    buckets_size: int,
+    bars_len: int,
+    target_to_bucket: Callable,
+    save_to: str,
+    has_register_ipo=False,
+    start="2010-01-01",
+    meta: dict = {},
+):
+    """构建按涨跌幅均匀分布的数据集
+
+    数据集的target值、以及如何映射到buket，由`target_to_bucket`来决定。
+
+    如果遇到证券停牌的情况，则停牌时间不能超过`bars_len`的10%，否则会被丢弃。
+
+    Args:
+        total: 总数
+        buckets_size: 桶个数
+        bars_len: 每个桶的bars长度
+        target_to_bucket: 将目标值映射到桶的函数
+        has_register_ipo: 是否包含注册制股票
+    Returns:
+        a DataBunch
+    """
+    data = []
+
+    buckets = [0] * buckets_size
+    capacity = int(total / buckets_size) + 1
+
+    start = tf.shift(arrow.get(start), 0, FrameType.DAY)
+    end = tf.day_shift(arrow.now(), 0)
+
+    for i, (tail, code) in enumerate(dataset_scope(start, end)):
+        sec = Security(code)
+        head = tf.shift(tail, -bars_len + 1, FrameType.DAY)
+
+        _head, _tail = await cache.get_bars_range(code, FrameType.DAY)
+        if _head is None or _tail is None or _head >= head or _tail <= tail:
+            continue
+
+        bars = await sec.load_bars(head, tail, FrameType.DAY)
+        if len(bars) != bars_len:
+            continue
+
+        close = bars["close"]
+        if np.count_nonzero(np.isfinite(close)) < bars_len * 0.9:
+            continue
+
+        target, bucket_idx = target_to_bucket(bars)
+        if target is None:
+            continue
+
+        try:
+            if buckets[bucket_idx] >= capacity:
+                continue
+        except IndexError:
+            continue
+
+        buckets[bucket_idx] += 1
+        data.append((code, target, bars))
+
+        if len(data) >= total * 0.95 or i >= total * 100:
+            break
+
+        if len(data) % int(total / 100) == 0:
+            logger.info("%s samples collected: %s", len(data), buckets)
+
+    meta.update(
+        {
+            "buckets_size": buckets_size,
+            "bars_len": bars_len,
+            "capacity": capacity,
+            "total": total,
+            "start": start,
+            "has_register_ipo": has_register_ipo,
+        }
+    )
+    with open(save_to, "wb") as f:
+        pickle.dump({"data": data, "meta": meta}, f)
