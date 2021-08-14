@@ -20,7 +20,9 @@ logger = logging.getLogger(__name__)
 Frame = NewType("Frame", (datetime.date, datetime.datetime))
 
 
-def dataset_scope(start: Frame, end: Frame, codes=None) -> List[Tuple[str, Frame]]:
+def dataset_scope(
+    start: Frame, end: Frame, codes=None, has_register_ipo=False
+) -> List[Tuple[str, Frame]]:
     """generate sample points for making dataset.
 
     Use this function to exclude duplicate points.
@@ -31,18 +33,46 @@ def dataset_scope(start: Frame, end: Frame, codes=None) -> List[Tuple[str, Frame
         codes: list of securities
 
     Returns:
-        A list of (frame, value)
+        A list of (frame, code)
     """
-    if codes is None:
-        secs = Securities()
-        codes = secs.choose(_types=["stock"])
-    frames = [tf.int2date(x) for x in tf.get_frames(start, end, FrameType.DAY)]
+    secs = Securities()
 
-    permutations = list(itertools.product(codes, frames))
+    if has_register_ipo:
+        if codes is None:
+            codes = secs.choose(_types=["stock"], exclude_st=True)
 
-    logger.info("%s permutaions in total", len(codes) * len(frames))
-    return random.sample(permutations, len(codes) * len(frames))
+        frames = [tf.int2date(x) for x in tf.get_frames(start, end, FrameType.DAY)]
 
+        codes = random.sample(codes, len(codes))
+        frames = random.sample(frames, len(frames))
+
+        return itertools.product(frames, codes)
+
+    codes_before_july = secs.choose(_types=["stock"], exclude_st=True, exclude_688=True)
+    codes_after_july = secs.choose(_types=["stock"], exclude_st=True, exclude_688=True, exclude_300=True)
+
+    if end < datetime.date(2020, 7, 20):
+        frames = [tf.int2date(x) for x in tf.get_frames(start, end, FrameType.DAY)]
+        codes = codes or codes_before_july
+
+        codes = random.sample(codes, len(codes))
+        frames = random.sample(frames, len(frames))
+        return itertools.product(frames, codes)
+
+    frames1 = [tf.int2date(x) for x in tf.get_frames(start, datetime.date(2020, 7, 19), FrameType.DAY)]
+
+    codes = codes or codes_before_july
+    codes = random.sample(codes, len(codes))
+    frames1 = random.sample(frames1, len(frames1))
+    permutations1 = itertools.product(frames1, codes)
+
+    frames2 = [tf.int2date(x) for x in tf.get_frames(datetime.date(2020, 7, 20), end, FrameType.DAY)]
+
+    codes = codes or codes_after_july
+    frames2 = random.sample(frames2, len(frames2))
+    permutations2 = itertools.product(frames2, codes)
+
+    return itertools.chain(permutations1, permutations2)
 
 async def make_dataset(
     transformers: dict,
