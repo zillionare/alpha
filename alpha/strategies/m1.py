@@ -12,17 +12,9 @@ import omicron
 import cfg4py
 from alpha.config import get_config_dir
 
-cft = cfg4py.get_instance()
+cfg = cfg4py.get_instance()
 
-from pymilvus import Milvus
-from pymilvus_orm import (
-    connections,
-    FieldSchema,
-    CollectionSchema,
-    DataType,
-    Collection,
-    list_collections,
-)
+from pymilvus import Milvus, DataType
 
 milvus = Milvus("172.17.0.1", "19530")
 
@@ -125,24 +117,6 @@ async def find():
     milvus.load_collection("stock")
 
     vec = None
-    # dsl = {
-    #     "bool": {
-    #         "must": [
-    #             {
-    #                 "vector": {
-    #                     "features": {
-    #                         "topK": 5,
-    #                         "query": [vec],
-    #                         "metric_type": "L2",
-    #                         "params": {
-    #                             "nprobe":10
-    #                         }
-    #                     }
-    #                 }
-    #             }
-    #         ]
-    #     }
-    # }
 
     topK = 5
     search_params = {"metric_type": "L2", "params": {"nprobe": 10}}
@@ -174,7 +148,7 @@ async def find():
             limit=2,
             output_fields=["code", "start"],
         )
-        # res = collection.search(vec, "features", search_params, topK)
+
         print(res)
 
 
