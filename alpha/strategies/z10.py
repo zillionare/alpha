@@ -26,6 +26,11 @@ cfg = cfg4py.get_instance()
 
 
 class Z10(BaseXGBoostStrategy):
+    """use polyfit
+
+    Args:
+        BaseXGBoostStrategy ([type]): [description]
+    """
     def __init__(self):
         home = os.path.expanduser(cfg.alpha.data_home)
         super().__init__("Z10", home)
