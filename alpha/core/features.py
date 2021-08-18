@@ -241,7 +241,7 @@ def relative_strength_index(prices, period=14):
     return rsis
 
 
-def bb(prices, period, num_std_dev=2.0):
+def bolling_band(prices, period, num_std_dev=2.0):
     """
     Bollinger bands (BB) are volatility bands placed above and below a moving
     average.
