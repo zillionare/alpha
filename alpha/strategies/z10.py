@@ -31,6 +31,7 @@ class Z10(BaseXGBoostStrategy):
     Args:
         BaseXGBoostStrategy ([type]): [description]
     """
+
     def __init__(self):
         home = os.path.expanduser(cfg.alpha.data_home)
         super().__init__("Z10", home)
@@ -54,7 +55,7 @@ class Z10(BaseXGBoostStrategy):
             target_win,
             total,
             bucket_size,
-            start=datetime.date(2018,1,1)
+            start=datetime.date(2018, 1, 1),
         )
 
         ds.desc = desc
@@ -68,7 +69,7 @@ class Z10(BaseXGBoostStrategy):
         c0 = xbars[-1]["close"]
 
         if np.all(np.isfinite([c1, c0])) and (c0 != 0):
-            return c1 / c0 - 1, int((c1/c0-1) * 100)
+            return c1 / c0 - 1, int((c1 / c0 - 1) * 100)
         else:
             raise NoTargetError
 

@@ -52,7 +52,9 @@ def dataset_scope(
         return itertools.product(frames, codes)
 
     codes_before_july = secs.choose(_types=["stock"], exclude_st=True, exclude_688=True)
-    codes_after_july = secs.choose(_types=["stock"], exclude_st=True, exclude_688=True, exclude_300=True)
+    codes_after_july = secs.choose(
+        _types=["stock"], exclude_st=True, exclude_688=True, exclude_300=True
+    )
 
     if end < datetime.date(2020, 7, 20):
         frames = [tf.int2date(x) for x in tf.get_frames(start, end, FrameType.DAY)]
@@ -62,14 +64,20 @@ def dataset_scope(
         frames = random.sample(frames, len(frames))
         return itertools.product(frames, codes)
 
-    frames1 = [tf.int2date(x) for x in tf.get_frames(start, datetime.date(2020, 7, 19), FrameType.DAY)]
+    frames1 = [
+        tf.int2date(x)
+        for x in tf.get_frames(start, datetime.date(2020, 7, 19), FrameType.DAY)
+    ]
 
     codes = codes or codes_before_july
     codes = random.sample(codes, len(codes))
     frames1 = random.sample(frames1, len(frames1))
     permutations1 = itertools.product(frames1, codes)
 
-    frames2 = [tf.int2date(x) for x in tf.get_frames(datetime.date(2020, 7, 20), end, FrameType.DAY)]
+    frames2 = [
+        tf.int2date(x)
+        for x in tf.get_frames(datetime.date(2020, 7, 20), end, FrameType.DAY)
+    ]
 
     codes = codes or codes_after_july
     frames2 = random.sample(frames2, len(frames2))
@@ -77,17 +85,18 @@ def dataset_scope(
 
     return itertools.chain(permutations1, permutations2)
 
+
 async def make_dataset(
     transformers: dict,
     target_transformer: Callable,
     target_win: int,
-    total:int,
-    bucket_size:int,
+    total: int,
+    bucket_size: int,
     secs: List[str] = None,
     start: Frame = None,
     end: Frame = None,
     main_frame=FrameType.DAY,
-    has_register_ipo=False
+    has_register_ipo=False,
 ) -> DataBunch:
     """生成数据集
 
@@ -131,7 +140,7 @@ async def make_dataset(
 
     X, y, raw = [], [], []
 
-    permutations = dataset_scope(start, end, secs,has_register_ipo)
+    permutations = dataset_scope(start, end, secs, has_register_ipo)
 
     main_transformer = transformers.get(main_frame, {}).get("func")
     assert main_transformer is not None, "main_transformer is None"
@@ -207,7 +216,7 @@ async def make_dataset(
         raw.append((code, xbars, ybars))
         buckets[bucket_idx] += 1
 
-        if len(X) % (total //100) == 0:
+        if len(X) % (total // 100) == 0:
             logger.info("%s samples collected: %s", len(X), buckets)
 
         if len(X) >= total * 0.95 or i >= total * 100:
