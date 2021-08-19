@@ -1,10 +1,15 @@
-from typing import Callable
-import datetime
-from dis import dis
+import os
+import sqlite3
+from typing import Callable, List
+import pandas as pd
 import functools
-from alpha.core.features import fillna, moving_average, relative_strength_index, top_n_argpos
+from alpha.core.features import (
+    fillna,
+    moving_average,
+    relative_strength_index,
+    top_n_argpos,
+)
 from omicron.core.types import Frame, FrameType
-from omicron.models.securities import Securities
 from omicron.models.security import Security
 from omicron.core.timeframe import tf
 from alpha.utils import round
@@ -17,17 +22,23 @@ import cfg4py
 import fire
 import logging
 from sklearn.preprocessing import normalize
+from sqlalchemy import engine
 
 from pymilvus import Milvus, DataType
 
+cfg = cfg4py.init("/apps/alpha/alpha/config")
 logger = logging.getLogger(__name__)
-#milvus = Milvus("172.17.0.1", "19530")
-milvus = Milvus("172.17.22.1", "19530")
 
+milvus = Milvus(cfg.milvus.host, cfg.milvus.port)
+
+try:
+    meta_df = pd.read_csv(os.path.expanduser(cfg.milvus.meta), sep="\t")
+    meta_df.set_index("ids", inplace=True)
+except Exception:
+    pass
 
 def async_run_command(func):
     async def _init_and_run(*args, **kwargs):
-        cfg4py.init("/apps/alpha/alpha/config")
         await omicron.init()
 
         await func(*args, **kwargs)
@@ -59,42 +70,70 @@ def init_stocks_collection(dim: int, drop=False):
         "indexes": [{"metric_type": "L2"}],
     }
 
-    fields = {"fields": [id_field, code_field, end_field, flag_field, feature_field]}
+    fields = {
+        "fields": [
+            id_field,
+            code_field,
+            end_field,
+            flag_field,
+            feature_field,
+        ]
+    }
     if milvus.has_collection("stock") and drop:
         milvus.drop_collection("stock")
-    
+
     if not milvus.has_collection("stock"):
         milvus.create_collection("stock", fields)
 
-def _predict(bars, threshold:float=3e-3, n:int=1):
-    milvus.load_collection("stock")
-    vecs = normalize([xtransform(bars)]).tolist()
 
+def find_by_vec(vecs, limit=1):
+    """
+    Args:
+        vecs (np.array): [description]
+
+    Returns:
+        [type]: [description]
+    """
     search_params = {"metric_type": "L2", "params": {"nprobe": 10}}
     res = milvus.search_with_expression(
-            "stock",
-            vecs,
-            "features",
-            param=search_params,
-            limit=1,
-            output_fields=["code", "end", "flag"],
-        )
-    
+        "stock",
+        vecs,
+        "features",
+        param=search_params,
+        limit=limit,
+        output_fields=["code", "end", "flag"],
+    )
+    return res
+
+
+def _predict(bars, threshold: float = 3e-3, n: int = 1):
+    milvus.load_collection("stock")
     results = []
+
+    try:
+        vecs = normalize([xtransform(bars)]).tolist()
+    except ValueError:
+        return results
+
+    res = find_by_vec(vecs)
+
     for item in res[0]:
         d = item.distance
+        seq = item.id
         if d < threshold:
-            code = str(item.entity.get('code'))[1:]
+            code = str(item.entity.get("code"))[1:]
             end = tf.int2time(item.entity.get("end"))
             flag = item.entity.get("flag")
 
-            results.append((code, end, flag, d))
+            results.append((seq, d))
 
     return results
 
-    
+
 @async_run_command
-async def predict(code:str, end:str, frame_type:str="30m"):
+async def predict(code: str, end: str, frame_type: str = "30m"):
+    global meta_df
+
     code = canonicalize(code)
     end = arrow.get(end)
     frame_type = FrameType(frame_type)
@@ -106,7 +145,8 @@ async def predict(code:str, end:str, frame_type:str="30m"):
 
     results = _predict(bars)
     if len(results) > 0:
-        *_, flag, distance = results[0]
+        seq, distance = results[0]
+        flag = meta_df[seq]["操作"]
         print(flag, f"{distance:.3f}")
     else:
         print(f"no match patterns")
@@ -157,13 +197,13 @@ def volume_features(volume: np.array, flags: ArrayLike, win: int = 80):
             valid_indice.append(i)
 
     indice = sorted(valid_indice)
-    np.pad(indice, (0, 3 - len(indice)), 'constant', constant_values=0)
+    np.pad(indice, (0, 3 - len(indice)), "constant", constant_values=0)
     vec.extend(flags[indice])
 
-
     # 间隔
-    vec.extend([np.tanh( 2 * (win - i - 1) / win) for i in indice])
+    vec.extend([np.tanh(2 * (win - i - 1) / win) for i in indice])
     return vec
+
 
 def rsi_features(close: np.array, rsi_win: int = 6):
     rsi = relative_strength_index(close, rsi_win)
@@ -174,11 +214,11 @@ def rsi_features(close: np.array, rsi_win: int = 6):
     min_rsi_pos = np.argwhere(rsi < 20)
     if len(min_rsi_pos) > 0:
         min_rsi_pos = min_rsi_pos[-1] + rsi_win
-        vec.extend(np.tanh((nbars -1 - min_rsi_pos) * 2/ nbars))
+        vec.extend(np.tanh((nbars - 1 - min_rsi_pos) * 2 / nbars))
     else:
         vec.append(1)
 
-    max_rsi_pos = np.argwhere(rsi > 80)
+    max_rsi_pos = np.argwhere(rsi > 90)
     if len(max_rsi_pos) > 0:
         max_rsi_pos = max_rsi_pos[-1] + rsi_win
         vec.extend(np.tanh((nbars - 1 - max_rsi_pos) * 2 / nbars))
@@ -186,8 +226,9 @@ def rsi_features(close: np.array, rsi_win: int = 6):
         vec.append(1)
 
     return vec
-    
-def canonicalize(code:str):
+
+
+def canonicalize(code: str):
     if code.endswith(".XSHE") or code.endswith(".XSHG"):
         return code
 
@@ -196,7 +237,8 @@ def canonicalize(code:str):
     else:
         return code + ".XSHE"
 
-def xtransform(bars, flen:int = 7):
+
+def xtransform(bars, flen: int = 7):
     """
     1. 均线使用5, 10, 20, 60各7根,计算ma,及ma之间的发散程度。共需要66个周期的close
     2. 计算60周期以来最大的3次成交量的方向、间隔，如果成交量大于成交均量1倍
@@ -220,11 +262,12 @@ def xtransform(bars, flen:int = 7):
     vec.extend(rsi_features(close))
 
     # 成交价变化特征
-    vec.extend((close[1:]/close[:-1])[-flen:])
+    vec.extend((close[1:] / close[:-1])[-flen:])
 
     return vec
 
-def _train(sample_bars: ArrayLike, time_convertor: Callable):
+
+def _train(sample_bars: ArrayLike, time_convertor: Callable)->List[int]:
     codes, dates, flags, features = [], [], [], []
 
     for (flag, code, end, bars) in sample_bars:
@@ -239,38 +282,58 @@ def _train(sample_bars: ArrayLike, time_convertor: Callable):
         features.append(vec)
 
     dim = len(vec)
-    init_stocks_collection(dim, drop = True)
+    init_stocks_collection(dim, drop=True)
 
     features = normalize(features).tolist()
     logger.debug("\n%s", features)
-    mr = milvus.insert("stock", [{
-            "name": "code",
-            "type": DataType.INT32,
-            "values": codes,
-        }, {
-            "name": "end" ,
-            "type": DataType.INT64,
-            "values": dates
-        }, {
-            "name": "flag",
-            "type": DataType.INT32,
-            "values": flags
-        },{
-            "name": "features",
-            "type": DataType.FLOAT_VECTOR,
-            "values": features
-        }])
+    mr = milvus.insert(
+        "stock",
+        [
+            {
+                "name": "code",
+                "type": DataType.INT32,
+                "values": codes,
+            },
+            {"name": "end", "type": DataType.INT64, "values": dates},
+            {"name": "flag", "type": DataType.INT32, "values": flags},
+            {"name": "features", "type": DataType.FLOAT_VECTOR, "values": features},
+        ],
+    )
     logger.info("%s samples inserted into milvus", len(mr.primary_keys))
+
+    return mr.primary_keys
 
 
 @async_run_command
-async def train(nbars:int = 80, frame_type:FrameType = FrameType.MIN30):
+async def train(nbars: int = 80, frame_type: FrameType = FrameType.MIN30):
+    """
+    -2 坚决卖出
+    -1 减仓观望
+    0 持仓不动
+    1 适度建仓
+    2 重仓买入
+
+    Args:
+        nbars (int, optional): [description]. Defaults to 80.
+        frame_type (FrameType, optional): [description]. Defaults to FrameType.MIN30.
+    """
+    global meta_df
     samples = [
+        (-1, "300985", "20210726 10:30", "均线过于发散，RSI高位,长上影线"),
+        (-2, "300985", "20210726 10:30", "高位回落，反弹无力不能上破均线，而均线已拐头"),
+        (-2, "300985", "20210727 10:00", "m5下降中，放量杀跌"),
+        (0, "300985", "20210728 15:00", "RSI低位，量能低位，m5均线将可能拐头"),
+        (0, "300985", "20210730 14:00", "W底右侧，均线金叉，但趋势还不稳固"),  # todo: 检测w底需要更多周期，30？
+        (0, "300985", "20210802 14:00", "趋势向好，但均线整理中"),
+        (2, "300985", "20210803 11:30", "均线多头，量能萎缩，m5均线再度小幅发散，起涨前夜。"),
+        (0, "300985", "20210803 14:00", "RSI高位，长上影，但均线排列有序，有一定支撑。"),
+        (1, "300985", "20210804 15:00", "放量冲高后，缩量回落收阳，接近m20支撑位。m5有拐头。均线整体向上有支撑。"),
+        (1, "300985", "20210809 15:00", "放量涨、缩量跌，均线多头，m5,m10,m20收敛，m60向上支撑"),
+        (2, "300985", "20210812 11:30", "多次放量拉升后，缩量回调，随时可能加速"),
+        (1, "300985", "20210813 10:00", "均线整体向上加速中，首次回调且收长下影。"),
+        (1, "300985", "20210816 10:00", "均线多头，资金方向为买入。但m5,m10,m20已高度发散，可能进入了最后拉升周期"),
         (-1, "300985", "20210817 10:00", "高开低走，放量大阴，资金方向为卖出，RSI反转信号已出，滞胀，此时卖出为最佳时机"),
         (-1, "300985", "20210817 11:30", "m5均线已拐头，上攻被均线压制，资金方向为卖出。应及时止损"),
-        (1, "300985", "20210803 11:30", "均线多头，最能萎缩，m5均线再度小幅发散，起涨前夜。"),
-        (1, "300985", "20210809 15:00", "放量涨、缩量跌，均线多头，m5,m10,m20收敛，m60向上支撑"),
-        (1, "300985", "20210816 10:00", "均线多头，资金方向为买入。但m5,m10,m20已高度发散，可能进入了最后拉升周期"),
     ]
 
     sample_bars = []
@@ -285,14 +348,24 @@ async def train(nbars:int = 80, frame_type:FrameType = FrameType.MIN30):
         sample_bars.append((flag, code, end, bars))
 
     convertor = tf.time2int if frame_type in tf.minute_level_frames else tf.date2int
-    _train(sample_bars, convertor)
+    ids = _train(sample_bars, convertor)
+
+    meta_df = pd.DataFrame(samples, columns=["操作", "模板", "取样点", "特征"])
+    meta_df["ids"] = ids
+    meta_df.set_index("ids", inplace=True)
+
+    meta_df.to_csv(os.path.expanduser(cfg.milvus.meta), sep="\t")
+
 
 def show_status():
     milvus.load_collection("stock")
     print(milvus.get_collection_stats("stock"))
 
+
 @async_run_command
-async def test(code:str, start: str, n:int=10, frame_type:str='30m'):
+async def test(
+    code: str, n: int = 10, end: str = None, frame_type: str = "30m", threshold=3e-3, console_output=False
+):
     """对`code`在`start`指定的`n`个周期里，进行pattern匹配测试。
     Args:
         code (str): 股票代码
@@ -300,26 +373,44 @@ async def test(code:str, start: str, n:int=10, frame_type:str='30m'):
         n (int): 周期数
         frame_type (str): 周期类型
     """
+    global meta_df
+
     code = str(code)
     sec = Security(canonicalize(code))
     frame_type = FrameType(frame_type)
-    start = arrow.get(start)
-    end = tf.shift(start, n, frame_type)
+    if end is None:
+        end = tf.day_shift(arrow.now(), 0)
+        if frame_type in tf.minute_level_frames:
+            end = tf.combine_time(end, hour=15)
+    else:
+        end = arrow.get(end)
 
-    convertor = tf.int2time if frame_type in tf.minute_level_frames else tf.int2date
-    for end in  tf.get_frames(start, end, frame_type):
-        end = convertor(end)
-        start = tf.shift(end, -80, frame_type)
-        bars = await sec.load_bars(start, end, frame_type)
+    distances, ids, frames = [], [], []
+    for i in range(n // 4):
+        tail = tf.shift(end, -i * 4, frame_type)
+        head = tf.shift(tail, -80, frame_type)
+        bars = await sec.load_bars(head, tail, frame_type)
         if len(bars) < 81:
             continue
 
-        result = _predict(bars)
+        result = _predict(bars, threshold=threshold)
         if len(result) > 0:
-            *_, flag, distance = result[0]
-            print(f"{end}\t{flag}\t{distance:.3f}")
-        else:
-            print(f"{end}\t{0}\tNA")
+            seq, distance = result[0]
+            ids.append(seq)
+            distances.append(distance)
+            frames.append(tail)
+
+    df = meta_df.loc[ids]
+    df["误差"] = distances
+    df["时间"] = frames
+
+    # todo 增加实测值
+
+    df = df[["时间", "操作", "误差", "模板", "取样点", "特征"]]
+    if console_output:
+        print(df.to_string(index=False))
+
+    return df
 
 
 
