@@ -1,6 +1,13 @@
 import os
 from tests import data_dir
-from alpha.strategies.m1 import _predict, _train, ma_features, rsi_features, train, volume_features
+from alpha.strategies.m1 import (
+    _predict,
+    _train,
+    ma_features,
+    rsi_features,
+    train,
+    volume_features,
+)
 import arrow
 import omicron
 from omicron.core.timeframe import tf
@@ -29,7 +36,9 @@ class TestM1(unittest.IsolatedAsyncioTestCase):
         25.57 25.48 25.46 25.43 25.65 26.44 26.35 26.38 26.31 26.19 26.23 25.99
         25.44 25.7  25.85 25.97 25.94 26.22 26.57 26.69 26.57 26.71 26.7  26.83
         26.75 26.79 26.69 26.8  26.92 26.8  26.9  26.88 27.47 28.3  28.45 28.22
-        27.88 27.7  27.57 27.72 27.96 27.82 27.72 27.78""".split(" "):
+        27.88 27.7  27.57 27.72 27.96 27.82 27.72 27.78""".split(
+            " "
+        ):
             try:
                 close.append(float(item))
             except ValueError:
@@ -58,7 +67,9 @@ class TestM1(unittest.IsolatedAsyncioTestCase):
         346100.  222600.  245100.  104700.  159600.  133200.  147200.  345300.
         409600.  257900.  168100.  116300.  292900. 2206300.  577000.  799000.
         863800.  564400.  277000.   92100.  214400.  154400.  172700.  288200.
-        """.split(" "):
+        """.split(
+            " "
+        ):
             try:
                 volume.append(float(item))
             except ValueError:
@@ -66,7 +77,9 @@ class TestM1(unittest.IsolatedAsyncioTestCase):
 
         vec = volume_features(np.array(volume), np.array(flags))
         self.assertEqual(6, len(vec))
-        np.testing.assert_array_almost_equal([1, 1, 1, 0.92, 0.89, 0.27], vec,decimal=2 )
+        np.testing.assert_array_almost_equal(
+            [1, 1, 1, 0.92, 0.89, 0.27], vec, decimal=2
+        )
 
     async def test_rsi_features(self):
         """
@@ -80,7 +93,9 @@ class TestM1(unittest.IsolatedAsyncioTestCase):
         25.57 25.48 25.46 25.43 25.65 26.44 26.35 26.38 26.31 26.19 26.23 25.99
         25.44 25.7  25.85 25.97 25.94 26.22 26.57 26.69 26.57 26.71 26.7  26.83
         26.75 26.79 26.69 26.8  26.92 26.8  26.9  26.88 27.47 28.3  28.45 28.22
-        27.88 27.7  27.57 27.72 27.96 27.82 27.72 27.78""".split(" "):
+        27.88 27.7  27.57 27.72 27.96 27.82 27.72 27.78""".split(
+            " "
+        ):
             try:
                 close.append(float(item))
             except ValueError:
@@ -91,9 +106,9 @@ class TestM1(unittest.IsolatedAsyncioTestCase):
 
     async def test_train_and_predict(self):
         samples = [
-        (-1, "300985.XSHE", "20210817 10:00", "高开低走，放量大阴，RSI反转信号已出，滞胀"),
-        (1, "300985.XSHE", "20210809 15:00", "放量涨、缩量跌，均线多头，m5,m10,m20收敛，m60向上支撑"),
-    ]
+            (-1, "300985.XSHE", "20210817 10:00", "高开低走，放量大阴，RSI反转信号已出，滞胀"),
+            (1, "300985.XSHE", "20210809 15:00", "放量涨、缩量跌，均线多头，m5,m10,m20收敛，m60向上支撑"),
+        ]
 
         _bars = pickle.load(open(os.path.join(data_dir(), "300985.pkl"), "rb"))
 
@@ -103,7 +118,7 @@ class TestM1(unittest.IsolatedAsyncioTestCase):
                 end = arrow.get(end)
 
             end_pos = np.max(np.argwhere(_bars["frame"] <= end.datetime))
-            bars = _bars[end_pos-80:end_pos+1]
+            bars = _bars[end_pos - 80 : end_pos + 1]
             sample_bars.append((flag, code, end, bars))
 
         _train(sample_bars, tf.time2int)
