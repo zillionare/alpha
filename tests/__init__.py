@@ -31,6 +31,8 @@ def init_test_env():
 
     return cfg4py.init(config_path, False)
 
+def data_dir():
+    return os.path.join(os.path.dirname(__file__), "data")
 
 def find_free_port():
     with closing(socket.socket(socket.AF_INET, socket.SOCK_STREAM)) as s:
@@ -110,7 +112,7 @@ def load_bars_from_file(sec: str, frame_type: str, ext: str = "csv", sep="\t"):
         ("volume", "<f8"),
     ]
 
-    return dataframe_to_structured_array(df, dtypes=dtypes)
+    #return dataframe_to_structured_array(df, dtypes=dtypes)
 
 
 # async def main():
