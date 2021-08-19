@@ -12,7 +12,6 @@ import aiohttp
 import cfg4py
 import pandas as pd
 from omicron.models.security import Security
-from omicron.core.numpy_extensions import dataframe_to_structured_array
 
 cfg = cfg4py.get_instance()
 logger = logging.getLogger()

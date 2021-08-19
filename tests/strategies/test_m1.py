@@ -1,6 +1,4 @@
-
-
-from alpha.strategies.m1 import ma_features, volume_features
+from alpha.strategies.m1 import ma_features, rsi_features, volume_features
 import arrow
 import omicron
 from omicron.core.timeframe import tf
@@ -66,4 +64,25 @@ class TestM1(unittest.IsolatedAsyncioTestCase):
         vec = volume_features(np.array(volume), np.array(flags))
         self.assertEqual(6, len(vec))
         np.testing.assert_array_almost_equal([1, 1, 1, 0.92, 0.89, 0.27], vec,decimal=2 )
+
+    async def test_rsi_features(self):
+        """
+        300985, 2021-08-04 15:00往前80个点
+        """
+        close = []
+        for item in """
+        26.35 26.28 26.38 26.36 26.22 26.2  26.21 26.18 26.37 26.33 26.46 26.42
+        26.45 26.33 26.46 26.42 28.16 28.46 28.46 28.   27.71 28.   27.79 27.76
+        26.79 26.4  26.9  26.76 26.77 26.77 26.51 26.31 25.76 25.87 25.68 25.66
+        25.57 25.48 25.46 25.43 25.65 26.44 26.35 26.38 26.31 26.19 26.23 25.99
+        25.44 25.7  25.85 25.97 25.94 26.22 26.57 26.69 26.57 26.71 26.7  26.83
+        26.75 26.79 26.69 26.8  26.92 26.8  26.9  26.88 27.47 28.3  28.45 28.22
+        27.88 27.7  27.57 27.72 27.96 27.82 27.72 27.78""".split(" "):
+            try:
+                close.append(float(item))
+            except ValueError:
+                pass
+
+        vec = rsi_features(np.array(close))
+        np.testing.assert_array_almost_equal([0.76, 0.22], vec, decimal=2)
 

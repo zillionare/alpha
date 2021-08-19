@@ -1,6 +1,5 @@
 import datetime
 import functools
-import imp
 from alpha.core.features import fillna, moving_average, relative_strength_index, top_n_argpos
 from omicron.core.types import Frame, FrameType
 from omicron.models.securities import Securities
@@ -13,14 +12,14 @@ from numpy.typing import ArrayLike
 import asyncio
 import omicron
 import cfg4py
-from alpha.config import get_config_dir
 import fire
 import logging
 
 from pymilvus import Milvus, DataType
 
 logger = logging.getLogger(__name__)
-milvus = Milvus("172.17.0.1", "19530")
+#milvus = Milvus("172.17.0.1", "19530")
+milvus = Milvus("172.17.22.1", "19530")
 
 
 def async_run_command(func):
@@ -157,6 +156,28 @@ def volume_features(volume: np.array, flags: ArrayLike, win: int = 80):
     vec.extend([np.tanh((win - i) / (win/2)) for i in indice])
     return vec
 
+def rsi_features(close: np.array, rsi_win: int = 6):
+    rsi = relative_strength_index(close, rsi_win)
+
+    vec = []
+    nbars = len(close)
+
+    min_rsi_pos = np.argwhere(rsi < 20)
+    if len(min_rsi_pos) > 0:
+        min_rsi_pos = min_rsi_pos[-1] + rsi_win
+        vec.extend(np.tanh((nbars -1 - min_rsi_pos) * 2/ nbars))
+    else:
+        vec.extend(1)
+
+    max_rsi_pos = np.argwhere(rsi > 80)
+    if len(max_rsi_pos) > 0:
+        max_rsi_pos = max_rsi_pos[-1] + rsi_win
+        vec.extend(np.tanh((nbars - 1 - max_rsi_pos) * 2 / nbars))
+    else:
+        vec.extend(1)
+
+    return vec
+    
 def canonicalize(code:str):
     if code.startswith("6"):
         return code + ".XSHG"
@@ -167,7 +188,7 @@ def xtransform(bars, flen:int = 7):
     """
     1. 均线使用5, 10, 20, 60各7根,计算ma,及ma之间的发散程度。共需要66个周期的close
     2. 计算60周期以来最大的3次成交量的方向、间隔，如果成交量大于成交均量1倍
-    3. 计算RSI中低于20，大于80时，距当前的距离tanh(i/14)
+    3. 计算RSI中低于20，大于80时，距当前的距离tanh(i*2/len(bars))
     4. 成交价特征：最后10周期阴阳线特征和涨跌幅特征
     Args:
         bars ([type]): [description]
@@ -184,10 +205,12 @@ def xtransform(bars, flen:int = 7):
     vec.extend(volume_features(volume, close))
 
     # RSI
-    rsi = relative_strength_index(close, 6)
-    last_min = np.argmax(rsi < 0.2)
-    last_max = np.argmax(rsi > 0.8)
+    vec.extend(rsi_features(close))
 
+    # 成交价变化特征
+    vec.extend(np.diff(close)[-flen:])
+
+    return vec
 
 
 
