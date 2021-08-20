@@ -1,30 +1,32 @@
+import asyncio
+import functools
+import logging
 import os
 import sqlite3
+from math import copysign
 from typing import Callable, List
+
+import arrow
+import cfg4py
+import fire
+import numpy as np
+import omicron
 import pandas as pd
-import functools
+from numpy.typing import ArrayLike
+from omicron.core.timeframe import tf
+from omicron.core.types import Frame, FrameType
+from omicron.models.security import Security
+from pymilvus import DataType, Milvus
+from sklearn.preprocessing import normalize
+from sqlalchemy import engine
+
 from alpha.core.features import (
     fillna,
     moving_average,
     relative_strength_index,
     top_n_argpos,
 )
-from omicron.core.types import Frame, FrameType
-from omicron.models.security import Security
-from omicron.core.timeframe import tf
 from alpha.utils import round
-import arrow
-import numpy as np
-from numpy.typing import ArrayLike
-import asyncio
-import omicron
-import cfg4py
-import fire
-import logging
-from sklearn.preprocessing import normalize
-from sqlalchemy import engine
-
-from pymilvus import Milvus, DataType
 
 cfg = cfg4py.init("/apps/alpha/alpha/config")
 logger = logging.getLogger(__name__)
@@ -36,6 +38,7 @@ try:
     meta_df.set_index("ids", inplace=True)
 except Exception:
     pass
+
 
 def async_run_command(func):
     async def _init_and_run(*args, **kwargs):
@@ -150,6 +153,7 @@ async def predict(code: str, end: str, frame_type: str = "30m"):
         print(flag, f"{distance:.3f}")
     else:
         print(f"no match patterns")
+
 
 def ma_features(close: np.array, wins=(5, 10, 20, 60), flen: int = 7):
     # 1. 先进行归一化，以便我们纯粹只比较形态
@@ -267,7 +271,7 @@ def xtransform(bars, flen: int = 7):
     return vec
 
 
-def _train(sample_bars: ArrayLike, time_convertor: Callable)->List[int]:
+def _train(sample_bars: ArrayLike, time_convertor: Callable) -> List[int]:
     codes, dates, flags, features = [], [], [], []
 
     for (flag, code, end, bars) in sample_bars:
@@ -362,9 +366,8 @@ def show_status():
     print(milvus.get_collection_stats("stock"))
 
 
-@async_run_command
-async def test(
-    code: str, n: int = 10, end: str = None, frame_type: str = "30m", threshold=3e-3, console_output=False
+async def _test(
+    code: str, n: int = 10, end: str = None, frame_type: str = "30m", threshold=3e-3
 ):
     """对`code`在`start`指定的`n`个周期里，进行pattern匹配测试。
     Args:
@@ -385,33 +388,69 @@ async def test(
     else:
         end = arrow.get(end)
 
-    distances, ids, frames = [], [], []
+    distances, ids, frames, profit, risk = [], [], [], [], []
     for i in range(n // 4):
         tail = tf.shift(end, -i * 4, frame_type)
         head = tf.shift(tail, -80, frame_type)
-        bars = await sec.load_bars(head, tail, frame_type)
-        if len(bars) < 81:
+        xbars = await sec.load_bars(head, tail, frame_type)
+        close = xbars["close"]
+
+        if len(xbars) < 81:
             continue
 
-        result = _predict(bars, threshold=threshold)
+        if np.count_nonzero(np.isfinite(close)) < len(close) * 0.9:
+            continue
+
+        result = _predict(xbars, threshold=threshold)
         if len(result) > 0:
+            yhead = tf.shift(tail, 1, frame_type)
+            ytail = tf.shift(tail, 5, frame_type)
+
+            ybars = await sec.load_bars(yhead, ytail, frame_type)
+            if len(ybars) < 5 or np.any(ybars["close"] == None):
+                continue
+
             seq, distance = result[0]
             ids.append(seq)
             distances.append(distance)
             frames.append(tail)
 
+            flag = copysign(1, meta_df.loc[seq, "操作"])
+            xclose = fillna(close)
+            profit.append(flag * (max(ybars["close"]) / xclose[-1] - 1))
+            risk.append(min(ybars["low"]) / xbars["close"][-1] - 1)
+
     df = meta_df.loc[ids]
     df["误差"] = distances
     df["时间"] = frames
+    df["收益"] = profit
+    df["风险"] = risk
 
-    # todo 增加实测值
+    df = df[["时间", "操作", "误差", "收益", "风险", "模板", "取样点", "特征"]]
+    df.index = df["时间"]
 
-    df = df[["时间", "操作", "误差", "模板", "取样点", "特征"]]
+    return df.style.format(
+        formatter={
+            "收益": "{:.2%}",
+            "风险": "{:.2%}",
+            "误差": "{:.2%}",
+            "时间": lambda t: f"{t.year}{t.month:02d}{t.day:02d} {t.hour:02d}:{t.minute:02d}",
+        }
+    ).hide_index().apply(lambda x: ["background-color: #22aa22" if v < 3e-3 else "" for v in x], axis=1, subset=("误差"))
+
+
+@async_run_command
+async def test(
+    code: str,
+    n: int = 10,
+    end: str = None,
+    frame_type: str = "30m",
+    threshold=3e-3,
+    console_output=False,
+):
+    df = await _test(code, n, end, frame_type, threshold)
     if console_output:
         print(df.to_string(index=False))
-
-    return df
-
 
 
 if __name__ == "__main__":
