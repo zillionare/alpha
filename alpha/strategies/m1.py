@@ -18,7 +18,7 @@ from omicron.core.types import Frame, FrameType
 from omicron.models.security import Security
 from pymilvus import DataType, Milvus
 from sklearn.preprocessing import normalize
-from sqlalchemy import engine
+import plotly.graph_objects as go
 
 from alpha.core.features import (
     fillna,
@@ -429,14 +429,40 @@ async def _test(
     df = df[["时间", "操作", "误差", "收益", "风险", "模板", "取样点", "特征"]]
     df.index = df["时间"]
 
-    return df.style.format(
-        formatter={
-            "收益": "{:.2%}",
-            "风险": "{:.2%}",
-            "误差": "{:.2%}",
-            "时间": lambda t: f"{t.year}{t.month:02d}{t.day:02d} {t.hour:02d}:{t.minute:02d}",
-        }
-    ).hide_index().apply(lambda x: ["background-color: #22aa22" if v < 3e-3 else "" for v in x], axis=1, subset=("误差"))
+    return (
+        df.style.format(
+            formatter={
+                "收益": "{:.2%}",
+                "风险": "{:.2%}",
+                "误差": "{:.2%}",
+                "时间": lambda t: f"{t.year}{t.month:02d}{t.day:02d} {t.hour:02d}:{t.minute:02d}",
+            }
+        )
+        .hide_index()
+        .apply(
+            lambda x: ["background-color: #22aa22" if v < 3e-3 else "" for v in x],
+            axis=1,
+            subset=("误差"),
+        )
+        .apply(
+            format_ops_cell,
+            axis=1,
+            subset=("操作"),
+        )
+    )
+
+
+def format_ops_cell(x):
+    style = []
+    for v in x:
+        if v > 0:
+            style.append("background-color: #cc2222")
+        elif v == 0:
+            style.append("background-color: #ffffff")
+        else:
+            style.append("background-color: #22aa22")
+
+    return style
 
 
 @async_run_command
@@ -451,6 +477,25 @@ async def test(
     df = await _test(code, n, end, frame_type, threshold)
     if console_output:
         print(df.to_string(index=False))
+
+    sec = Security(canonicalize(code))
+    end = arrow.get(end) if end else arrow.now()
+    start = tf.shift(end, -n - 100, frame_type)
+
+    bars = await sec.load_bars(start, end, frame_type)
+
+    fig = go.Figure(
+        data=[
+            go.Candlestick(
+                x=bars["frame"],
+                open=bars["open"],
+                high=bars["high"],
+                low=bars["low"],
+                close=bars["close"],
+            )
+        ]
+    )
+    return df, fig
 
 
 if __name__ == "__main__":
