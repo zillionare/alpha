@@ -333,8 +333,9 @@ class SimVecStrategy:
                     "操作": lambda v: opcode.get(v),
                     "收益": "{:.2%}",
                     "风险": "{:.2%}",
-                    "误差": "{:.2%}",
+                    "误差": "{:.2f}",
                     "时间": lambda t: f"{t.year}{t.month:02d}{t.day:02d} {t.hour:02d}:{t.minute:02d}",
+                    "取样点": lambda t: f"{t.year}{t.month:02d}{t.day:02d} {t.hour:02d}:{t.minute:02d}",
                 }
             )
             .hide_index()
@@ -381,7 +382,16 @@ async def train(datafile:str, version=None):
     await s.train(datafile, version)
 
 @async_run_command
-async def predict(model:str, code: str, end:str=None, ft: str='30m', threshold=3e-3):
+async def predict(model:str, code: str, end:str=None, ft: str='30m', threshold=3e-2):
+    """[summary]
+
+    Args:
+        model (str): [description]
+        code (str): [description]
+        end (str, optional): [description]. Defaults to None.
+        ft (str, optional): [description]. Defaults to '30m'.
+        threshold ([type], optional): Defaults to 3e-2. according to test, even x == y, L2 (sqrt(dot(x,x) - 2 * dot(x,y) + dot(y,y)) will still get 0.0015. so it's better to choose 3e-2 ad threshold
+    """
     s = SimVecStrategy("sv-30m")
 
     if os.path.exists(model):
