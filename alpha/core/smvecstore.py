@@ -109,7 +109,7 @@ class SmallSizeVectorStore:
         res = np.empty(meta.shape, dtype=res_type)
         for col in meta.dtype.names:
             res[col] = meta[col]
-        res["d"] = d.flatten()[:top_n]
+        res["d"] = d.flatten()[indices]
 
         return res
 
