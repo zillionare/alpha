@@ -1,12 +1,11 @@
-from enum import IntEnum
+
 from alpha.core.smvecstore import SmallSizeVectorStore
 import asyncio
 import functools
 import logging
 import os
-import sqlite3
 from math import copysign
-from typing import Callable, List
+from typing import List
 
 import arrow
 import cfg4py
@@ -18,7 +17,6 @@ from numpy.typing import ArrayLike
 from omicron.core.timeframe import tf
 from omicron.core.types import Frame, FrameType
 from omicron.models.security import Security
-from pymilvus import DataType, Milvus
 from sklearn.preprocessing import normalize
 import plotly.graph_objects as go
 
@@ -59,10 +57,10 @@ class SimVecStrategy:
         end = arrow.get(end)
         ft = FrameType(frame_type)
 
-        start = tf.shift(end, -self.nbars, ft)
+        start = tf.shift(end, -self.nbars + 1, ft)
         bars = await sec.load_bars(start, end, ft)
         if (
-            np.count_nonzero(bars["close"] == None) > len(bars) * 0.9
+            np.count_nonzero(bars["close"] == None) > len(bars) * 0.1
             or len(bars) < self.nbars
         ):
             return None
@@ -255,7 +253,9 @@ class SimVecStrategy:
         frame_type: str = "30m",
         threshold=9999,
     ):
-        """对`code`在`start`指定的`n`个周期里，进行pattern匹配测试。
+        """对`code`在`end`指定的前`n`个周期里，进行pattern匹配测试。
+
+        `end`之后，需要留至少5个周期，以便观察。
         Args:
             code (str): 股票代码
             start (str): 开始时间
@@ -268,42 +268,43 @@ class SimVecStrategy:
             end = tf.day_shift(arrow.now(), 0)
             if frame_type in tf.minute_level_frames:
                 end = tf.combine_time(end, hour=15)
+
+            end = tf.shift(end, -5, frame_type)
         else:
             end = arrow.get(end)
 
+        wwin = 5 # watch window
+        end = tf.shift(end, wwin - 1, frame_type)
+        start = tf.shift(end, -self.nbars -n -2, frame_type)
+
+        bars = await sec.load_bars(start, end, frame_type)
+
         results = []
-        for i in range(n // 4):
-            tail = tf.shift(end, -i * 4, frame_type)
-            head = tf.shift(tail, -80, frame_type)
-            xbars = await sec.load_bars(head, tail, frame_type)
+        tstart = bars[self.nbars -1]["frame"]
+        tend = bars[self.nbars + n - 2]["frame"]
+        print(f"test {code} from {tstart} to {tend}")
+        for i in range(n):
+            xbars = bars[i:i+self.nbars]
+            ybars = bars[i+self.nbars: i+self.nbars + wwin]
+
             close = xbars["close"]
-
-            if len(xbars) < 81:
-                continue
-
-            if np.count_nonzero(np.isfinite(close)) < len(close) * 0.9:
-                continue
+            if np.any(ybars["close"] == None) or np.count_nonzero(close == None) > 0.1 * len(close):
+                    continue
 
             res = self._predict(xbars, threshold=threshold)
             # frame, operation, dist, profit, risk,  sample_code, sample_point, desc
-            row = [tail]
+            row = [xbars[-1]["frame"]]
             if len(res) > 0:
-                yhead = tf.shift(tail, 1, frame_type)
-                ytail = tf.shift(tail, 5, frame_type)
-
-                ybars = await sec.load_bars(yhead, ytail, frame_type)
-                if len(ybars) < 5 or np.any(ybars["close"] == None):
-                    continue
 
                 # operation
                 row.append(res[0]["op"])
                 flag = copysign(1, res[0]["op"])
-                xclose = fillna(close)
 
                 # distance
                 row.append(res[0]["d"])
 
                 # profit or gain of avoiding loss
+                xclose = fillna(close)
                 row.append(flag * (max(ybars["close"]) / xclose[-1] - 1))
                 # risk if we act or not act
                 row.append(min(ybars["low"]) / xbars["close"][-1] - 1)
@@ -311,9 +312,9 @@ class SimVecStrategy:
                 # sample_code, sample_point and desc
                 row.extend([res[0]["code"], res[0]["end"], res[0]["desc"]])
 
-            results.append(row)
+                results.append(row)
 
-        if len(results[0]) == 1:
+        if len(results) == 0:
             return None
 
         df = pd.DataFrame(

@@ -34,3 +34,10 @@ class Config(object):
 
     class alpha:
         data_home: Optional[str] = None
+
+    class milvus:
+        host: Optional[str] = None
+
+        port: Optional[int] = None
+
+        meta: Optional[str] = None
