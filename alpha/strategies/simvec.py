@@ -38,7 +38,13 @@ class SimVecStrategy:
     def __init__(self, name: str, *args, **kwargs):
         self.name = name
         self.store = SmallSizeVectorStore(
-            name, {"op": "<i4", "code":"O", "end": "O", "desc": "O",}
+            name,
+            {
+                "op": "<i4",
+                "code": "O",
+                "end": "O",
+                "desc": "O",
+            },
         )
         self.nbars = kwargs.get("nbars", 81)
         self.metric = "L2"
@@ -228,11 +234,11 @@ class SimVecStrategy:
 
         return self._predict(bars, threshold, top_n)
 
-    def _predict(self, bars, threshold=None, n: int = 1):
+    def _predict(self, bars, threshold=1e-2, n: int = 1):
         """预测"""
         vec = self.normalize(self.xtransform(bars))
 
-        res = self.store.search_vec(vec, top_n=n, metric=self.metric)
+        res = self.store.search_vec(vec, threshold, metric=self.metric)
         if threshold is not None:
             return res[res["d"] < threshold][:n]
         else:
@@ -319,16 +325,12 @@ class SimVecStrategy:
     def draw_test_report(
         self, df: pd.DataFrame, code: str, end: Frame, frame_type: FrameType
     ):
-        opcode = {
-            2: "买入",
-            1: "轻仓参与",
-            0: "持仓不动",
-            -1: "减仓",
-            -1: "清仓"
-        }
+        opcode = {2: "买入", 1: "轻仓参与", 0: "持仓不动", -1: "减仓", -1: "清仓"}
 
         return (
-            df.style.format(
+            df.style.set_properties(**{"text-align": "left"}, subset=("特征"))
+            .set_table_styles([dict(selector="th", props=[("text-align", "center")])])
+            .format(
                 formatter={
                     "操作": lambda v: opcode.get(v),
                     "收益": "{:.2%}",
@@ -352,6 +354,7 @@ class SimVecStrategy:
         )
 
     def format_ops_cell(self, x):
+
         style = []
         for v in x:
             if v > 0:
@@ -376,13 +379,17 @@ def async_run_command(func):
 
     return wrapper
 
+
 @async_run_command
-async def train(datafile:str, version=None):
+async def train(datafile: str, version=None):
     s = SimVecStrategy("sv-30m")
     await s.train(datafile, version)
 
+
 @async_run_command
-async def predict(model:str, code: str, end:str=None, ft: str='30m', threshold=3e-2):
+async def predict(
+    model: str, code: str, end: str = None, ft: str = "30m", threshold=3e-2
+):
     """[summary]
 
     Args:
@@ -401,8 +408,11 @@ async def predict(model:str, code: str, end:str=None, ft: str='30m', threshold=3
         s.load(path)
     print(await s.predict(code, end, ft, threshold=threshold))
 
+
 @async_run_command
-async def test(model: str, code: str, n:int = 10, end:str=None, ft:str='30m', threshold=3e-3):
+async def test(
+    model: str, code: str, n: int = 10, end: str = None, ft: str = "30m", threshold=3e-3
+):
     s = SimVecStrategy("sv-30m")
 
     if os.path.exists(model):
@@ -416,8 +426,4 @@ async def test(model: str, code: str, n:int = 10, end:str=None, ft:str='30m', th
 
 
 if __name__ == "__main__":
-    fire.Fire({
-        "train": train,
-        "predict": predict,
-        "test": test
-    })
+    fire.Fire({"train": train, "predict": predict, "test": test})
