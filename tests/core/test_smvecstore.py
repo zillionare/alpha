@@ -25,16 +25,18 @@ class TestSmVecStore(unittest.TestCase):
         meta = store[2]
         self.assertEqual(meta["flag"], -1)
 
-        rows = store[[0,1]]
+        rows = store[[0, 1]]
         self.assertEqual(len(rows), 2)
         self.assertListEqual([1, -1], rows["flag"].tolist())
 
-        matched = store.search_vec([1,2,3])
+        matched = store.search_vec([1, 2, 3])
         self.assertListEqual([1, -1, -1], matched["flag"].tolist())
         np.testing.assert_array_almost_equal([0, 3, 2], matched["d"].tolist())
 
-        matched = store.search_vec([1,2,3], metric="Cosine")
-        np.testing.assert_array_almost_equal([0, 0.40, 0.15], matched["d"].tolist(), decimal=2)
+        matched = store.search_vec([1, 2, 3], metric="Cosine")
+        np.testing.assert_array_almost_equal(
+            [0, 0.40, 0.15], matched["d"].tolist(), decimal=2
+        )
 
         store.save("/tmp/smvec.pkl")
         store2 = SmallSizeVectorStore.load("/tmp/smvec.pkl")
@@ -43,7 +45,4 @@ class TestSmVecStore(unittest.TestCase):
         self.assertListEqual([1, -1, -1], store2["flag"].tolist())
 
         vec, meta = store.get_vectors("flag", 1)
-        self.assertListEqual([1., 2., 3.], vec.flatten().tolist())
-
-
-
+        self.assertListEqual([1.0, 2.0, 3.0], vec.flatten().tolist())
