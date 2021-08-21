@@ -100,7 +100,7 @@ class SmallSizeVectorStore:
             d = euclidean_distances(self.vectors, vec.reshape(1, -1))
             indices = np.argsort(d.flatten())[:top_n]
 
-        if metric == "Cosine":
+        elif metric == "Cosine":
             d = cosine_distances(self.vectors, vec.reshape(1, -1))
             indices = np.argsort(d.flatten())[:top_n]
 
@@ -109,11 +109,11 @@ class SmallSizeVectorStore:
         res = np.empty(meta.shape, dtype=res_type)
         for col in meta.dtype.names:
             res[col] = meta[col]
-        res["d"] = d.flatten()
+        res["d"] = d.flatten()[:top_n]
 
         return res
 
-    def get_vectors(self, col:str, value: Any):
+    def get_vectors(self, col: str, value: Any):
         """locate and return vectore by `col`"""
         if col not in self.columns:
             raise ValueError(f"{col} is not a valid column")
