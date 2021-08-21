@@ -6,6 +6,7 @@ import pickle
 from typing import Any, List, Union
 import numpy as np
 import logging
+import pandas as pd
 
 from sklearn.metrics import euclidean_distances
 from sklearn.metrics.pairwise import cosine_distances
@@ -19,7 +20,7 @@ class SmallSizeVectorStore:
         self.vector_type = vector_type
 
         # maintain the order of columns
-        self.cols = list(columns.keys())
+        self.colnames = list(columns.keys())
         self.columns = columns
 
         self.vectors = None
@@ -27,8 +28,8 @@ class SmallSizeVectorStore:
 
     def _insert_one(self, meta_item: dict, vector):
         meta = np.array(
-            [tuple(meta_item[col] for col in self.cols)],
-            dtype=[(col, self.columns[col]) for col in self.cols],
+            [tuple(meta_item[col] for col in self.colnames)],
+            dtype=[(col, self.columns[col]) for col in self.colnames],
         )
 
         try:
@@ -87,7 +88,7 @@ class SmallSizeVectorStore:
         with open(path, "wb") as f:
             pickle.dump(self, f)
 
-    def search_vec(self, vec: Union[np.array, List], top_n=5, metric="L2"):
+    def search_vec(self, vec: Union[np.array, List], threshold, n:int=1, metric="L2"):
         """search vector in store
 
         supported metrics are `L2`, `Cosine`
@@ -97,12 +98,14 @@ class SmallSizeVectorStore:
             vec = np.array(vec)
 
         if metric == "L2":
-            d = euclidean_distances(self.vectors, vec.reshape(1, -1))
-            indices = np.argsort(d.flatten())[:top_n]
+            d = euclidean_distances(self.vectors, vec.reshape(1, -1)).flatten()
 
         elif metric == "Cosine":
-            d = cosine_distances(self.vectors, vec.reshape(1, -1))
-            indices = np.argsort(d.flatten())[:top_n]
+            d = cosine_distances(self.vectors, vec.reshape(1, -1)).flatten()
+
+        pos_all_lt_threshold = (np.argwhere(d < threshold)).flatten()
+        d_lt_threshold = d[pos_all_lt_threshold]
+        indices = pos_all_lt_threshold[np.argsort(d_lt_threshold)[:n]]
 
         meta = self[indices]
         res_type = np.dtype(meta.dtype.descr + [("d", "<f4")])
@@ -120,3 +123,7 @@ class SmallSizeVectorStore:
 
         idx = self.meta[col] == value
         return self.vectors[idx], self.meta[idx]
+
+    def show_samples(self):
+        """turn `self.meta` as a dataframe"""
+        return pd.DataFrame(self.meta.tolist(), columns=self.colnames)
