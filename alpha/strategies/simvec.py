@@ -236,6 +236,9 @@ class SimVecStrategy:
         """预测"""
         vec = self.normalize(self.xtransform(bars))
 
+        if vec is None:
+            return None
+
         res = self.store.search_vec(vec, threshold, metric=self.metric)
         if threshold is not None:
             return res[res["d"] < threshold][:n]
@@ -294,25 +297,26 @@ class SimVecStrategy:
             res = self._predict(xbars, threshold=threshold)
             # frame, operation, dist, profit, risk,  sample_code, sample_point, desc
             row = [xbars[-1]["frame"]]
-            if len(res) > 0:
+            if not res:
+                continue
 
-                # operation
-                row.append(res[0]["op"])
-                flag = copysign(1, res[0]["op"])
+            # operation
+            row.append(res[0]["op"])
+            flag = copysign(1, res[0]["op"])
 
-                # distance
-                row.append(res[0]["d"])
+            # distance
+            row.append(res[0]["d"])
 
-                # profit or gain of avoiding loss
-                xclose = fillna(close)
-                row.append(flag * (max(ybars["close"]) / xclose[-1] - 1))
-                # risk if we act or not act
-                row.append(min(ybars["low"]) / xbars["close"][-1] - 1)
+            # profit or gain of avoiding loss
+            xclose = fillna(close)
+            row.append(flag * (max(ybars["close"]) / xclose[-1] - 1))
+            # risk if we act or not act
+            row.append(min(ybars["low"]) / xbars["close"][-1] - 1)
 
-                # sample_code, sample_point and desc
-                row.extend([res[0]["code"], res[0]["end"], res[0]["desc"]])
+            # sample_code, sample_point and desc
+            row.extend([res[0]["code"], res[0]["end"], res[0]["desc"]])
 
-                results.append(row)
+            results.append(row)
 
         if len(results) == 0:
             return None
