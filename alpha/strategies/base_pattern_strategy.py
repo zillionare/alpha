@@ -3,7 +3,9 @@
 from asyncio.log import logger
 from os import stat
 import pickle
+from sqlite3 import DataError
 from typing import Any, List, Union
+from black import E
 import numpy as np
 import logging
 import pandas as pd
@@ -14,7 +16,7 @@ from sklearn.metrics.pairwise import cosine_distances
 logger = logging.getLogger(__name__)  # pylint: disable=invalid-name
 
 
-class SmallSizeVectorStore:
+class PatternMatchStrategy:
     def __init__(self, name: str, columns: dict, vector_type: str = "<f4"):
         self.name = name
         self.vector_type = vector_type
@@ -66,6 +68,26 @@ class SmallSizeVectorStore:
             ids.append(self._insert_one(item, vector))
 
         return ids
+
+    def remove(self, key:str, value: Any, mapping=None):
+        if key is None and not mapping:
+            raise DataError("at least one key/value pair must exists")
+
+        condition = (self.meta[key] == value)
+        if mapping:
+            for k,v in mapping.items():
+                condition = condition & (self.meta[k] == v)
+
+        idx = np.argwhere(condition).flatten()
+
+        try:
+            meta = np.delete(self.meta, idx)
+            vectors = np.delete(self.vectors, idx, axis=0)
+        except Exception as e:
+            raise e
+
+        self.meta = meta
+        self.vectors = vectors
 
     def __getitem__(self, indice: Union[int, List]):
         return self.meta[indice]
