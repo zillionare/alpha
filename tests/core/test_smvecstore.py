@@ -1,17 +1,17 @@
-from alpha.strategies.base_pattern_strategy import PatternMatchStrategy
+from alpha.core.smvecstore import SmallSizeVectorStore
 from unicodedata import decimal
 import numpy as np
 import unittest
 
 
-class TesPatternMatchStrategy(unittest.TestCase):
+class TestSmallSizeVectorStore(unittest.TestCase):
     """Unit tests for the `SmVecStore` class."""
 
     def setUp(self):
         pass
 
     def test_all_in_one(self):
-        store = PatternMatchStrategy("test", {"desc": "O", "flag": "<i4"})
+        store = SmallSizeVectorStore("test", {"desc": "O", "flag": "<i4"})
 
         rid = store.insert({"flag": 1, "desc": "one"}, [1, 2, 3])
         self.assertEqual(rid, 0)
@@ -39,7 +39,7 @@ class TesPatternMatchStrategy(unittest.TestCase):
         )
 
         store.save("/tmp/smvec.pkl")
-        store2 = PatternMatchStrategy.load("/tmp/smvec.pkl")
+        store2 = SmallSizeVectorStore.load("/tmp/smvec.pkl")
 
         self.assertEqual(len(store2), len(store))
         self.assertListEqual([1, -1, -1], store2["flag"].tolist())

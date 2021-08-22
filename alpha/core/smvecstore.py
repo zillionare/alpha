@@ -16,7 +16,7 @@ from sklearn.metrics.pairwise import cosine_distances
 logger = logging.getLogger(__name__)  # pylint: disable=invalid-name
 
 
-class PatternMatchStrategy:
+class SmallSizeVectorStore:
     def __init__(self, name: str, columns: dict, vector_type: str = "<f4"):
         self.name = name
         self.vector_type = vector_type

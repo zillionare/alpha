@@ -19,6 +19,7 @@ from omicron.core.types import Frame, FrameType
 from omicron.models.security import Security
 from sklearn.preprocessing import normalize
 import plotly.graph_objects as go
+from omicron import cache
 
 from alpha.core.features import (
     fillna,
@@ -265,30 +266,47 @@ class SimVecStrategy:
             n (int): 周期数
             frame_type (str): 周期类型
         """
-        sec = Security(self.canonicalize(str(code)))
+        wwin = 10 # watch window
+
+        code = self.canonicalize(code)
+        sec = Security(code)
         frame_type = FrameType(frame_type)
         if end is None:
             end = tf.day_shift(arrow.now(), 0)
             if frame_type in tf.minute_level_frames:
                 end = tf.combine_time(end, hour=15)
 
-            end = tf.shift(end, -5, frame_type)
+            end = tf.shift(end, -wwin+1, frame_type)
         else:
             end = arrow.get(end)
 
-        wwin = 5 # watch window
         end = tf.shift(end, wwin - 1, frame_type)
+        assert end < arrow.now(), f"end time must be later than now: {end}"
+
         start = tf.shift(end, -self.nbars -n -2, frame_type)
+
+        head, tail = await cache.get_bars_range(code, frame_type)
+        if any([head is None, tail is None]):
+            return None
+        start = max(start, head)
+        end = min(end, tail)
+
+        if tf.count_frames(start, end, frame_type) < self.nbars + wwin:
+            return None
 
         bars = await sec.load_bars(start, end, frame_type)
 
         results = []
-        tstart = bars[self.nbars -1]["frame"]
-        tend = bars[self.nbars + n - 2]["frame"]
+        tstart = bars[self.nbars-1]["frame"]
+        tend = bars[-wwin - 1]["frame"]
         print(f"test {code} from {tstart} to {tend}")
         for i in range(n):
+            if i + self.nbars + wwin > len(bars):
+                break
+
             xbars = bars[i:i+self.nbars]
             ybars = bars[i+self.nbars: i+self.nbars + wwin]
+
 
             close = xbars["close"]
             if np.any(ybars["close"] == None) or np.count_nonzero(close == None) > 0.1 * len(close):
@@ -296,8 +314,8 @@ class SimVecStrategy:
 
             res = self._predict(xbars, threshold=threshold)
             # frame, operation, dist, profit, risk,  sample_code, sample_point, desc
-            row = [xbars[-1]["frame"]]
-            if not res:
+            row = [xbars[-1]["frame"], code]
+            if res is None or len(res) == 0:
                 continue
 
             # operation
@@ -321,16 +339,20 @@ class SimVecStrategy:
         if len(results) == 0:
             return None
 
-        df = pd.DataFrame(
-            results, columns=["时间", "操作", "误差", "收益", "风险", "模板", "取样点", "特征"]
-        )
-
-        return df
+        return results
 
     def draw_test_report(
-        self, df: pd.DataFrame, code: str, end: Frame, frame_type: FrameType
+        self, results: list,
     ):
         opcode = {2: "买入", 1: "轻仓参与", 0: "持仓不动", -1: "减仓", -1: "清仓"}
+
+        if len(results) == 0:
+            print("no results")
+            return None
+
+        df = pd.DataFrame(
+            results, columns=["时间", "代码", "操作", "误差", "收益", "风险", "模板", "取样点", "特征"]
+        )
 
         return (
             df.style.set_properties(**{"text-align": "left"}, subset=("特征"))
