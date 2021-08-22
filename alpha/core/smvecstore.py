@@ -69,13 +69,13 @@ class SmallSizeVectorStore:
 
         return ids
 
-    def remove(self, key:str, value: Any, mapping=None):
+    def remove(self, key: str, value: Any, **mapping):
         if key is None and not mapping:
             raise DataError("at least one key/value pair must exists")
 
-        condition = (self.meta[key] == value)
+        condition = self.meta[key] == value
         if mapping:
-            for k,v in mapping.items():
+            for k, v in mapping.items():
                 condition = condition & (self.meta[k] == v)
 
         idx = np.argwhere(condition).flatten()
@@ -88,6 +88,8 @@ class SmallSizeVectorStore:
 
         self.meta = meta
         self.vectors = vectors
+
+        return idx
 
     def __getitem__(self, indice: Union[int, List]):
         return self.meta[indice]
@@ -110,7 +112,9 @@ class SmallSizeVectorStore:
         with open(path, "wb") as f:
             pickle.dump(self, f)
 
-    def search_vec(self, vec: Union[np.array, List], threshold, n:int=1, metric="L2"):
+    def search_vec(
+        self, vec: Union[np.array, List], threshold, n: int = 1, metric="L2"
+    ):
         """search vector in store
 
         supported metrics are `L2`, `Cosine`

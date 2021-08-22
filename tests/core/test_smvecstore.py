@@ -49,5 +49,5 @@ class TestSmallSizeVectorStore(unittest.TestCase):
 
         store.remove("flag", 1)
         self.assertEqual(2, len(store))
-        store.remove("flag", -1, {"desc":"two"})
-        self.assertListEqual([1., 0., 3.], store.vectors[0].tolist())
+        store.remove("flag", -1, {"desc": "two"})
+        self.assertListEqual([1.0, 0.0, 3.0], store.vectors[0].tolist())

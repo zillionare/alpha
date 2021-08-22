@@ -1,13 +1,6 @@
+from alpha.strategies.simvec import SimVecStrategy
 import os
-from tests import data_dir
-from alpha.strategies.m1 import (
-    _predict,
-    _train,
-    ma_features,
-    rsi_features,
-    train,
-    volume_features,
-)
+
 import arrow
 import omicron
 from omicron.core.timeframe import tf
@@ -21,7 +14,7 @@ import pickle
 import cfg4py
 
 
-class TestM1(unittest.IsolatedAsyncioTestCase):
+class TestSimVecStrategy(unittest.IsolatedAsyncioTestCase):
     async def asyncSetUp(self) -> None:
         cfg4py.init(get_config_dir())
         await omicron.init()
@@ -44,7 +37,9 @@ class TestM1(unittest.IsolatedAsyncioTestCase):
             except ValueError:
                 pass
 
-        vec = ma_features(np.array(close))
+        s = SimVecStrategy("sv-30m")
+
+        vec = s.ma_features(np.array(close))
         self.assertAlmostEqual(vec[0], 1.012, places=3)
         self.assertAlmostEqual(vec[-1], 0.042, places=3)
         self.assertEqual(35, len(vec))
@@ -75,7 +70,8 @@ class TestM1(unittest.IsolatedAsyncioTestCase):
             except ValueError:
                 pass
 
-        vec = volume_features(np.array(volume), np.array(flags))
+        s = SimVecStrategy("sv-30m")
+        vec = s.volume_features(np.array(volume), np.array(flags))
         self.assertEqual(6, len(vec))
         np.testing.assert_array_almost_equal(
             [1, 1, 1, 0.92, 0.89, 0.27], vec, decimal=2
@@ -101,29 +97,11 @@ class TestM1(unittest.IsolatedAsyncioTestCase):
             except ValueError:
                 pass
 
-        vec = rsi_features(np.array(close))
+        s = SimVecStrategy("sv-30m")
+        vec = s.rsi_features(np.array(close))
         np.testing.assert_array_almost_equal([0.76, 0.22], vec, decimal=2)
 
-    async def test_train_and_predict(self):
-        samples = [
-            (-1, "300985.XSHE", "20210817 10:00", "高开低走，放量大阴，RSI反转信号已出，滞胀"),
-            (1, "300985.XSHE", "20210809 15:00", "放量涨、缩量跌，均线多头，m5,m10,m20收敛，m60向上支撑"),
-        ]
-
-        _bars = pickle.load(open(os.path.join(data_dir(), "300985.pkl"), "rb"))
-
-        sample_bars = []
-        for (flag, code, end, desc) in samples:
-            if isinstance(end, str):
-                end = arrow.get(end)
-
-            end_pos = np.max(np.argwhere(_bars["frame"] <= end.datetime))
-            bars = _bars[end_pos - 80 : end_pos + 1]
-            sample_bars.append((flag, code, end, bars))
-
-        _train(sample_bars, tf.time2int)
-
-        for (flag, code, end, bars) in sample_bars:
-            result = _predict(bars)
-            self.assertEqual(flag, result[0][-2])
-            self.assertAlmostEqual(0, result[0][-1])
+    def test_remove_pattern(self):
+        s = SimVecStrategy("sv-30m")
+        s.load("v1")
+        s.remove_pattern(code="300985", end="20210803 11:30")

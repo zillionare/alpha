@@ -1,5 +1,3 @@
-
-from alpha.core.smvecstore import SmallSizeVectorStore
 import asyncio
 import functools
 import logging
@@ -13,13 +11,13 @@ import fire
 import numpy as np
 import omicron
 import pandas as pd
+import plotly.graph_objects as go
 from numpy.typing import ArrayLike
+from omicron import cache
 from omicron.core.timeframe import tf
 from omicron.core.types import Frame, FrameType
 from omicron.models.security import Security
 from sklearn.preprocessing import normalize
-import plotly.graph_objects as go
-from omicron import cache
 
 from alpha.core.features import (
     fillna,
@@ -27,6 +25,7 @@ from alpha.core.features import (
     relative_strength_index,
     top_n_argpos,
 )
+from alpha.core.smvecstore import SmallSizeVectorStore
 from alpha.utils import round
 
 cfg = cfg4py.init("/apps/alpha/alpha/config")
@@ -48,8 +47,14 @@ class SimVecStrategy:
         self.nbars = kwargs.get("nbars", 81)
         self.metric = "L2"
 
-    def load(self, path: str) -> None:
-        self.store = SmallSizeVectorStore.load(path)
+    def load(self, model: str) -> None:
+        if os.path.exists(model):
+            self.store = SmallSizeVectorStore.load(model)
+        elif model.startswith("v"):
+            path = os.path.expanduser(
+                f"~/alpha/data/{self.name}/{self.name}-{model}.pkl"
+            )
+            self.store = SmallSizeVectorStore.load(path)
 
     async def add_pattern(
         self, op: int, code: str, end: str, desc: str, frame_type: str = "30m"
@@ -82,7 +87,7 @@ class SimVecStrategy:
                 op, code, end, desc = line.strip().split("\t")
                 await self.add_pattern(int(op), code, end, desc)
 
-    def ma_features(self, close: np.array, wins=(5, 10, 20, 60), flen: int = 7):
+    def ma_features(self, close: np.array, wins=(5, 10, 20, 60), flen: int = 10):
         # 1. 先进行归一化，以便我们纯粹只比较形态
         c_ = close / close[-1]
 
@@ -93,8 +98,12 @@ class SimVecStrategy:
             vec.extend(ma)
             mas.append(ma)
 
-        # 各均线的发散程度？太发散则有回归需求；太聚拢则有发散需求
         mas = np.stack(mas)
+
+        # 5日线与20日线的差值
+        vec.extend(mas[0] - mas[2])
+
+        # 各均线的发散程度？太发散则有回归需求；太聚拢则有发散需求
         mas = np.max(mas, axis=0) - np.min(mas, axis=0)
         vec.extend(mas)
 
@@ -147,7 +156,7 @@ class SimVecStrategy:
         else:
             vec.append(1)
 
-        max_rsi_pos = np.argwhere(rsi > 90)
+        max_rsi_pos = np.argwhere(rsi > 80)
         if len(max_rsi_pos) > 0:
             max_rsi_pos = max_rsi_pos[-1] + rsi_win
             vec.extend(np.tanh((nbars - 1 - max_rsi_pos) * 2 / nbars))
@@ -165,9 +174,9 @@ class SimVecStrategy:
         else:
             return code + ".XSHE"
 
-    def xtransform(self, bars, flen: int = 7):
+    def xtransform(self, bars, flen: int = 10):
         """
-        1. 均线使用5, 10, 20, 60各7根,计算ma,及ma之间的发散程度。共需要66个周期的close
+        1. 均线使用5, 10, 20, 60各`flen`根,计算ma,及ma之间的发散程度。共需要66个周期的close
         2. 计算60周期以来最大的3次成交量的方向、间隔，如果成交量大于成交均量1倍
         3. 计算RSI中低于20，大于80时，距当前的距离tanh(i*2/len(bars))
         4. 成交价特征：最后10周期阴阳线特征和涨跌幅特征
@@ -191,7 +200,24 @@ class SimVecStrategy:
         vec.extend(self.rsi_features(close))
 
         # 成交价变化特征
-        vec.extend((close[1:] / close[:-1])[-flen:])
+        vec.extend(self.price_features(close, flen))
+
+        return vec
+
+    def price_features(self, close: np.array, flen: int = 10):
+        """计算收盘价的特征
+
+        Args:
+            close (np.array): 收盘价序列
+            flen (int, optional): [description]. Defaults to 10.
+        """
+        vec = []
+        nbars = len(close)
+
+        vec.extend((close[1:] / close[:-1] - 1)[-flen:])
+
+        top_prices = top_n_argpos(close, 3)
+        vec.extend(np.tanh(2 * (nbars - 1 - top_prices) / nbars))
 
         return vec
 
@@ -266,7 +292,7 @@ class SimVecStrategy:
             n (int): 周期数
             frame_type (str): 周期类型
         """
-        wwin = 10 # watch window
+        wwin = 10  # watch window
 
         code = self.canonicalize(code)
         sec = Security(code)
@@ -276,14 +302,14 @@ class SimVecStrategy:
             if frame_type in tf.minute_level_frames:
                 end = tf.combine_time(end, hour=15)
 
-            end = tf.shift(end, -wwin+1, frame_type)
+            end = tf.shift(end, -wwin + 1, frame_type)
         else:
             end = arrow.get(end)
 
         end = tf.shift(end, wwin - 1, frame_type)
         assert end < arrow.now(), f"end time must be later than now: {end}"
 
-        start = tf.shift(end, -self.nbars -n -2, frame_type)
+        start = tf.shift(end, -self.nbars - n - 2, frame_type)
 
         head, tail = await cache.get_bars_range(code, frame_type)
         if any([head is None, tail is None]):
@@ -297,20 +323,21 @@ class SimVecStrategy:
         bars = await sec.load_bars(start, end, frame_type)
 
         results = []
-        tstart = bars[self.nbars-1]["frame"]
+        tstart = bars[self.nbars - 1]["frame"]
         tend = bars[-wwin - 1]["frame"]
         print(f"test {code} from {tstart} to {tend}")
         for i in range(n):
             if i + self.nbars + wwin > len(bars):
                 break
 
-            xbars = bars[i:i+self.nbars]
-            ybars = bars[i+self.nbars: i+self.nbars + wwin]
-
+            xbars = bars[i : i + self.nbars]
+            ybars = bars[i + self.nbars : i + self.nbars + wwin]
 
             close = xbars["close"]
-            if np.any(ybars["close"] == None) or np.count_nonzero(close == None) > 0.1 * len(close):
-                    continue
+            if np.any(ybars["close"] == None) or np.count_nonzero(
+                close == None
+            ) > 0.1 * len(close):
+                continue
 
             res = self._predict(xbars, threshold=threshold)
             # frame, operation, dist, profit, risk,  sample_code, sample_point, desc
@@ -342,7 +369,8 @@ class SimVecStrategy:
         return results
 
     def draw_test_report(
-        self, results: list,
+        self,
+        results: list,
     ):
         opcode = {2: "买入", 1: "轻仓参与", 0: "持仓不动", -1: "减仓", -1: "清仓"}
 
@@ -392,6 +420,21 @@ class SimVecStrategy:
                 style.append("background-color: #22aa22")
 
         return style
+
+    def remove_pattern(self, code: str, end: str):
+        """
+        删除模式
+        """
+        return self.store.remove("code", code, end=arrow.get(end))
+
+    def save(self, model: str):
+        if os.path.exists(os.path.expanduser(model)):
+            self.store.save(model)
+        elif model.startswith("v"):
+            path = os.path.expanduser(
+                f"~/alpha/data/{self.name}/{self.name}-{model}.pkl"
+            )
+            self.store.save(path)
 
 
 def async_run_command(func):
