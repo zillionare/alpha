@@ -41,8 +41,14 @@ class MorphaFeatures:
 
         self.build()
 
+    def scale(self, x):
+        if min(x) < 1:
+            x += -min(x) + 1
+
+        return x
+
     def build(self) -> None:
-        """build features from model
+        """build features for model
 
         """
         for a in [i / 20000 for i in range(-20, 20)]:
@@ -52,25 +58,26 @@ class MorphaFeatures:
 
                 # use same price serices for all ma2
                 y = p(np.arange(self.nbars))
-                # 最后一个周期涨幅
-                pcr = y[-1] / y[-2] - 1
+                y = self.scale(y)
+
+                # vx is the distance to the end of bars
+                vx = self.nbars - 1 - (-b) / (2 * (a or 1e-13))
+                vx = np.tanh(vx * 2 / self.nbars)
+
                 for win in self.wins:
                     store = self.stores[win]
                     ma = moving_average(y, win)
-                    for j in range(-self.samples, 0):
-                        c = y[j - nbars:j]
-                        # avoid zero division
-                        a = a or 1e-13
-                        vx = len(y) - 1 - (-b) / (2 * a)
-                        ma = moving_average(c / c[0], win)
+                    for j in range(-self.samples + 1, 1):
+                        vec = ma[len(ma) + j - self.flen:len(ma) + j]
+                        pcr = ma[len(ma) -1 + j] / ma[len(ma) + j -2] - 1
                         store._insert_one(
                             {
                                 "acc": a,
                                 "b": b,
                                 "pcr": pcr,
-                                "vx": np.tanh(vx * 2 / len(y)),
+                                "vx": vx,
                             },
-                            ma,
+                            vec,
                         )
 
     def xtransform(self, close: np.ndarray) -> List:
@@ -89,12 +96,15 @@ class MorphaFeatures:
         if np.count_nonzero(np.isfinite(close)) != len(close):
             raise DataError("data contains np.NaN or None")
 
-        close = close/close[0]
+        close = self.scale(close/close[0])
+        dtypes = None
         for win in self.wins:
             ma = moving_average(close, win)[-self.flen:]
             matched = self.stores[win].search_vec(ma, threshold=999, n=1)
+            dtypes = matched.dtype
             if matched and len(matched) == 1:
-                vec.extend(matched[0])
+                # acc, b, pcr, vx, d(distance)
+                vec.append(matched[0].tolist())
 
-        return vec
+        return np.array(vec, dtype=dtypes)
 
