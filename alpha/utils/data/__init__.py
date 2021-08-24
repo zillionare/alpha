@@ -24,7 +24,7 @@ Frame = NewType("Frame", (datetime.date, datetime.datetime))
 
 
 def dataset_scope(
-    start: Frame, end: Frame, codes=None, has_register_ipo=False
+    start: Frame, end: Frame, codes=None, has_register_ipo=False, frame_type=FrameType.DAY
 ) -> List[Tuple[str, Frame]]:
     """generate sample points for making dataset.
 
@@ -40,11 +40,18 @@ def dataset_scope(
     """
     secs = Securities()
 
+    if frame_type in tf.minute_level_frames:
+        convertor = tf.int2time
+        timemark = arrow.get("2020-07-20 15:00+08:00")
+    else:
+        convertor = tf.int2date
+        timemark = datetime.date(2020, 7, 20)
+
     if has_register_ipo:
         if codes is None:
             codes = secs.choose(_types=["stock"], exclude_st=True)
 
-        frames = [tf.int2date(x) for x in tf.get_frames(start, end, FrameType.DAY)]
+        frames = [convertor(x) for x in tf.get_frames(start, end, frame_type)]
 
         codes = random.sample(codes, len(codes))
         frames = random.sample(frames, len(frames))
@@ -56,8 +63,8 @@ def dataset_scope(
         _types=["stock"], exclude_st=True, exclude_688=True, exclude_300=True
     )
 
-    if end < datetime.date(2020, 7, 20):
-        frames = [tf.int2date(x) for x in tf.get_frames(start, end, FrameType.DAY)]
+    if end < timemark:
+        frames = [convertor(x) for x in tf.get_frames(start, end, frame_type)]
         codes = codes or codes_before_july
 
         codes = random.sample(codes, len(codes))
@@ -65,8 +72,8 @@ def dataset_scope(
         return itertools.product(frames, codes)
 
     frames1 = [
-        tf.int2date(x)
-        for x in tf.get_frames(start, datetime.date(2020, 7, 19), FrameType.DAY)
+        convertor(x)
+        for x in tf.get_frames(start, timemark, frame_type)
     ]
 
     codes = codes or codes_before_july
@@ -75,8 +82,8 @@ def dataset_scope(
     permutations1 = itertools.product(frames1, codes)
 
     frames2 = [
-        tf.int2date(x)
-        for x in tf.get_frames(datetime.date(2020, 7, 20), end, FrameType.DAY)
+        convertor(x)
+        for x in tf.get_frames(timemark, end, frame_type)
     ]
 
     codes = codes or codes_after_july
@@ -236,6 +243,7 @@ async def even_distributed_dataset(
     has_register_ipo=False,
     start="2010-01-01",
     meta: dict = {},
+    frame_type: FrameType = FrameType.DAY
 ):
     """构建按涨跌幅均匀分布的数据集
 
@@ -257,18 +265,19 @@ async def even_distributed_dataset(
     buckets = [0] * buckets_size
     capacity = int(total / buckets_size) + 1
 
-    start = tf.shift(arrow.get(start), 0, FrameType.DAY)
-    end = tf.day_shift(arrow.now(), 0)
+    start = tf.shift(arrow.get(start), 0, frame_type)
+    end_date = tf.day_shift(arrow.now(), 0)
+    end = tf.shift(tf.combine_time(end_date, hour=15), 0, frame_type)
 
-    for i, (tail, code) in enumerate(dataset_scope(start, end)):
+    for i, (tail, code) in enumerate(dataset_scope(start, end, frame_type=frame_type)):
         sec = Security(code)
-        head = tf.shift(tail, -bars_len + 1, FrameType.DAY)
+        head = tf.shift(tail, -bars_len + 1, frame_type)
 
-        _head, _tail = await cache.get_bars_range(code, FrameType.DAY)
+        _head, _tail = await cache.get_bars_range(code, frame_type)
         if _head is None or _tail is None or _head >= head or _tail <= tail:
             continue
 
-        bars = await sec.load_bars(head, tail, FrameType.DAY)
+        bars = await sec.load_bars(head, tail, frame_type)
         if len(bars) != bars_len:
             continue
 
@@ -307,3 +316,19 @@ async def even_distributed_dataset(
     )
     with open(save_to, "wb") as f:
         pickle.dump({"data": data, "meta": meta}, f)
+
+def load_data(dataset_path: str) -> "DataBunch":
+    """
+    Loads data from a given dataset path.
+    """
+    with open(dataset_path, "rb") as f:
+        bunch = pickle.load(f)
+        bunch.path = dataset_path
+
+    if bunch.name is None:
+        bunch.name = dataset_path.split("/")[-1].split(".")[0]
+
+    if bunch.desc is None:
+        bunch.desc = bunch.name
+
+    return bunch
