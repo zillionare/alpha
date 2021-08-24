@@ -34,3 +34,5 @@ milvus:
   #host: "172.17.22.1"
   port: 19530
   meta: "~/alpha/mivlus.meta.tsv"
+mongo:
+  dsn: 'mongodb://mongo.aaron'
