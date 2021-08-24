@@ -1,4 +1,3 @@
-from torch import result_type
 from alpha.config import get_config_dir
 from typing import List, Union
 from pymilvus import DataType, Milvus
@@ -126,12 +125,13 @@ class VecStore:
         if len(pos) == 0:
             return None
 
-        distances = {_id: d for _id, d in zip(np.array(ids)[pos].flatten(), dist_all[pos].flatten())}
+        ids = np.array(ids)[pos].flatten()
+        distances = {_id: d for _id, d in zip(ids, dist_all[pos].flatten())}
 
         if self.meta_collection is not None:
             meta_data = self.meta_collection.find({
                 "_id": {
-                    "$in" : ids[pos]
+                    "$in" : ids.tolist()
                 }
             })
 
@@ -146,6 +146,7 @@ class VecStore:
             del distances[_id]
 
         if len(distances) > 0:
+            # in case errors happened during inserting
             logger.warning("records %s has no meta bound", distances.keys())
 
         return results
@@ -162,7 +163,7 @@ class VecStore:
         ids = [meta["_id"] for meta in metas]
 
         res = self.milvus.query(self.name, f"_id in {ids}", output_fields=["_id", "features"])
-        features = {}
+        features = {item["_id"]: item["features"] for item in res}
 
         for meta in metas:
             _id = meta["_id"]
@@ -174,15 +175,5 @@ class VecStore:
 
         return results
 
-cfg4py.init(get_config_dir())
-vs = VecStore("stock", "L2", 50, cfg.milvus.host, cfg.milvus.port, cfg.mongo.dsn)
-vs.create_collection()
 
 
-vec = np.random.rand(10, 50)
-meta = [{"flag": i//2, "seq": i} for i in range(10)]
-
-vs.insert(vec.tolist(), meta)
-
-vs.search_vec(vec[:2].tolist(), 0.2)
-vs.search_by_meta(flag=1, seq=2, return_vec=True)
