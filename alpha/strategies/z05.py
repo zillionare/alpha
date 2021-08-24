@@ -1,6 +1,6 @@
 from random import sample
 from alpha.core.features import fillna, ma_permutation, transform_y_by_change_pct
-from alpha.strategies.databunch import DataBunch
+from alpha.utils.data import DataBunch
 import os
 import arrow
 from omicron.core.timeframe import tf

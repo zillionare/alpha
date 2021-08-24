@@ -16,7 +16,7 @@ from alpha.core.features import (
     transform_y_by_change_pct,
 )
 from alpha.strategies.base_xgboost_strategy import BaseXGBoostStrategy
-from alpha.strategies.databunch import DataBunch
+from alpha.utils.data import DataBunch
 
 cfg = cfg4py.init()
 

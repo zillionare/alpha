@@ -5,7 +5,7 @@ from sklearn.metrics import make_scorer, max_error, mean_absolute_error
 from alpha.core.features import fillna, moving_average, relative_strength_index
 from typing import List
 from alpha.core.errors import NoFeaturesError, NoTargetError
-from alpha.strategies.databunch import DataBunch
+from alpha.utils.data import DataBunch
 import os
 import cfg4py
 import arrow
