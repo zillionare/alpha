@@ -11,7 +11,6 @@ import fire
 import numpy as np
 import omicron
 import pandas as pd
-import plotly.graph_objects as go
 from numpy.typing import ArrayLike
 from omicron import cache
 from omicron.core.timeframe import tf

@@ -48,9 +48,7 @@ class MorphaFeatures:
         return x
 
     def build(self) -> None:
-        """build features for model
-
-        """
+        """build features for model"""
         for a in [i / 20000 for i in range(-20, 20)]:
             # b= 0.1对应每天涨停的情况
             for b in [i / 200 for i in range(-20, 20)]:
@@ -68,8 +66,8 @@ class MorphaFeatures:
                     store = self.stores[win]
                     ma = moving_average(y, win)
                     for j in range(-self.samples + 1, 1):
-                        vec = ma[len(ma) + j - self.flen:len(ma) + j]
-                        pcr = ma[len(ma) -1 + j] / ma[len(ma) + j -2] - 1
+                        vec = ma[len(ma) + j - self.flen : len(ma) + j]
+                        pcr = ma[len(ma) - 1 + j] / ma[len(ma) + j - 2] - 1
                         store._insert_one(
                             {
                                 "acc": a,
@@ -91,15 +89,15 @@ class MorphaFeatures:
         if len(close) < self.nbars:
             raise DataError("not enough data")
 
-        close = close[-self.nbars:]
+        close = close[-self.nbars :]
 
         if np.count_nonzero(np.isfinite(close)) != len(close):
             raise DataError("data contains np.NaN or None")
 
-        close = self.scale(close/close[0])
+        close = self.scale(close / close[0])
         dtypes = None
         for win in self.wins:
-            ma = moving_average(close, win)[-self.flen:]
+            ma = moving_average(close, win)[-self.flen :]
             matched = self.stores[win].search_vec(ma, threshold=999, n=1)
             dtypes = matched.dtype
             if matched and len(matched) == 1:
@@ -107,4 +105,3 @@ class MorphaFeatures:
                 vec.append(matched[0].tolist())
 
         return np.array(vec, dtype=dtypes)
-

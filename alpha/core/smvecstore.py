@@ -1,11 +1,9 @@
 """small size vector store"""
 
 from asyncio.log import logger
-from os import stat
 import pickle
 from sqlite3 import DataError
 from typing import Any, List, Union
-from black import E
 import numpy as np
 import logging
 import pandas as pd

@@ -1,4 +1,3 @@
-
 import time
 from alpha.core.morphalpatterns import MorphaFeatures
 import unittest
@@ -22,6 +21,6 @@ class TestMorphalPatterns(unittest.TestCase):
         features = mf.xtransform(y)
 
         self.assertEqual(3, len(features))
-        np.testing.assert_array_almost_equal([0.0002, 0.005, 0.0125], features[0].tolist()[:3], decimal=3)
-
-
+        np.testing.assert_array_almost_equal(
+            [0.0002, 0.005, 0.0125], features[0].tolist()[:3], decimal=3
+        )
