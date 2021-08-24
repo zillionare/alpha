@@ -91,20 +91,3 @@ class DataBunch(Bunch):
     @property
     def y(self):
         return self.target
-
-    @staticmethod
-    def load_data(dataset_path: str) -> "DataBunch":
-        """
-        Loads data from a given dataset path.
-        """
-        with open(dataset_path, "rb") as f:
-            bunch = pickle.load(f)
-            bunch.path = dataset_path
-
-        if bunch.name is None:
-            bunch.name = dataset_path.split("/")[-1].split(".")[0]
-
-        if bunch.desc is None:
-            bunch.desc = bunch.name
-
-        return bunch
