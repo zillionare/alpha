@@ -15,11 +15,11 @@ import cfg4py
 import fire
 import omicron
 import psutil
-from genericpath import exists
 from omicron import cache
 from omicron.models.securities import Securities
+from omicron.core.types import FrameType
 
-from alpha.strategies.databunch import load_data
+from alpha.utils.data import load_data
 
 
 def async_run_command(func):
@@ -97,18 +97,26 @@ async def train(strategy: str, version: str = None, ds: str = None):
 
 
 @async_run_command
-async def make_even_distributed_dataset(total: int, save_to: str, bars_len: int = 300):
+async def make_even_distributed_dataset(total: int, save_to: str, bars_len: int = 300, frame_type: str = "1d"):
     buckets_size = 21
 
     def target_to_bucket(bars):
-        c0, c1 = bars[-2:]["close"]
+        close = bars["close"]
+        c0 = close[-11]
+        c_ = close[-10:]
 
-        if np.all(np.isfinite((c0, c1))):
-            return c1 / c0 - 1, int((c1 / c0 - 1) * 100) + buckets_size // 2
+        if np.isfinite(c0) and np.count_nonzero(np.isfinite(c_)) > 0.9 * len(c_):
+            minc, maxc = min(c_),  max(c_)
+            pcr_minus = minc / c0 - 1
+            pcr_plus = maxc / c0 -1
+            if abs(pcr_minus) >= abs(pcr_plus):
+                return pcr_minus, int(pcr_minus * 100) + buckets_size // 2
+            else:
+                return pcr_plus, int(pcr_plus * 100) + buckets_size // 2
+        else:
+            return None, None
 
-        return None, None
-
-    meta = {"target_win": 1}
+    meta = {"target_win": 10}
 
     await even_distributed_dataset(
         total,
@@ -117,7 +125,8 @@ async def make_even_distributed_dataset(total: int, save_to: str, bars_len: int 
         target_to_bucket,
         save_to,
         meta=meta,
-        start="2015-10-09",
+        start="2015-10-09 10:00",
+        frame_type=FrameType(frame_type)
     )
 
 
