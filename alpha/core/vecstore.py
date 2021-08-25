@@ -1,13 +1,16 @@
-from alpha.config import get_config_dir
+import logging
 from typing import List, Union
-from pymilvus import DataType, Milvus
-from pymongo import MongoClient
+
 import cfg4py
 import numpy as np
-import logging
+from pymilvus import DataType, Milvus
+from pymongo import MongoClient
+
+from alpha.config import get_config_dir
 
 logger = logging.getLogger(__name__)
 cfg = cfg4py.get_instance()
+
 
 class VecStore:
     def __init__(
@@ -41,6 +44,11 @@ class VecStore:
 
         self.metric = metric
         self.dim = dim
+
+    def drop_collection(self):
+        self.milvus.drop_collection(self.name)
+        if self.meta_collection:
+            self.meta_collection.remove({})
 
     def create_collection(self, drop_if_exists=True):
         if drop_if_exists:
@@ -112,11 +120,11 @@ class VecStore:
             "features",
             param=params,
             limit=limit,
-            output_fields=["_id"]
+            output_fields=["_id"],
         )
 
         ids, distances = [], []
-        for i in range(len(res)): # chuncks
+        for i in range(len(res)):  # chuncks
             ids.extend(res[i].ids)
             distances.extend(res[i].distances)
 
@@ -129,19 +137,12 @@ class VecStore:
         distances = {_id: d for _id, d in zip(ids, dist_all[pos].flatten())}
 
         if self.meta_collection is not None:
-            meta_data = self.meta_collection.find({
-                "_id": {
-                    "$in" : ids.tolist()
-                }
-            })
+            meta_data = self.meta_collection.find({"_id": {"$in": ids.tolist()}})
 
         results = []
         for meta in meta_data:
             _id = meta["_id"]
-            results.append({
-                "distance": distances.get(_id),
-                **meta
-            })
+            results.append({"distance": distances.get(_id), **meta})
 
             del distances[_id]
 
@@ -162,18 +163,14 @@ class VecStore:
         results = []
         ids = [meta["_id"] for meta in metas]
 
-        res = self.milvus.query(self.name, f"_id in {ids}", output_fields=["_id", "features"])
+        res = self.milvus.query(
+            self.name, f"_id in {ids}", output_fields=["_id", "features"]
+        )
         features = {item["_id"]: item["features"] for item in res}
 
         for meta in metas:
             _id = meta["_id"]
 
-            results.append({
-                "features": features.get(_id),
-                **meta
-            })
+            results.append({"features": features.get(_id), **meta})
 
         return results
-
-
-
