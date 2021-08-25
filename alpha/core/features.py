@@ -1,9 +1,9 @@
+import itertools
 import math
 from typing import Any, List, Tuple, Union
 
 import numpy as np
 from numpy.typing import ArrayLike
-import itertools
 
 argpos_permutations = {
     n: list(itertools.permutations(range(n))) for n in (2, 3, 4, 5, 6, 7)
@@ -360,7 +360,7 @@ def bolling_band(prices, period, num_std_dev=2.0):
     # 3 bands, bandwidth, range and %B
     bbs = np.zeros((bb_range, 6))
 
-    simple_ma = sma(prices, period)
+    simple_ma = moving_average(prices, period)
 
     for idx in range(bb_range):
         std_dev = np.std(prices[idx : idx + period])

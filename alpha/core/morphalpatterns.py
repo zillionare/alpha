@@ -17,11 +17,12 @@ from high score to low score, we'll have 5 kinds:
 
 import os
 import pickle
-from sqlite3 import DataError, DatabaseError
+from sqlite3 import DatabaseError, DataError
 from typing import List
+
+import numpy as np
 from alpha.core.features import moving_average
 from alpha.core.smvecstore import SmallSizeVectorStore
-import numpy as np
 
 
 class MorphaFeatures:

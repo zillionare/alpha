@@ -1,15 +1,26 @@
+import datetime
 import itertools
 import json
-import random
-
-import xgboost
-from alpha.utils.data import DataBunch
+import logging
 import os
 import pickle
-from typing import Callable, List, Tuple, Union
-from ruamel.yaml import YAML
-from numpy.typing import ArrayLike
+import random
+from typing import Callable, List, NewType, Tuple, Union
+
 import numpy as np
+import xgboost
+from alpha.utils.data import DataBunch
+from numpy.typing import ArrayLike
+from omicron.core.timeframe import tf
+from omicron.core.types import FrameType
+from omicron.models.securities import Securities
+from ruamel.yaml import YAML
+from scipy.stats import randint, uniform
+from sklearn.metrics import (
+    classification_report,
+    mean_absolute_error,
+    mean_squared_error,
+)
 from sklearn.model_selection import (
     GridSearchCV,
     ParameterGrid,
@@ -17,18 +28,6 @@ from sklearn.model_selection import (
     RepeatedStratifiedKFold,
 )
 from xgboost import XGBClassifier, XGBModel, XGBRegressor
-from sklearn.metrics import (
-    classification_report,
-    mean_absolute_error,
-    mean_squared_error,
-)
-from scipy.stats import randint, uniform
-from typing import NewType
-import datetime
-from omicron.models.securities import Securities
-from omicron.core.timeframe import tf
-from omicron.core.types import FrameType
-import logging
 
 logger = logging.getLogger(__name__)
 

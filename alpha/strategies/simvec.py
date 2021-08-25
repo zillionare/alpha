@@ -6,18 +6,12 @@ from math import copysign
 from typing import List
 
 import arrow
+
 import cfg4py
 import fire
 import numpy as np
 import omicron
 import pandas as pd
-from numpy.typing import ArrayLike
-from omicron import cache
-from omicron.core.timeframe import tf
-from omicron.core.types import Frame, FrameType
-from omicron.models.security import Security
-from sklearn.preprocessing import normalize
-
 from alpha.core.features import (
     fillna,
     moving_average,
@@ -26,6 +20,11 @@ from alpha.core.features import (
 )
 from alpha.core.smvecstore import SmallSizeVectorStore
 from alpha.utils import round
+from numpy.typing import ArrayLike
+from omicron import cache
+from omicron.core.timeframe import tf
+from omicron.core.types import Frame, FrameType
+from omicron.models.security import Security
 
 cfg = cfg4py.init("/apps/alpha/alpha/config")
 logger = logging.getLogger(__name__)
@@ -333,6 +332,7 @@ class SimVecStrategy:
             ybars = bars[i + self.nbars : i + self.nbars + wwin]
 
             close = xbars["close"]
+
             if np.any(ybars["close"] == None) or np.count_nonzero(
                 close == None
             ) > 0.1 * len(close):

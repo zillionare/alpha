@@ -1,8 +1,9 @@
-from pytest import param
-from alpha.strategies.z04 import Z04
-from tests import init_test_env
 import unittest
+
 import omicron
+from alpha.strategies.z04 import Z04
+from pytest import param
+from tests import init_test_env
 
 
 class TestZ04(unittest.IsolatedAsyncioTestCase):

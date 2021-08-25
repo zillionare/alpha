@@ -1,7 +1,8 @@
-from alpha.core.features import pos_encode
 import itertools
 import unittest
+
 import numpy as np
+from alpha.core.features import pos_encode
 
 
 class TextX(unittest.TestCase):

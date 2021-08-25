@@ -1,8 +1,8 @@
 import logging
 import unittest
 
-from alpha.strategies.z01 import Z01Strategy
 from alpha.strategies import factory
+from alpha.strategies.z01 import Z01Strategy
 
 logger = logging.getLogger(__name__)
 

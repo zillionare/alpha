@@ -1,22 +1,21 @@
-import pickle
-from sklearn.inspection import permutation_importance
-from alpha.core.errors import NoFeaturesError, NoTargetError
-from typing import Callable, NewType
-from typing import List
-from typing import Tuple
-import arrow
-from omicron.models.securities import Securities
-from omicron.models.security import Security
+import datetime
 import itertools
+import logging
+import pickle
+import random
+from typing import Callable, List, NewType, Tuple
+
+import arrow
+
+import numpy as np
+from alpha.core.errors import NoFeaturesError, NoTargetError
+from alpha.utils.data.databunch import DataBunch
+from omicron import cache
 from omicron.core.timeframe import tf
 from omicron.core.types import FrameType
-import random
-import datetime
-from alpha.utils.data.databunch import DataBunch
-import numpy as np
-from omicron import cache
-
-import logging
+from omicron.models.securities import Securities
+from omicron.models.security import Security
+from sklearn.inspection import permutation_importance
 
 logger = logging.getLogger(__name__)
 
@@ -24,7 +23,11 @@ Frame = NewType("Frame", (datetime.date, datetime.datetime))
 
 
 def dataset_scope(
-    start: Frame, end: Frame, codes=None, has_register_ipo=False, frame_type=FrameType.DAY
+    start: Frame,
+    end: Frame,
+    codes=None,
+    has_register_ipo=False,
+    frame_type=FrameType.DAY,
 ) -> List[Tuple[str, Frame]]:
     """generate sample points for making dataset.
 
@@ -71,20 +74,14 @@ def dataset_scope(
         frames = random.sample(frames, len(frames))
         return itertools.product(frames, codes)
 
-    frames1 = [
-        convertor(x)
-        for x in tf.get_frames(start, timemark, frame_type)
-    ]
+    frames1 = [convertor(x) for x in tf.get_frames(start, timemark, frame_type)]
 
     codes = codes or codes_before_july
     codes = random.sample(codes, len(codes))
     frames1 = random.sample(frames1, len(frames1))
     permutations1 = itertools.product(frames1, codes)
 
-    frames2 = [
-        convertor(x)
-        for x in tf.get_frames(timemark, end, frame_type)
-    ]
+    frames2 = [convertor(x) for x in tf.get_frames(timemark, end, frame_type)]
 
     codes = codes or codes_after_july
     frames2 = random.sample(frames2, len(frames2))
@@ -243,7 +240,7 @@ async def even_distributed_dataset(
     has_register_ipo=False,
     start="2010-01-01",
     meta: dict = {},
-    frame_type: FrameType = FrameType.DAY
+    frame_type: FrameType = FrameType.DAY,
 ):
     """构建按涨跌幅均匀分布的数据集
 
@@ -316,6 +313,7 @@ async def even_distributed_dataset(
     )
     with open(save_to, "wb") as f:
         pickle.dump({"data": data, "meta": meta}, f)
+
 
 def load_data(dataset_path: str) -> "DataBunch":
     """

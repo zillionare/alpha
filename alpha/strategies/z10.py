@@ -1,24 +1,23 @@
-from xml.sax.handler import feature_string_interning
-from omicron.models.securities import Securities
-
-from sklearn.metrics import make_scorer, max_error, mean_absolute_error
-from alpha.core.features import fillna, moving_average, relative_strength_index
-from typing import List
-from alpha.core.errors import NoFeaturesError, NoTargetError
-from alpha.utils.data import DataBunch
-import os
-import cfg4py
-import arrow
-import numpy as np
-import logging
 import datetime
+import logging
+import os
+from typing import List
+from xml.sax.handler import feature_string_interning
 
+import arrow
+
+import cfg4py
+import numpy as np
+from alpha import utils
+from alpha.core.errors import NoFeaturesError, NoTargetError
+from alpha.core.features import fillna, moving_average, relative_strength_index
+from alpha.strategies.base_xgboost_strategy import BaseXGBoostStrategy
+from alpha.utils.data import DataBunch
 from omicron.core.timeframe import tf
 from omicron.core.types import FrameType
+from omicron.models.securities import Securities
 from omicron.models.security import Security
-from alpha.strategies.base_xgboost_strategy import BaseXGBoostStrategy
-
-from alpha import utils
+from sklearn.metrics import make_scorer, max_error, mean_absolute_error
 
 logger = logging.getLogger(__name__)
 

@@ -1,19 +1,21 @@
+import logging
+import os
+
+import arrow
+
+import cfg4py
+import numpy as np
 from alpha.core.features import (
-    transform_to_change_pct,
     fillna,
     ma_permutation,
+    transform_to_change_pct,
     transform_y_by_change_pct,
 )
 from alpha.strategies.base_xgboost_strategy import BaseXGBoostStrategy
 from alpha.utils.data import DataBunch
-import os
-import cfg4py
-import arrow
 from omicron.core.timeframe import tf
 from omicron.core.types import FrameType
 from omicron.models.security import Security
-import numpy as np
-import logging
 
 cfg = cfg4py.init()
 
@@ -61,7 +63,7 @@ class Z07(BaseXGBoostStrategy):
             ybars = bars[-self.target_win :]
             xbars = bars[: -self.target_win]
 
-            close = bars["close"]
+            # close = bars["close"]
 
             # to calc the advance/decrease rate, we need c0 and all close in target_win
             y_ = transform_y_by_change_pct(

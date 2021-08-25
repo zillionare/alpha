@@ -9,7 +9,6 @@ from typing import Callable, List, Union
 
 import numpy as np
 import pandas as pd
-
 from alpha.backtesting import _EQUITY_AGG, OHLCV_AGG, TRADES_AGG
 from backtesting._util import _as_list, _data_period, _Indicator
 from bokeh.colors import RGB
@@ -192,7 +191,7 @@ def plot(
     reverse_indicators=True,
     show_legend=True,
     open_browser=True,
-):
+):  # noqa: C901
     """
     Like much of GUI code everywhere, this is a mess.
     """

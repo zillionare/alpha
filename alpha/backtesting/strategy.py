@@ -1,5 +1,4 @@
-from alpha.backtesting.forward_array import ForwardArray
-from alpha.backtesting.errors import OutOfMoneyError
+import logging
 import sys
 from abc import ABCMeta, abstractmethod
 from itertools import chain
@@ -7,16 +6,15 @@ from numbers import Number
 from typing import Callable, Tuple, Union
 
 import numpy as np
-import logging
-from numpy.typing import ArrayLike
 import pandas as pd
-
 from alpha.backtesting.broker import Broker
+from alpha.backtesting.errors import OutOfMoneyError
+from alpha.backtesting.forward_array import ForwardArray
 from alpha.backtesting.order import Order
 from alpha.backtesting.position import Position
 from alpha.backtesting.trade import Trade
+from numpy.typing import ArrayLike
 from omicron.models.security import Security
-
 
 logger = logging.getLogger()
 

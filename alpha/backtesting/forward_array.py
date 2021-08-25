@@ -1,6 +1,7 @@
 from typing import Any
-from numpy.typing import ArrayLike
+
 import numpy as np
+from numpy.typing import ArrayLike
 from omicron.core.numpy_extensions import numpy_append_fields
 
 

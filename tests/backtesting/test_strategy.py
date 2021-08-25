@@ -1,11 +1,11 @@
-from alpha.backtesting.forward_array import ForwardArray
-from alpha.backtesting.broker import Broker
-from alpha.backtesting.strategy import Strategy
-import omicron
-from tests import init_test_env, load_bars_from_file
+import logging
 import unittest
 
-import logging
+import omicron
+from alpha.backtesting.broker import Broker
+from alpha.backtesting.forward_array import ForwardArray
+from alpha.backtesting.strategy import Strategy
+from tests import init_test_env, load_bars_from_file
 
 logging.basicConfig(level=logging.INFO)
 

@@ -41,3 +41,6 @@ class Config(object):
         port: Optional[int] = None
 
         meta: Optional[str] = None
+
+    class mongo:
+        dsn: Optional[str] = None

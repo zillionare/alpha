@@ -1,6 +1,5 @@
 """Console script for alpha."""
 
-from alpha.utils.data import even_distributed_dataset
 import asyncio
 import functools
 import importlib.util
@@ -8,18 +7,18 @@ import os
 import pickle
 import sys
 from warnings import simplefilter
-import numpy as np
 
 import arrow
+
 import cfg4py
 import fire
+import numpy as np
 import omicron
 import psutil
+from alpha.utils.data import even_distributed_dataset, load_data
 from omicron import cache
-from omicron.models.securities import Securities
 from omicron.core.types import FrameType
-
-from alpha.utils.data import load_data
+from omicron.models.securities import Securities
 
 
 def async_run_command(func):
@@ -47,7 +46,7 @@ async def backtest(strategy: str, code: str = None, frame_type: str = "1d"):
     secs = Securities.choose(["stock"])
     await cache.sys.lpush(f"backtest.scope.{strategy}.{frame_type.value}", secs)
     for i in range(cpus):
-        proc = await asyncio.create_subprocess_exec(
+        await asyncio.create_subprocess_exec(
             sys.executable, "-m", "alpha.core.mp", "main", strategy, frame_type
         )
 
@@ -97,7 +96,9 @@ async def train(strategy: str, version: str = None, ds: str = None):
 
 
 @async_run_command
-async def make_even_distributed_dataset(total: int, save_to: str, bars_len: int = 300, frame_type: str = "1d"):
+async def make_even_distributed_dataset(
+    total: int, save_to: str, bars_len: int = 300, frame_type: str = "1d"
+):
     buckets_size = 21
 
     def target_to_bucket(bars):
@@ -106,9 +107,9 @@ async def make_even_distributed_dataset(total: int, save_to: str, bars_len: int 
         c_ = close[-10:]
 
         if np.isfinite(c0) and np.count_nonzero(np.isfinite(c_)) > 0.9 * len(c_):
-            minc, maxc = min(c_),  max(c_)
+            minc, maxc = min(c_), max(c_)
             pcr_minus = minc / c0 - 1
-            pcr_plus = maxc / c0 -1
+            pcr_plus = maxc / c0 - 1
             if abs(pcr_minus) >= abs(pcr_plus):
                 return pcr_minus, int(pcr_minus * 100) + buckets_size // 2
             else:
@@ -126,7 +127,7 @@ async def make_even_distributed_dataset(total: int, save_to: str, bars_len: int 
         save_to,
         meta=meta,
         start="2015-10-09 10:00",
-        frame_type=FrameType(frame_type)
+        frame_type=FrameType(frame_type),
     )
 
 

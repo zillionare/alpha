@@ -3,9 +3,8 @@ import warnings
 from math import copysign
 from typing import List
 
-import numpy as np
-
 import aioredis
+import numpy as np
 from alpha.backtesting.errors import OutOfMoneyError
 from alpha.backtesting.order import Order
 from alpha.backtesting.position import Position
@@ -119,7 +118,7 @@ class Broker:
 
     @property
     def last_price(self) -> float:
-        """ Price at the last (current) close. """
+        """Price at the last (current) close."""
         return self._data.close[-1]
 
     def _adjusted_price(self, size=None, price=None) -> float:
@@ -156,6 +155,7 @@ class Broker:
             self._equity[i:] = 0
             raise OutOfMoneyError
 
+    # noqa
     def _process_orders(self):
         data = self._data
         open, high, low = data.open[-1], data.high[-1], data.low[-1]

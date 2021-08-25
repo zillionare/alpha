@@ -1,13 +1,12 @@
 """small size vector store"""
 
-from asyncio.log import logger
+import logging
 import pickle
 from sqlite3 import DataError
 from typing import Any, List, Union
-import numpy as np
-import logging
-import pandas as pd
 
+import numpy as np
+import pandas as pd
 from sklearn.metrics import euclidean_distances
 from sklearn.metrics.pairwise import cosine_distances
 
@@ -60,7 +59,7 @@ class SmallSizeVectorStore:
 
         ids = []
         if len(meta_items) != len(vectors):
-            raise ValueError(f"length of meta and vectors should be same")
+            raise ValueError("length of meta and vectors should be same")
 
         for item, vector in zip(meta_items, vectors):
             ids.append(self._insert_one(item, vector))

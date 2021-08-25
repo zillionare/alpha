@@ -1,20 +1,22 @@
-from alpha.core.vecstore import VecStore
-from alpha.config import get_config_dir
 import unittest
-import numpy as np
 
 import cfg4py
+import numpy as np
+from alpha.config import get_config_dir
+from alpha.core.vecstore import VecStore
+
+
 class TestVecStore(unittest.TestCase):
     def test_all_in_one(self):
-        """to run this test, you need to setup a milvus server and a mongo server
-        """
+        """to run this test, you need to setup a milvus server and a mongo server"""
         cfg = cfg4py.init(get_config_dir())
-        vs = VecStore("stock", "L2", 50, cfg.milvus.host, cfg.milvus.port, cfg.mongo.dsn)
+        vs = VecStore(
+            "stock", "L2", 50, cfg.milvus.host, cfg.milvus.port, cfg.mongo.dsn
+        )
         vs.create_collection(drop_if_exists=True)
 
-
         vec = np.random.rand(10, 50)
-        meta = [{"flag": i//2, "seq": i} for i in range(10)]
+        meta = [{"flag": i // 2, "seq": i} for i in range(10)]
 
         ids = vs.insert(vec.tolist(), meta)
         self.assertEqual(len(ids), 10)

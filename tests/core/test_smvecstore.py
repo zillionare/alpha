@@ -1,7 +1,8 @@
-from alpha.core.smvecstore import SmallSizeVectorStore
-from unicodedata import decimal
-import numpy as np
 import unittest
+from unicodedata import decimal
+
+import numpy as np
+from alpha.core.smvecstore import SmallSizeVectorStore
 
 
 class TestSmallSizeVectorStore(unittest.TestCase):

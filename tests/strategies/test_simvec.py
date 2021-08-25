@@ -1,17 +1,17 @@
-from alpha.strategies.simvec import SimVecStrategy
 import os
+import pickle
+import unittest
 
 import arrow
+
+import cfg4py
+import numpy as np
 import omicron
+from alpha.config import get_config_dir
+from alpha.strategies.simvec import SimVecStrategy
 from omicron.core.timeframe import tf
 from omicron.core.types import FrameType
 from omicron.models.security import Security
-from alpha.config import get_config_dir
-import unittest
-import numpy as np
-import pickle
-
-import cfg4py
 
 
 class TestSimVecStrategy(unittest.IsolatedAsyncioTestCase):

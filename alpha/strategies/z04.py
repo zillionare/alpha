@@ -1,18 +1,13 @@
 import os
-from alpha.utils.data import DataBunch
 import pickle
 from configparser import NoOptionError
 from ctypes import Union
 from typing import Callable
 
 import arrow
-import numpy as np
-from numpy.typing import ArrayLike
-from omicron.core.timeframe import tf
-from omicron.core.types import FrameType
-from omicron.models.securities import Securities
-from omicron.models.security import Security
 
+import cfg4py
+import numpy as np
 from alpha.core.features import (
     fillna,
     ma_permutation,
@@ -21,7 +16,12 @@ from alpha.core.features import (
     transform_y_by_change_pct,
 )
 from alpha.strategies.base_xgboost_strategy import BaseXGBoostStrategy
-import cfg4py
+from alpha.utils.data import DataBunch
+from numpy.typing import ArrayLike
+from omicron.core.timeframe import tf
+from omicron.core.types import FrameType
+from omicron.models.securities import Securities
+from omicron.models.security import Security
 
 cfg = cfg4py.init()
 

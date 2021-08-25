@@ -52,7 +52,7 @@ async def is_local_omega_alive(port: int = 3181):
                 if resp.status == 200:
                     return await resp.text()
         return True
-    except Exception as e:
+    except Exception:
         return False
 
 
@@ -104,7 +104,7 @@ def load_bars_from_file(sec: str, frame_type: str, ext: str = "csv", sep="\t"):
     df = pd.read_csv(file, sep=sep)
     df["frame"] = pd.to_datetime(df["frame"])
 
-    # frame	open	high	low	close	volume
+    # frame    open    high    low    close    volume
     dtypes = [
         ("frame", "O"),
         ("open", "<f4"),
@@ -114,6 +114,7 @@ def load_bars_from_file(sec: str, frame_type: str, ext: str = "csv", sep="\t"):
         ("volume", "<f8"),
     ]
 
+    print(dtypes)
     # return dataframe_to_structured_array(df, dtypes=dtypes)
 
 

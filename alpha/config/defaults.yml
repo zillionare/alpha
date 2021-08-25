@@ -19,19 +19,19 @@ logging:
       - console
     level: INFO
 redis:
-  dsn: redis://172.17.0.1:6379
-  #dsn: redis://127.0.0.1:6379
+  #dsn: redis://172.17.0.1:6379
+  dsn: redis://127.0.0.1:6379
 postgres:
   enabled: false
 omega:
   urls:
-    quotes_server: http://172.17.0.1:3181
-    #quotes_server: http://127.0.0.1:3181
+    #quotes_server: http://172.17.0.1:3181
+    quotes_server: http://127.0.0.1:3181
 alpha:
     data_home: ~/alpha/data
 milvus:
-  host: "172.17.0.1"
-  #host: "172.17.22.1"
+  #host: "172.17.0.1"
+  host: "172.17.22.1"
   port: 19530
   meta: "~/alpha/mivlus.meta.tsv"
 mongo:

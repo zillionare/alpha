@@ -5,17 +5,19 @@
 
 import pickle
 import random
-from omicron.models.security import Security
-from omicron.models.securities import Securities
+
+import arrow
+
+import numpy as np
+from alpha.core.features import fillna, moving_average
 from omicron.core.timeframe import tf
 from omicron.core.types import FrameType
+from omicron.models.securities import Securities
+from omicron.models.security import Security
 from scipy.stats import randint, uniform
-import arrow
-import numpy as np
+from sklearn.metrics import mean_squared_error as MSE
 from sklearn.model_selection import RandomizedSearchCV
 from xgboost import XGBRegressor
-from alpha.core.features import fillna, moving_average
-from sklearn.metrics import mean_squared_error as MSE
 
 
 class Z03:

@@ -2,10 +2,10 @@ import logging
 import unittest
 
 import arrow
-import cfg4py
-import pandas as pd
 
+import cfg4py
 import omicron
+import pandas as pd
 from alpha.config import get_config_dir
 from alpha.strategies.z01 import Z01Strategy
 from backtesting.backtesting import Backtest

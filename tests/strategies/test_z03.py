@@ -1,8 +1,9 @@
+import unittest
+
+import numpy as np
+import omicron
 from alpha.strategies.z03 import Z03
 from tests import init_test_env
-import unittest
-import omicron
-import numpy as np
 
 
 class TestZ03(unittest.IsolatedAsyncioTestCase):
