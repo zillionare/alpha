@@ -4,7 +4,7 @@ from typing import List, Union
 import cfg4py
 import numpy as np
 from pymilvus import DataType, Milvus
-from pymongo import MongoClient
+from pymongo.database import Database
 
 from alpha.config import get_config_dir
 
@@ -12,35 +12,29 @@ logger = logging.getLogger(__name__)
 cfg = cfg4py.get_instance()
 
 
-class VecStore:
+class VecCollection:
     def __init__(
         self,
         name: str,
         metric: str,
         dim: int,
-        milhost: str,
-        milport: int,
-        meta_dsn: str = None,
+        milvus: Milvus,
+        mongo: Database = None
     ) -> None:
-        """large-scale vectores store, which store vectors in milvus and meta data in mongo database
+        """A collection of vectors, which stores vectors in milvus and it's meta in mongo collection, with the same name.
 
         Args:
             name (str): the name used by both milvus collection and metadata table (SQL)
-            milhost (str): [description]
-            milport (int): [description]
-            meta_dsn (str, optional): dsn for mongo, if there's meta data
         """
         self.name = name
-        self.milvus = Milvus(host=milhost, port=milport)
+
+        self.milvus = milvus
 
         if self.milvus.has_collection(name):
             self.milvus.load_collection(self.name, timeout=10)
 
-        if meta_dsn:
-            self.mongo = MongoClient(meta_dsn)
-            self.meta_collection = self.mongo["alpha"][self.name]
-        else:
-            self.meta_collection = None
+        if mongo:
+            self.meta_collection = mongo[self.name]
 
         self.metric = metric
         self.dim = dim
@@ -48,14 +42,14 @@ class VecStore:
     def drop_collection(self):
         self.milvus.drop_collection(self.name)
         if self.meta_collection:
-            self.meta_collection.remove({})
+            self.meta_collection.delete_many({})
 
     def create_collection(self, drop_if_exists=True):
         if drop_if_exists:
             if self.milvus.has_collection(self.name):
                 self.milvus.drop_collection(self.name)
             if self.meta_collection:
-                self.meta_collection.remove({})
+                self.meta_collection.delete_many({})
         else:
             if self.milvus.has_collection(self.name):
                 return

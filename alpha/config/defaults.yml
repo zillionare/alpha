@@ -25,14 +25,13 @@ postgres:
   enabled: false
 omega:
   urls:
-    #quotes_server: http://172.17.0.1:3181
-    quotes_server: http://127.0.0.1:3181
+    quotes_server: http://172.17.0.1:3181
+    #quotes_server: http://127.0.0.1:3181
 alpha:
     data_home: ~/alpha/data
 milvus:
-  #host: "172.17.0.1"
-  host: "172.17.22.1"
+  host: "milvus-standalone"
+  #host: "172.17.22.1"
   port: 19530
-  meta: "~/alpha/mivlus.meta.tsv"
 mongo:
-  dsn: 'mongodb://mongo.aaron'
+  dsn: 'mongodb://admin:123456@mongo.hirecode'

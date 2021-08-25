@@ -1,25 +1,34 @@
+import itertools
 import os
 import pickle
 
 import cfg4py
 from alpha.config import get_config_dir
 from alpha.core.features import moving_average
-from alpha.core.vecstore import VecStore
+from alpha.core.vecstore import VecCollection
 from pymilvus import Milvus
+from pymongo import MongoClient
 
 cfg = cfg4py.init(get_config_dir())
 
 
 class FlatSearchStrategy:
-    def __init__(self, name: str, create_space: bool = True):
-        self.space = VecStore(
-            name,
-            "L2",
-            28,
-            milhost=cfg.milvus.host,
-            milport=cfg.milvus.port,
-            meta_dsn=cfg.mongo.dsn,
-        )
+    def __init__(self, name: str):
+        self.spaces = {}
+        self.milvus = Milvus(cfg.milvus.host, cfg.milvus.port)
+        self.mongo = MongoClient(cfg.mong.dsn)
+        for win in [5, 10, 20, 60]:
+            for ft in ["1d", "30m"]:
+                name = f"{name}-ma-{win}-{ft}"
+                self.spaces[name] = VecCollection(name,
+                "L2",
+                30,
+                self.milvus,
+                self.mongo
+            )
+
+        self.name = name
+
         self.wins = [5, 10, 20, 60]
         self.flen = 7
         self.space.create_collection(False)
