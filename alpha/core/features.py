@@ -61,7 +61,7 @@ def predict_by_moving_average(
         ma_pred = np.polyval(coef, np.arange(len(ma) + i))
         preds.append(reverse_moving_average(ma_pred, len(ma_pred) -1, win))
 
-    return preds
+    return preds, pmae
 
 
 def moving_average(ts: np.array, win: int):

@@ -90,9 +90,11 @@ class TestFeatures(unittest.TestCase):
             return 0.002 * i * i + 0.001 * i + 1
         ts = [f(i) for i in range(11)]
 
-        preds = predict_by_moving_average(ts, 5)
+        preds, pmae = predict_by_moving_average(ts, 5)
         self.assertAlmostEqual(1.261, preds[0])
         self.assertTrue(preds[0]/ f(11)-1 < 0.007)
+        self.assertTrue(pmae < 0.001)
 
-        preds = predict_by_moving_average(ts, 5, 3)
+        preds, pmae = predict_by_moving_average(ts, 5, 3)
         np.testing.assert_array_almost_equal([1.261, 1.308, 1.359], preds, 3)
+        self.assertTrue(pmae < 0.001)
