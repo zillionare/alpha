@@ -1,3 +1,4 @@
+from alpha.strategies.simvec import predict
 import itertools
 import unittest
 
@@ -8,6 +9,8 @@ from alpha.core.features import (
     ma_permutation,
     moving_average,
     pos_encode_v2,
+    predict_by_moving_average,
+    reverse_moving_average,
     transform_y_by_change_pct,
 )
 
@@ -74,3 +77,22 @@ class TestFeatures(unittest.TestCase):
 
         ts = [10, 10.1, 10.2, 9.5]
         self.assertEqual(-1, transform_y_by_change_pct(ts, (0.95, 1.05)))
+
+    def test_reverse_moving_average(self):
+        c = np.arange(10)
+        ma = moving_average(c, 3)
+        c1 = [reverse_moving_average(ma, i, 3) for i in range(len(ma))]
+        exp = [5, 6, 7, 8, 9]
+        np.testing.assert_array_almost_equal(exp, c1[3:], 3)
+
+    def test_predict_by_moving_average(self):
+        def f(i):
+            return 0.002 * i * i + 0.001 * i + 1
+        ts = [f(i) for i in range(11)]
+
+        preds = predict_by_moving_average(ts, 5)
+        self.assertAlmostEqual(1.261, preds[0])
+        self.assertTrue(preds[0]/ f(11)-1 < 0.007)
+
+        preds = predict_by_moving_average(ts, 5, 3)
+        np.testing.assert_array_almost_equal([1.261, 1.308, 1.359], preds, 3)
