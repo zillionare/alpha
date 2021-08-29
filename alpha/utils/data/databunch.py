@@ -1,3 +1,4 @@
+from alpha.core.features import moving_average
 import pickle
 
 import numpy as np
@@ -91,3 +92,28 @@ class DataBunch(Bunch):
     @property
     def y(self):
         return self.target
+
+    def plot(self, i, wins=[5, 10, 20, 60], convas_win=30):
+        code, xbars, ybars = self.raw[i]
+        import matplotlib.pyplot as plt
+
+        xclose = xbars["close"]
+        yclose = ybars["close"]
+
+        xend = xbars["frame"][-1]
+        close = np.concatenate((xclose, yclose))
+        for win in wins:
+            ma = moving_average(close, win)[-convas_win:]
+            plt.plot(ma, label=f"{win}d")
+
+        yend = convas_win
+        ystart = yend - len(ybars)
+
+        xclose_bars = convas_win - len(ybars)
+        xend = ystart
+        xstart = xend - xclose_bars
+
+        plt.plot(np.arange(ystart, yend), yclose, "r.", label="close")
+        plt.plot(np.arange(xstart, xend), xclose[-xclose_bars:], "b.")
+
+        plt.text(0, max(close) * 0.9, f"{code} {xend}")
