@@ -11,6 +11,7 @@ from pymongo import MongoClient
 
 cfg = cfg4py.init(get_config_dir())
 
+
 class FlatSearchStrategy:
     def __init__(self, name: str):
         self.spaces = {}
@@ -19,11 +20,7 @@ class FlatSearchStrategy:
         for win in [5, 10, 20, 60]:
             for ft in ["1d", "30m"]:
                 name = f"{name}-ma-{win}-{ft}"
-                self.spaces[name] = VecCollection(name,
-                "L2",
-                30,
-                self.milvus
-            )
+                self.spaces[name] = VecCollection(name, "L2", 30, self.milvus)
 
         self.meta_collection = self.mongo.alpha.meta
         self.name = name
@@ -69,13 +66,15 @@ class FlatSearchStrategy:
                 _id = vc.insert([v])
                 ids[k] = _id
 
-            self.meta_collection.insert({
-                "code": code,
-                "pcr": pcr,
-                "start": bars["frame"][0],
-                "end": bars["frame"][-target_len - 1],
-                "ids": ids
-            })
+            self.meta_collection.insert(
+                {
+                    "code": code,
+                    "pcr": pcr,
+                    "start": bars["frame"][0],
+                    "end": bars["frame"][-target_len - 1],
+                    "ids": ids,
+                }
+            )
 
     def predict(self, bars):
         vec = self.xtransform(bars)

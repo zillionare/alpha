@@ -14,12 +14,7 @@ cfg = cfg4py.get_instance()
 
 class VecCollection:
     def __init__(
-        self,
-        name: str,
-        metric: str,
-        dim: int,
-        milvus: Milvus,
-        mongo: Database = None
+        self, name: str, metric: str, dim: int, milvus: Milvus, mongo: Database = None
     ) -> None:
         """A collection of vectors, which stores vectors in milvus and it's meta in mongo collection, with the same name.
 
