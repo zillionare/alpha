@@ -85,6 +85,12 @@ class TestFeatures(unittest.TestCase):
         exp = [5, 6, 7, 8, 9]
         np.testing.assert_array_almost_equal(exp, c1[3:], 3)
 
+        c = np.arange(15)
+        ma = moving_average(c, 5)
+        c1 = [reverse_moving_average(ma, i, 5) for i in range(len(ma))]
+        exp = np.arange(9, 15).tolist()
+        np.testing.assert_array_almost_equal(exp, c1[5:], 3)
+
     def test_predict_by_moving_average(self):
         def f(i):
             return 0.002 * i * i + 0.001 * i + 1
