@@ -113,3 +113,5 @@ class Seven(BaseXGBoostStrategy):
         return await make_dataset(
             transformers, target_transformer, target_win, total, nbuckets=self.nbuckets, notes=notes,epoch=200
         )
+
+# todo: check 300671.XSHE/20190816, why it pass err_threshold checking?
