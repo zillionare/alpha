@@ -93,14 +93,13 @@ class DataBunch(Bunch):
     def y(self):
         return self.target
 
-    def plot(self, i, wins=[5, 10, 20, 60], convas_win=30):
+    def plot(self, i, wins=[5, 10, 20, 60], convas_win=30, ax=None):
         code, xbars, ybars = self.raw[i]
         import matplotlib.pyplot as plt
 
         xclose = xbars["close"]
         yclose = ybars["close"]
 
-        xend = xbars["frame"][-1]
         close = np.concatenate((xclose, yclose))
         for win in wins:
             ma = moving_average(close, win)[-convas_win:]
@@ -116,4 +115,8 @@ class DataBunch(Bunch):
         plt.plot(np.arange(ystart, yend), yclose, "r.", label="close")
         plt.plot(np.arange(xstart, xend), xclose[-xclose_bars:], "b.")
 
-        plt.text(0, max(close) * 0.9, f"{code} {xend}")
+        if ax:
+            transform = ax.transAxes
+        else:
+            transform = plt.gca().transAxes
+        plt.text(0, 0.95, f"{code} {xbars['frame'][-1]}", transform= transform)
