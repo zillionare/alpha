@@ -36,7 +36,9 @@ class Seven(BaseXGBoostStrategy):
 
         self.n_xbars = max(self.wins) * 2
         self.n_ybars = 5
-        self.nbuckets = 10
+        self.bins = [-0.15, -0.1, -0.05, 0, 0.05, 0.1, 0.15, 0.2]
+        self.nbuckets = len(self.bins) + 2
+
 
     def x_transform(self, xbars):
         vec = []
@@ -51,7 +53,7 @@ class Seven(BaseXGBoostStrategy):
 
         return vec
 
-    def y_transform(self, ybars, xbars, err_threshold=0.01):
+    def y_transform(self, ybars, xbars):
         xclose = fillna(xbars["close"].copy())
         yclose = ybars["close"]
 
@@ -64,16 +66,21 @@ class Seven(BaseXGBoostStrategy):
         else:
             agg = min
 
-        # fixme: y should be determined by yclose only, not ypred
         for win in self.wins:
-            fit_win = max(14, 2 * win)
+            fit_win = max(7+win, 2 * win)
             pred_close, pmae = predict_by_moving_average(
                 xclose[-fit_win:], win, yn, err_threshold=1
             )
 
+            y = agg(yclose) / c0
+            # use dynamic threshold, bigger threshold for large fluctuation
+            if self.y_to_bucket(y) in [0, self.nbuckets - 1, self.nbuckets]:
+                err_threshold = 0.015
+            else:
+                err_threshold = 0.01
+
             err = mean_absolute_error(yclose, pred_close) / yclose.mean()
-            if err < err_threshold:
-                y = agg(pred_close) / c0
+            if err < err_threshold: # means price can be predicted by moving average
                 return y, self.y_to_bucket(y)
 
         return 0, self.nbuckets - 1
@@ -82,11 +89,11 @@ class Seven(BaseXGBoostStrategy):
         if y == 0:
             return self.nbuckets - 1
 
-        y_ = 100 * (y - 1)
-        bins = [-15, -10, -5, 0, 5, 10, 15, 20]
-        for i, b in enumerate(bins):
-            if y_ < b:
+        for i, b in enumerate(self.bins):
+            if y - 1 < b:
                 return i
+        else:
+            return len(self.bins) + 1
 
     async def make_dataset(
         self, total: int, notes: str = None, version=None
@@ -100,6 +107,9 @@ class Seven(BaseXGBoostStrategy):
         target_transformer = self.y_transform
         target_win = self.n_ybars
 
+
+        labels = " ".join([f"{k}->{v}" for k,v in enumerate(self.bins)])
+        notes = notes or f"name: {self.name}, labels: {labels}"
         return await make_dataset(
-            transformers, target_transformer, target_win, total, nbuckets=self.nbuckets
+            transformers, target_transformer, target_win, total, nbuckets=self.nbuckets, notes=notes,epoch=200
         )

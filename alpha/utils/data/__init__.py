@@ -101,6 +101,8 @@ async def make_dataset(
     end: Frame = None,
     main_frame=FrameType.DAY,
     has_register_ipo=False,
+    notes:str=None,
+    epoch = 100
 ) -> DataBunch:
     """生成数据集
 
@@ -128,6 +130,9 @@ async def make_dataset(
         start: start frame
         end: end frame
         main_frame: main frame type
+        has_register_ipo: whether to include stock that is listed under register ipo
+        notes: notes for this dataset
+        epoch: number of epochs to wait before stop iterating, if `total` is not met
     Returns:
         a DataBunch
     """
@@ -174,10 +179,12 @@ async def make_dataset(
         # get the target value
         try:
             y_, bucket_idx = target_transformer(ybars, xbars)
+            if buckets[bucket_idx] >= capacity:
+                continue
         except NoTargetError:
             continue
-
-        if buckets[bucket_idx] >= capacity:
+        except Exception as e:
+            logger.exception(e)
             continue
 
         try:
@@ -228,11 +235,11 @@ async def make_dataset(
             logger.info("have collected more than 0.95 times of required samples")
             break
 
-        if i >= total * 100:
-            logger.info("have searched more than 100 times of total space, stopped")
+        if i >= total * epoch:
+            logger.info("have searched more than %s times of total space, stopped", epoch)
             break
 
-    ds = DataBunch(X, y, raw)
+    ds = DataBunch(X, y, raw, desc=notes)
     logger.info("%s features made", ds.X.shape)
     return ds
 
