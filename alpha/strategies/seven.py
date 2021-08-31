@@ -114,7 +114,7 @@ class Seven(BaseXGBoostStrategy):
             transformers, target_transformer, target_win, total, nbuckets=self.nbuckets, notes=notes,epoch=200
         )
 
-    async def check(self, code:str, xend:str, n:int, ft:FrameType=FrameType.DAY, disp_nbars=40):
+    async def check(self, code:str, xend:str, n:int, ft:FrameType=FrameType.DAY, wins=None, disp_nbars=40):
         """check specific stock's status
 
         Args:
@@ -145,21 +145,21 @@ class Seven(BaseXGBoostStrategy):
         xclose = close[:-5]
         yclose = close[-5:]
 
-        plt.plot(close[-disp_nbars:], ".", color="tab:red")
+        plt.plot(close[-disp_nbars:], "--", color="tab:red")
 
         plt.text(0.1, 0.9, f"{code} {xend}", transform=plt.gca().transAxes)
-        result = {}
-        for i, win in enumerate(self.wins):
+
+        wins = wins or self.wins
+        for i, win in enumerate(wins):
             fit_win = max(7 + win, 2 * win)
             ypred, pmae_ma = predict_by_moving_average(xclose[-fit_win:], win, 5, err_threshold=1)
 
             pmae_y_ypred = mean_absolute_error(yclose, ypred) / yclose.mean()
-            result[win] = (ypred, pmae_ma, pmae_y_ypred)
 
             ma = moving_average(xclose, win)[-disp_nbars+5:]
             plt.plot(ma, color=color_map[win])
             plt.plot(np.arange(disp_nbars - 5, disp_nbars), ypred, ".", color=color_map[win])
 
-            print(f"{win}: {pmae_ma:.2f} {pmae_y_ypred:.2f}")
+            print(f"{win}日: 均线误差 {pmae_ma:.3f} 预测误差 {pmae_y_ypred:.2f} 预测：{ypred}")
 
 # todo: check 300671.XSHE/20190816, why it pass err_threshold checking?
