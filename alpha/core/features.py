@@ -52,10 +52,13 @@ def predict_by_moving_average(
         float: the predicted value
     """
     ma = moving_average(ts, win)
-    if len(ma) < 7:
-        raise ValueError(f"{len(ma)} < 7, can't predict")
 
-    coef, pmae = polyfit(ma, degree=2)
+    n = 10 if win > 7 else 7
+
+    if len(ma) < n:
+        raise ValueError(f"{len(ma)} < {n}, can't predict")
+
+    coef, pmae = polyfit(ma[-n:], degree=2)
     if pmae > err_threshold:
         return None, None
 
