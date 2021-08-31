@@ -95,12 +95,14 @@ async def make_dataset(
     target_transformer: Callable,
     target_win: int,
     total: int,
-    bucket_size: int,
+    nbuckets: int,
     secs: List[str] = None,
     start: Frame = None,
     end: Frame = None,
     main_frame=FrameType.DAY,
     has_register_ipo=False,
+    notes:str=None,
+    epoch = 100
 ) -> DataBunch:
     """生成数据集
 
@@ -124,11 +126,13 @@ async def make_dataset(
         transformers: a dict of {frame_type: {name: name of the transformer, optional, func: transformer function, bars_len: length of bars, used by `make_dataset` to load bars}}
         target_transformer: a function that takes bars as input and return a list of row features.
         target_win: the length of target window
-        bucket: a tuple of (start, end, func)
         secs: list of securities
         start: start frame
         end: end frame
         main_frame: main frame type
+        has_register_ipo: whether to include stock that is listed under register ipo
+        notes: notes for this dataset
+        epoch: number of epochs to wait before stop iterating, if `total` is not met
     Returns:
         a DataBunch
     """
@@ -139,8 +143,8 @@ async def make_dataset(
 
     start = start or datetime.date(2015, 10, 9)
 
-    buckets = [0] * bucket_size
-    capacity = int(total / bucket_size) + 1
+    buckets = [0] * nbuckets
+    capacity = int(total / nbuckets) + 1
 
     X, y, raw = [], [], []
 
@@ -167,16 +171,20 @@ async def make_dataset(
         xbars = bars[:-target_win]
         ybars = bars[-target_win:]
 
+        if np.count_nonzero(np.isfinite(xbars["close"])) < len(xbars) * 0.95 or np.count_nonzero(np.isfinite(ybars["close"])) < len(ybars):
+            continue
+
         side_bar_end = xbars["frame"][-1]
 
         # get the target value
         try:
             y_, bucket_idx = target_transformer(ybars, xbars)
-            bucket_idx += bucket_size // 2
+            if buckets[bucket_idx] >= capacity:
+                continue
         except NoTargetError:
             continue
-
-        if buckets[bucket_idx] >= capacity:
+        except Exception as e:
+            logger.exception(e)
             continue
 
         try:
@@ -223,10 +231,15 @@ async def make_dataset(
         if len(X) % (total // 100) == 0:
             logger.info("%s samples collected: %s", len(X), buckets)
 
-        if len(X) >= total * 0.95 or i >= total * 100:
+        if len(X) >= total * 0.95:
+            logger.info("have collected more than 0.95 times of required samples")
             break
 
-    ds = DataBunch(X, y, raw)
+        if i >= total * epoch:
+            logger.info("have searched more than %s times of total space, stopped", epoch)
+            break
+
+    ds = DataBunch(X, y, raw, desc=notes)
     logger.info("%s features made", ds.X.shape)
     return ds
 

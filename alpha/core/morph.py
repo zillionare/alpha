@@ -2,7 +2,7 @@
 
 To simpify the morphal patterns, add these limitations:
 
-1. use ma of (5, 10 ,20) only
+1. use ma of (20, 30, 60) only
 2. nframes of each feature is 20
 
 from high score to low score, we'll have 5 kinds:
@@ -15,9 +15,6 @@ from high score to low score, we'll have 5 kinds:
 
 """
 
-import os
-import pickle
-from sqlite3 import DatabaseError, DataError
 from typing import List
 
 import numpy as np

@@ -10,6 +10,63 @@ argpos_permutations = {
 }
 
 
+def polyfit(ts: np.array, degree: int = 2) -> tuple:
+    """fit ts with np.polyfit, return coeff and pmae"""
+    coeff = np.polyfit(np.arange(len(ts)), ts, degree)
+    pmae = np.abs(np.polyval(coeff, np.arange(len(ts))) - ts).mean() / np.mean(ts)
+    return coeff.tolist(), pmae
+
+
+def reverse_moving_average(ma: ArrayLike, i: int, win: int) -> float:
+    """given moving_average, reverse the origin value at index i
+
+    if i < win, then return Nan, these values are not in the window thus cannot be recovered
+
+    see also https://stackoverflow.com/questions/52456267/how-to-do-a-reverse-moving-average-in-pandas-rolling-mean-operation-on-pr
+    but these func doesn't perfom well with out moving_average
+    Example:
+        >>> c = np.arange(10)
+        >>> ma = moving_average(c, 3)
+        >>> c1 = [reverse_moving_average(ma, i, 3) for i in range(len(ma))]
+        >>> c1 == [1, 2, 3, 4.9999, 6.000, 7, 8, 9]
+
+    Args:
+        ma (np.array): the moving average series
+        i (int): the index of origin
+        win (int): the window size, which is used to calculate moving average
+    """
+    return ma[i] * win - ma[i - 1] * win + np.mean(ma[i - win : i])
+
+
+def predict_by_moving_average(
+    ts: ArrayLike, win: int, n_preds: int = 1, err_threshold=1e-2
+) -> float:
+    """predict the next ith value by fitted moving average
+
+    Args:
+        ts (np.array): the time series
+        i (int): the index of the value to be predicted, start from 1
+        win (int): the window size
+
+    Returns:
+        float: the predicted value
+    """
+    ma = moving_average(ts, win)
+    if len(ma) < 7:
+        raise ValueError(f"{len(ma)} < 7, can't predict")
+
+    coef, pmae = polyfit(ma, degree=2)
+    if pmae > err_threshold:
+        return None, None
+
+    preds = []
+    for i in range(1, n_preds + 1):
+        ma_pred = np.polyval(coef, np.arange(len(ma) + i))
+        preds.append(reverse_moving_average(ma_pred, len(ma_pred) -1, win))
+
+    return preds, pmae
+
+
 def moving_average(ts: np.array, win: int):
     """计算时间序列ts在win窗口内的移动平均
 

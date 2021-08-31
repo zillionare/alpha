@@ -7,6 +7,7 @@ from alpha.config import get_config_dir
 from alpha.core.veccollection import VecCollection
 from pymongo import MongoClient
 
+
 class TestVecCollection(unittest.TestCase):
     def test_all_in_one(self):
         """to run this test, you need to setup a milvus server and a mongo server"""
@@ -14,9 +15,7 @@ class TestVecCollection(unittest.TestCase):
         milvus = Milvus(host=cfg.milvus.host, port=cfg.milvus.port)
         mongo = MongoClient(cfg.mongo.dsn)
 
-        vc = VecCollection(
-            "alpha_test", "L2", 50, milvus, mongo.alpha_test
-        )
+        vc = VecCollection("alpha_test", "L2", 50, milvus, mongo.alpha_test)
         vc.create_collection(drop_if_exists=True)
 
         vec = np.random.rand(10, 50)

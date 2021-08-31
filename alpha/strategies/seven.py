@@ -1,0 +1,117 @@
+import logging
+import os
+
+import arrow
+from alpha.utils.data import make_dataset
+from sklearn.metrics import mean_absolute_error
+
+import cfg4py
+import numpy as np
+from alpha.core.features import (
+    fillna,
+    moving_average,
+    polyfit,
+    top_n_argpos,
+    transform_to_change_pct,
+    transform_y_by_change_pct,
+    predict_by_moving_average,
+)
+from alpha.strategies.base_xgboost_strategy import BaseXGBoostStrategy
+from alpha.utils.data import DataBunch
+from omicron.core.timeframe import tf
+from omicron.core.types import FrameType
+from omicron.models.security import Security
+
+cfg = cfg4py.init()
+
+logger = logging.getLogger(__name__)
+
+
+class Seven(BaseXGBoostStrategy):
+    def __init__(self, *args, **kwargs):
+        home = os.path.expanduser(cfg.alpha.data_home)
+        super().__init__("Seven", home)
+
+        self.wins = [5, 10, 20, 30, 60]
+
+        self.n_xbars = max(self.wins) * 2
+        self.n_ybars = 5
+        self.bins = [-0.15, -0.1, -0.05, 0, 0.05, 0.1, 0.15, 0.2]
+        self.nbuckets = len(self.bins) + 2
+
+
+    def x_transform(self, xbars):
+        vec = []
+        xclose = fillna(xbars["close"].copy())
+        for win in self.wins:
+            fit_win = max(7, win)
+            ma = moving_average(xclose, win)[-fit_win:]
+            ma /= ma[0]
+            (a, b, c), pmae = polyfit(ma)
+            # c should be always 1
+            vec.extend([a, b, pmae])
+
+        return vec
+
+    def y_transform(self, ybars, xbars):
+        xclose = fillna(xbars["close"].copy())
+        yclose = ybars["close"]
+
+        yn = len(yclose)
+
+        c0 = xclose[-1]
+
+        if abs(min(yclose) / c0 - 1) < abs(max(yclose) / c0 - 1):
+            agg = max
+        else:
+            agg = min
+
+        for win in self.wins:
+            fit_win = max(7+win, 2 * win)
+            pred_close, pmae = predict_by_moving_average(
+                xclose[-fit_win:], win, yn, err_threshold=1
+            )
+
+            y = agg(yclose) / c0
+            # use dynamic threshold, bigger threshold for large fluctuation
+            if self.y_to_bucket(y) in [0, self.nbuckets - 1, self.nbuckets]:
+                err_threshold = 0.015
+            else:
+                err_threshold = 0.01
+
+            err = mean_absolute_error(yclose, pred_close) / yclose.mean()
+            if err < err_threshold: # means price can be predicted by moving average
+                return y, self.y_to_bucket(y)
+
+        return 0, self.nbuckets - 1
+
+    def y_to_bucket(self, y):
+        if y == 0:
+            return self.nbuckets - 1
+
+        for i, b in enumerate(self.bins):
+            if y - 1 < b:
+                return i
+        else:
+            return len(self.bins) + 1
+
+    async def make_dataset(
+        self, total: int, notes: str = None, version=None
+    ) -> DataBunch:
+        transformers = {
+            FrameType.DAY: {
+                "func": self.x_transform,
+                "bars_len": self.n_ybars + self.n_xbars,
+            }
+        }
+        target_transformer = self.y_transform
+        target_win = self.n_ybars
+
+
+        labels = " ".join([f"{k}->{v}" for k,v in enumerate(self.bins)])
+        notes = notes or f"name: {self.name}, labels: {labels}"
+        return await make_dataset(
+            transformers, target_transformer, target_win, total, nbuckets=self.nbuckets, notes=notes,epoch=200
+        )
+
+# todo: check 300671.XSHE/20190816, why it pass err_threshold checking?

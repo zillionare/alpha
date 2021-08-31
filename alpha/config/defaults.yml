@@ -19,8 +19,8 @@ logging:
       - console
     level: INFO
 redis:
-  #dsn: redis://172.17.0.1:6379
-  dsn: redis://127.0.0.1:6379
+  dsn: redis://172.17.0.1:6379
+  #dsn: redis://127.0.0.1:6379
 postgres:
   enabled: false
 omega:

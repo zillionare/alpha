@@ -339,24 +339,3 @@ class BaseXGBoostStrategy:
 
     async def build_dataset(self, save_to: str):
         raise NotImplementedError
-
-    def dataset_scope(self, start: Frame, end: Frame) -> List[Tuple[str, Frame]]:
-        """generate sample points for making dataset.
-
-        Use this function to exclude duplicate points.
-
-        Args:
-            start: start frame
-            end: end frame
-
-        Returns:
-            A list of (frame, value)
-        """
-        secs = Securities()
-        codes = secs.choose(_types=["stock"])
-        frames = [tf.int2date(x) for x in tf.get_frames(start, end, FrameType.DAY)]
-
-        permutations = list(itertools.product(codes, frames))
-
-        logger.info("%s permutaions in total", len(codes) * len(frames))
-        return random.sample(permutations, len(codes) * len(frames))

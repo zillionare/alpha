@@ -5,7 +5,7 @@ class HydraStrategy(BaseXGBoostStrategy):
     """
     The Hydra Strategy is based on xgboost, but use several hybrid method to extract features:
 
-    1.
+    1. vecter matching
 
     """
 
