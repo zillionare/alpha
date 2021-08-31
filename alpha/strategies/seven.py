@@ -75,7 +75,7 @@ class Seven(BaseXGBoostStrategy):
             y = agg(yclose) / c0
             # use dynamic threshold, bigger threshold for large fluctuation
             if self.y_to_bucket(y) in [0, self.nbuckets - 1, self.nbuckets]:
-                err_threshold = 0.015
+                err_threshold = 0.02
             else:
                 err_threshold = 0.01
 
