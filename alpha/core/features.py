@@ -434,3 +434,57 @@ def bolling_band(prices, period, num_std_dev=2.0):
         bbs[idx, 5] = (prices[idx] - bbs[idx, 2]) / bbs[idx, 4]
 
     return bbs
+
+def volume_features(bars: np.array, win: int = 80):
+    """计算`win`周期内，最大3次成交量(且成交量大于成交均量的1倍）的方向和间隔
+
+    成交量方向：如果当前股价上涨则成交量方向为1，下跌则为-1，平盘则为0
+    如果存在上下影线，则成交量需要进行调整，调整方法是乘以实体比例
+    Args:
+        bars: 行情数据
+        win (int, optional): [description]. Defaults to 80.
+
+    Raises:
+        ValueError: [description]
+    """
+    if len(bars) < win + 1:
+        raise ValueError(f"len of bars should be >= {win + 1}")
+
+    vec = []
+
+    close = bars["close"][-win - 1:]
+    if np.count_nonzero(np.isfinite(close)) < win * 0.9:
+        raise ValueError("not enough valid close price")
+
+    high = bars["high"].copy()
+    low = bars["low"].copy()
+    open = bars["open"].copy()
+
+    close = fillna(close.copy())
+    high = fillna(high)
+    low = fillna(low)
+    open = fillna(open)
+
+    # 成交量方向
+    flags = np.sign(close[1:] - close[:-1])
+
+    volume = bars["volume"][-win:]
+    avg = np.mean(volume)
+
+    # 根据open, high, low, close 计算实体比例
+    br = np.abs(open - close) / (high - low)
+    volume = volume * br
+
+    indice = top_n_argpos(volume, 3)
+    valid_indice = []
+    for i in indice:
+        if volume[i] > avg:
+            valid_indice.append(i)
+
+    indice = sorted(valid_indice)
+    np.pad(indice, (0, 3 - len(indice)), "constant", constant_values=0)
+    vec.extend(flags[indice])
+
+    # 间隔
+    vec.extend([np.tanh(2 * (win - i - 1) / win) for i in indice])
+    return vec
