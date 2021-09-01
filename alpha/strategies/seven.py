@@ -11,10 +11,12 @@ from alpha.core.features import (
     fillna,
     moving_average,
     polyfit,
+    relative_strength_index,
     top_n_argpos,
     transform_to_change_pct,
     transform_y_by_change_pct,
     predict_by_moving_average,
+    volume_features,
 )
 from alpha.strategies.base_xgboost_strategy import BaseXGBoostStrategy
 from alpha.utils.data import DataBunch
@@ -39,10 +41,16 @@ class Seven(BaseXGBoostStrategy):
         self.bins = [-0.15, -0.1, -0.05, 0, 0.05, 0.1, 0.15, 0.2]
         self.nbuckets = len(self.bins) + 2
 
+        # volume feature window
+        self.vol_win = max(self.wins)
+
 
     def x_transform(self, xbars):
         vec = []
         xclose = fillna(xbars["close"].copy())
+
+        mas = []
+        # add moving average trend line
         for win in self.wins:
             fit_win = max(7, win)
             ma = moving_average(xclose, win)[-fit_win:]
@@ -50,6 +58,18 @@ class Seven(BaseXGBoostStrategy):
             (a, b, c), pmae = polyfit(ma)
             # c should be always 1
             vec.extend([a, b, pmae])
+
+            mas.append(ma[-1])
+
+        # add volume features
+        vec.extend(volume_features(xbars, self.vol_win))
+
+        # add last 3 days rsi features
+        rsi = relative_strength_index(xclose)[-3:]
+        vec.extend(rsi/100)
+
+        # 最短窗口到最长窗口的ma之前的偏转度，在[-1,1]之间
+        vec.append((mas[0] - mas[-1]) / (mas[0] + mas[-1]))
 
         return vec
 
