@@ -1,6 +1,8 @@
-from alpha.strategies.simvec import predict
+import os
+from tests import data_dir
 import itertools
 import unittest
+import pickle
 
 import numpy as np
 
@@ -12,6 +14,7 @@ from alpha.core.features import (
     predict_by_moving_average,
     reverse_moving_average,
     transform_y_by_change_pct,
+    volume_features,
 )
 
 
@@ -110,3 +113,13 @@ class TestFeatures(unittest.TestCase):
         preds, pmae = predict_by_moving_average(ts, 10)
         self.assertAlmostEqual(1.774, preds[0], 3)
         self.assertTrue(pmae < 0.001)
+
+    def test_volume_features(self):
+        data_file = os.path.join(data_dir(), "300985.pkl")
+        with open(data_file, "rb") as f:
+            bars = pickle.load(f)
+            
+
+        vec = volume_features(bars)
+        exp = [0, 1, -1, 1, 0.482, 0.025, 1, 0.278, 0.42]
+        np.testing.assert_array_almost_equal(exp, vec, 3)

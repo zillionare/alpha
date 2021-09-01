@@ -439,7 +439,9 @@ def volume_features(bars: np.array, win: int = 80):
     """计算`win`周期内，最大3次成交量(且成交量大于成交均量的1倍）的方向和间隔
 
     成交量方向：如果当前股价上涨则成交量方向为1，下跌则为-1，平盘则为0
-    如果存在上下影线，则成交量需要进行调整，调整方法是乘以实体比例
+    如果存在上下影线，则成交量需要进行调整，调整方法是乘以实体比例。
+
+    特征共有9个，高成交量位置、成交量量比、成交量方向
     Args:
         bars: 行情数据
         win (int, optional): [description]. Defaults to 80.
@@ -456,14 +458,14 @@ def volume_features(bars: np.array, win: int = 80):
     if np.count_nonzero(np.isfinite(close)) < win * 0.9:
         raise ValueError("not enough valid close price")
 
-    high = bars["high"].copy()
-    low = bars["low"].copy()
-    open = bars["open"].copy()
+    high = bars["high"].copy()[-win:]
+    low = bars["low"].copy()[-win:]
+    _open = bars["open"].copy()[-win:]
 
     close = fillna(close.copy())
-    high = fillna(high)
-    low = fillna(low)
-    open = fillna(open)
+    high = fillna(high)[-win:]
+    low = fillna(low)[-win:]
+    _open = fillna(_open)
 
     # 成交量方向
     flags = np.sign(close[1:] - close[:-1])
@@ -472,7 +474,7 @@ def volume_features(bars: np.array, win: int = 80):
     avg = np.mean(volume)
 
     # 根据open, high, low, close 计算实体比例
-    br = np.abs(open - close) / (high - low)
+    br = np.abs(_open - close[-win:]) / (high - low)
     volume = volume * br
 
     indice = top_n_argpos(volume, 3)
@@ -482,9 +484,20 @@ def volume_features(bars: np.array, win: int = 80):
             valid_indice.append(i)
 
     indice = sorted(valid_indice)
-    np.pad(indice, (0, 3 - len(indice)), "constant", constant_values=0)
-    vec.extend(flags[indice])
 
-    # 间隔
-    vec.extend([np.tanh(2 * (win - i - 1) / win) for i in indice])
+    # 最大成交量的方向
+    flags = flags[indice]
+    flags = np.pad(flags, (3 - len(flags), 0), "constant", constant_values=0)
+    vec.extend(flags)
+
+    # 最大成交量的间隔
+    dist = [np.tanh(2 * (win - i - 1) / win) for i in indice]
+    # 距离越远，值越大。因此左填充1
+    dist = np.pad(dist, (3 - len(dist), 0), "constant", constant_values=1)
+    vec.extend(dist)
+
+    # 最大成交量的量比，按10倍进行scale
+    vr = [np.tanh(volume[i] / (10 * avg)) for i in indice]
+    vr = np.pad(vr, (3 - len(vr), 0), "constant", constant_values=1)
+    vec.extend(vr)
     return vec
