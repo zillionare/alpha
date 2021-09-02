@@ -119,4 +119,4 @@ class DataBunch(Bunch):
             transform = ax.transAxes
         else:
             transform = plt.gca().transAxes
-        plt.text(0, 0.95, f"{code} {xbars['frame'][-1]}", transform= transform)
+        plt.text(0, 0.95, f"{code} {xbars['frame'][-1]}", transform=transform)

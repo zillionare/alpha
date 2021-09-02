@@ -65,7 +65,7 @@ def predict_by_moving_average(
     preds = []
     for i in range(1, n_preds + 1):
         ma_pred = np.polyval(coef, np.arange(len(ma) + i))
-        preds.append(reverse_moving_average(ma_pred, len(ma_pred) -1, win))
+        preds.append(reverse_moving_average(ma_pred, len(ma_pred) - 1, win))
 
     return preds, pmae
 
@@ -435,6 +435,7 @@ def bolling_band(prices, period, num_std_dev=2.0):
 
     return bbs
 
+
 def volume_features(bars: np.array, win: int = 80):
     """计算`win`周期内，最大3次成交量(且成交量大于成交均量的1倍）的方向和间隔
 
@@ -454,7 +455,7 @@ def volume_features(bars: np.array, win: int = 80):
 
     vec = []
 
-    close = bars["close"][-win - 1:]
+    close = bars["close"][-win - 1 :]
     if np.count_nonzero(np.isfinite(close)) < win * 0.9:
         raise ValueError("not enough valid close price")
 
@@ -501,3 +502,82 @@ def volume_features(bars: np.array, win: int = 80):
     vr = np.pad(vr, (3 - len(vr), 0), "constant", constant_values=1)
     vec.extend(vr)
     return vec
+
+def relation_with_prev_high(close, win=20):
+    """当前bar与前高的关系
+
+    返回二维向量。
+
+    第一维为当前bar到前高的距离。取值范围[-1,1]，当取值为零时，意味着正在不断创新高；为正数时，意味着刚突破前高，数值越大，越远。为负，意味着还未突破前高。
+
+    第二维为股价与前高的差值，通过np.tanh进行scale
+
+    Args:
+        close ([type]): [description]
+    """
+    vec = []
+    c0 = close[-1]
+
+    if np.isnan(c0):
+        raise ValueError("close is nan")
+
+    prev_high_idx = np.argmax(close[:-1])
+    prev_high = close[prev_high_idx]
+
+    if c0 > prev_high:
+        vec.append(np.tanh(2 * (win - prev_high_idx - 1)/win))
+    else:
+        vec.append(-np.tanh(2 * (win - prev_high_idx - 2)/win))
+
+    vec.append(np.tanh(c0 / prev_high - 1))
+
+    return vec
+
+def relationship_with_prev_low(close, win=20):
+    """当前bar与前低的关系
+
+    第一维为当前bar到前高的距离。取值范围[-1,1]，当取值为零时，意味着正在不断创新高；为正数时，意味着刚突破前高，数值越大，越远。为负，意味着还未突破前高。
+
+    第二维为股价与前高的差值，通过np.tanh进行scale
+
+    Args:
+        close ([type]): [description]
+        win (int, optional): [description]. Defaults to 20.
+    """
+    vec = []
+    c0 = close[-1]
+
+    if np.isnan(c0):
+        raise ValueError("close is nan")
+
+    prev_low_idx = np.argmin(close[:-1])
+    prev_low = close[prev_low_idx]
+
+    if c0 > prev_low:
+        vec.append(np.tanh(2 * (win - prev_low_idx - 1)/win))
+    else:
+        vec.append(-np.tanh(2 * (win - prev_low_idx - 2)/win))
+
+    vec.append(np.tanh(c0 / prev_low - 1))
+
+    return vec
+
+def long_short_features(bars: np.array, flen:int=10):
+    """最近`flen`个bar的阴阳线排列特征
+
+    Args:
+        bars (np.array): [description]
+    """
+    if len(bars) < flen:
+        raise ValueError(f"bars length must be larger than {flen}, actual {len(bars)}")
+
+    return np.where(bars["close"] > bars["open"], 1, -1)[-flen:]
+
+def roc_features(close: np.array, flen: int = 10):
+    if len(close) < flen + 1:
+        raise ValueError(f"close length must be larger than {flen} + 1, actual {len(close)}")
+
+    if np.count_nonzero(np.isfinite(close)) != len(close):
+        raise ValueError("close should not contains np.nan")
+
+    return (close[1:]/close[:-1] - 1)[-flen:]

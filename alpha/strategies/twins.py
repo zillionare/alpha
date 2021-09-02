@@ -15,8 +15,11 @@ import pandas as pd
 from alpha.core.features import (
     fillna,
     moving_average,
+    relation_with_prev_high,
+    relationship_with_prev_low,
     relative_strength_index,
     top_n_argpos,
+    volume_features,
 )
 from alpha.core.smvecstore import SmallSizeVectorStore
 from alpha.utils import round
@@ -30,7 +33,9 @@ cfg = cfg4py.init("/apps/alpha/alpha/config")
 logger = logging.getLogger(__name__)
 
 
-class SimVecStrategy:
+class Twins:
+    """寻找相似图形来选股的策略。"""
+
     def __init__(self, name: str, *args, **kwargs):
         self.name = name
         self.store = SmallSizeVectorStore(
@@ -44,6 +49,8 @@ class SimVecStrategy:
         )
         self.nbars = kwargs.get("nbars", 81)
         self.metric = "L2"
+        self.ma_wins = [5, 10, 20, 60, 120, 250]
+        self.vol_win = 80
 
     def load(self, model: str) -> None:
         if os.path.exists(model):
@@ -69,7 +76,7 @@ class SimVecStrategy:
         ):
             return None
 
-        vec = self.xtransform(bars)
+        vec = self.x_transform(bars)
         self.store.insert({"op": op, "desc": desc, "end": end, "code": code}, vec)
 
     async def add_patterns(self, path: str):
@@ -85,84 +92,6 @@ class SimVecStrategy:
                 op, code, end, desc = line.strip().split("\t")
                 await self.add_pattern(int(op), code, end, desc)
 
-    def ma_features(self, close: np.array, wins=(5, 10, 20, 60), flen: int = 10):
-        # 1. 先进行归一化，以便我们纯粹只比较形态
-        c_ = close / close[-1]
-
-        vec = []
-        mas = []
-        for win in wins:
-            ma = moving_average(c_, win)[-flen:]
-            vec.extend(ma)
-            mas.append(ma)
-
-        mas = np.stack(mas)
-
-        # 5日线与20日线的差值
-        vec.extend(mas[0] - mas[2])
-
-        # 各均线的发散程度？太发散则有回归需求；太聚拢则有发散需求
-        mas = np.max(mas, axis=0) - np.min(mas, axis=0)
-        vec.extend(mas)
-
-        return vec
-
-    def volume_features(self, volume: np.array, flags: ArrayLike, win: int = 80):
-        """计算`win`周期以来，最大3次成交量的方向和间隔，如果成交量大于成交均量的1倍
-
-        Args:
-            volume (np.array): [description]
-            flags (ArrayLike): 当前成交量的方向
-            win (int, optional): [description]. Defaults to 80.
-
-        Raises:
-            ValueError: [description]
-        """
-        if len(volume) < win or len(flags) < win:
-            raise ValueError(f"len of volume/flags should be >= {win}")
-
-        vec = []
-
-        volume = volume[-win:]
-        flags = flags[-win:]
-
-        avg = np.mean(volume)
-        indice = top_n_argpos(volume, 3)
-        valid_indice = []
-        for i in indice:
-            if volume[i] > avg:
-                valid_indice.append(i)
-
-        indice = sorted(valid_indice)
-        np.pad(indice, (0, 3 - len(indice)), "constant", constant_values=0)
-        vec.extend(flags[indice])
-
-        # 间隔
-        vec.extend([np.tanh(2 * (win - i - 1) / win) for i in indice])
-        return vec
-
-    def rsi_features(self, close: np.array, rsi_win: int = 6):
-        rsi = relative_strength_index(close, rsi_win)
-
-        vec = []
-        nbars = len(close)
-
-        min_rsi_pos = np.argwhere(rsi < 20)
-        if len(min_rsi_pos) > 0:
-            min_rsi_pos = min_rsi_pos[-1] + rsi_win
-            vec.extend(np.tanh((nbars - 1 - min_rsi_pos) * 2 / nbars))
-        else:
-            vec.append(1)
-
-        max_rsi_pos = np.argwhere(rsi > 80)
-        if len(max_rsi_pos) > 0:
-            max_rsi_pos = max_rsi_pos[-1] + rsi_win
-            vec.extend(np.tanh((nbars - 1 - max_rsi_pos) * 2 / nbars))
-        else:
-            vec.append(1)
-
-        return vec
-
     def canonicalize(self, code: str):
         if code.endswith(".XSHE") or code.endswith(".XSHG"):
             return code
@@ -172,7 +101,7 @@ class SimVecStrategy:
         else:
             return code + ".XSHE"
 
-    def xtransform(self, bars, flen: int = 10):
+    def x_transform(self, bars, flen: int = 10):
         """
         1. 均线使用5, 10, 20, 60各`flen`根,计算ma,及ma之间的发散程度。共需要66个周期的close
         2. 计算60周期以来最大的3次成交量的方向、间隔，如果成交量大于成交均量1倍
@@ -181,24 +110,38 @@ class SimVecStrategy:
         Args:
             bars ([type]): [description]
         """
+        morph = []
         vec = []
         close = bars["close"]
         if np.count_nonzero(np.isfinite(close)) < len(close) * 0.9:
             return None
 
         close = fillna(close.copy())
-        vec.extend(self.ma_features(close))
+        mas = []
+        for win in self.ma_wins:
+            ma = moving_average(close, win)[-flen:]
+            ma = ma/ma[0]
+            morph.extend(ma)
+            mas.append(ma[-1])
 
-        volume = fillna(bars["volume"].copy())
-        vec.extend(
-            self.volume_features(volume, np.where(close[1:] > close[:-1], 1, -1))
-        )
+        vec.extend(volume_features(bars, self.vol_win))
 
         # RSI
-        vec.extend(self.rsi_features(close))
+        rsi = relative_strength_index(close)[-4:]
+        vec.extend(rsi)
+
+        # 各均线的发散程度？太发散则有回归需求；太聚拢则有发散需求
+        diverge = (mas[0] - mas[-1])/(mas[0] + mas[-1])
+        vec.append(diverge)
 
         # 成交价变化特征
         vec.extend(self.price_features(close, flen))
+
+        # 与前高的关系
+        vec.extend(relation_with_prev_high(close[-60:]))
+
+        # 与前低的关系
+        vec.extend(relationship_with_prev_low(close[-60:]))
 
         return vec
 
@@ -259,7 +202,7 @@ class SimVecStrategy:
 
     def _predict(self, bars, threshold=1e-2, n: int = 1):
         """预测"""
-        vec = self.normalize(self.xtransform(bars))
+        vec = self.normalize(self.x_transform(bars))
 
         if vec is None:
             return None
@@ -451,7 +394,7 @@ def async_run_command(func):
 
 @async_run_command
 async def train(datafile: str, version=None):
-    s = SimVecStrategy("sv-30m")
+    s = Twins("sv-30m")
     await s.train(datafile, version)
 
 
@@ -468,7 +411,7 @@ async def predict(
         ft (str, optional): [description]. Defaults to '30m'.
         threshold ([type], optional): Defaults to 3e-2. according to test, even x == y, L2 (sqrt(dot(x,x) - 2 * dot(x,y) + dot(y,y)) will still get 0.0015. so it's better to choose 3e-2 ad threshold
     """
-    s = SimVecStrategy("sv-30m")
+    s = Twins("sv-30m")
 
     if os.path.exists(model):
         s.load(model)
@@ -482,7 +425,7 @@ async def predict(
 async def test(
     model: str, code: str, n: int = 10, end: str = None, ft: str = "30m", threshold=3e-3
 ):
-    s = SimVecStrategy("sv-30m")
+    s = Twins("sv-30m")
 
     if os.path.exists(model):
         s.load(model)

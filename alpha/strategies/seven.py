@@ -44,7 +44,6 @@ class Seven(BaseXGBoostStrategy):
         # volume feature window
         self.vol_win = max(self.wins)
 
-
     def x_transform(self, xbars):
         vec = []
         xclose = fillna(xbars["close"].copy())
@@ -66,14 +65,14 @@ class Seven(BaseXGBoostStrategy):
 
         # add last 3 days rsi features
         rsi = relative_strength_index(xclose)[-3:]
-        vec.extend(rsi/100)
+        vec.extend(rsi / 100)
 
         # 最短窗口到最长窗口的ma之前的偏转度，在[-1,1]之间
         vec.append((mas[0] - mas[-1]) / (mas[0] + mas[-1]))
 
         return vec
 
-    def y_transform(self, ybars, xbars):
+    def y_transform(self, ybars, xbars, code):
         xclose = fillna(xbars["close"].copy())
         yclose = ybars["close"]
 
@@ -86,13 +85,13 @@ class Seven(BaseXGBoostStrategy):
         else:
             agg = min
 
+        y = agg(yclose) / c0
         for win in self.wins:
-            fit_win = max(7+win, 2 * win)
+            fit_win = max(7 + win, 2 * win)
             pred_close, pmae = predict_by_moving_average(
                 xclose[-fit_win:], win, yn, err_threshold=1
             )
 
-            y = agg(yclose) / c0
             # use dynamic threshold, bigger threshold for large fluctuation
             if self.y_to_bucket(y) in [0, self.nbuckets - 1, self.nbuckets]:
                 err_threshold = 0.02
@@ -100,8 +99,18 @@ class Seven(BaseXGBoostStrategy):
                 err_threshold = 0.01
 
             err = mean_absolute_error(yclose, pred_close) / yclose.mean()
-            if err < err_threshold: # means price can be predicted by moving average
+            # means price can be predicted by moving average
+            if err < err_threshold and pmae < err_threshold:
                 return y, self.y_to_bucket(y)
+
+        if y > 1.2 or y < 0.85:
+            xend = xbars["frame"][-1]
+            logger.info(
+                "adv/dec rate of %s in 5 days since %s reach at %s, while cannot be predicted by ma",
+                code,
+                xend,
+                y,
+            )
 
         return 0, self.nbuckets - 1
 
@@ -109,6 +118,7 @@ class Seven(BaseXGBoostStrategy):
         if y == 0:
             return self.nbuckets - 1
 
+        # [-0.15, -0.1, -0.05, 0, 0.05, 0.1, 0.15, 0.2]
         for i, b in enumerate(self.bins):
             if y - 1 < b:
                 return i
@@ -127,14 +137,27 @@ class Seven(BaseXGBoostStrategy):
         target_transformer = self.y_transform
         target_win = self.n_ybars
 
-
-        labels = " ".join([f"{k}->{v}" for k,v in enumerate(self.bins)])
+        labels = " ".join([f"{k}->{v}" for k, v in enumerate(self.bins)])
         notes = notes or f"name: {self.name}, labels: {labels}"
         return await make_dataset(
-            transformers, target_transformer, target_win, total, nbuckets=self.nbuckets, notes=notes,epoch=200
+            transformers,
+            target_transformer,
+            target_win,
+            total,
+            nbuckets=self.nbuckets,
+            notes=notes,
+            epoch=200,
         )
 
-    async def check(self, code:str, xend:str, n:int, ft:FrameType=FrameType.DAY, wins=None, disp_nbars=40):
+    async def check(
+        self,
+        code: str,
+        xend: str,
+        n: int,
+        ft: FrameType = FrameType.DAY,
+        wins=None,
+        disp_nbars=40,
+    ):
         """check specific stock's status
 
         Args:
@@ -172,14 +195,16 @@ class Seven(BaseXGBoostStrategy):
         wins = wins or self.wins
         for i, win in enumerate(wins):
             fit_win = max(7 + win, 2 * win)
-            ypred, pmae_ma = predict_by_moving_average(xclose[-fit_win:], win, 5, err_threshold=1)
+            ypred, pmae_ma = predict_by_moving_average(
+                xclose[-fit_win:], win, 5, err_threshold=1
+            )
 
             pmae_y_ypred = mean_absolute_error(yclose, ypred) / yclose.mean()
 
-            ma = moving_average(xclose, win)[-disp_nbars+5:]
+            ma = moving_average(xclose, win)[-disp_nbars + 5 :]
             plt.plot(ma, color=color_map[win])
-            plt.plot(np.arange(disp_nbars - 5, disp_nbars), ypred, ".", color=color_map[win])
+            plt.plot(
+                np.arange(disp_nbars - 5, disp_nbars), ypred, ".", color=color_map[win]
+            )
 
             print(f"{win}日: 均线误差 {pmae_ma:.3f} 预测误差 {pmae_y_ypred:.2f} 预测：{ypred}")
-
-# todo: check 300671.XSHE/20190816, why it pass err_threshold checking?

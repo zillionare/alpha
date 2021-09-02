@@ -120,3 +120,14 @@ redis: {dsn: 'redis://172.17.0.1:6379'}
 2021-09-01 21:43:14,454 I 13674 alpha.utils.data:make_dataset:232 | 2200 samples collected: [42, 5, 338, 501, 501, 284, 22, 6, 0, 501]
 2021-09-01 21:46:47,735 I 13674 alpha.utils.data:make_dataset:232 | 2250 samples collected: [42, 5, 360, 501, 501, 312, 22, 6, 0, 501]
 2021-09-01 21:50:19,339 I 13674 alpha.utils.data:make_dataset:232 | 2300 samples collected: [42, 5, 393, 501, 501, 329, 22, 6, 0, 501]
+2021-09-01 21:51:00,448 I 13674 alpha.utils.data:make_dataset:232 | 2350 samples collected: [44, 6, 435, 501, 501, 334, 22, 6, 0, 501]
+2021-09-01 21:51:56,407 I 13674 alpha.utils.data:make_dataset:232 | 2400 samples collected: [44, 6, 456, 501, 501, 363, 22, 6, 0, 501]
+2021-09-01 21:53:00,035 I 13674 alpha.utils.data:make_dataset:232 | 2450 samples collected: [44, 6, 470, 501, 501, 396, 25, 6, 0, 501]
+2021-09-01 21:56:13,972 I 13674 alpha.utils.data:make_dataset:232 | 2500 samples collected: [45, 6, 492, 501, 501, 419, 29, 6, 0, 501]
+2021-09-01 21:59:04,578 I 13674 alpha.utils.data:make_dataset:232 | 2550 samples collected: [46, 7, 501, 501, 501, 457, 30, 6, 0, 501]
+2021-09-01 22:04:21,336 I 13674 alpha.utils.data:make_dataset:232 | 2600 samples collected: [47, 8, 501, 501, 501, 501, 34, 6, 0, 501]
+2021-09-01 22:45:52,543 I 13674 alpha.utils.data:make_dataset:232 | 2650 samples collected: [60, 25, 501, 501, 501, 501, 53, 7, 0, 501]
+2021-09-01 23:40:54,995 I 13674 alpha.utils.data:make_dataset:232 | 2700 samples collected: [71, 33, 501, 501, 501, 501, 82, 9, 0, 501]
+2021-09-02 00:07:38,674 I 13674 alpha.utils.data:make_dataset:232 | 2750 samples collected: [90, 42, 501, 501, 501, 501, 103, 10, 0, 501]
+2021-09-02 00:09:40,481 I 13674 alpha.utils.data:make_dataset:239 | have searched more than 200 times of total space, stopped
+2021-09-02 00:09:40,495 I 13674 alpha.utils.data:make_dataset:243 | (2759, 28) features made

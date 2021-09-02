@@ -12,6 +12,7 @@ from alpha.core.features import (
     moving_average,
     pos_encode_v2,
     predict_by_moving_average,
+    relation_with_prev_high,
     reverse_moving_average,
     transform_y_by_change_pct,
     volume_features,
@@ -102,7 +103,7 @@ class TestFeatures(unittest.TestCase):
 
         preds, pmae = predict_by_moving_average(ts, 5)
         self.assertAlmostEqual(1.261, preds[0])
-        self.assertTrue(preds[0]/ f(11)-1 < 0.007)
+        self.assertTrue(preds[0] / f(11) - 1 < 0.007)
         self.assertTrue(pmae < 0.001)
 
         preds, pmae = predict_by_moving_average(ts, 5, 3)
@@ -118,8 +119,15 @@ class TestFeatures(unittest.TestCase):
         data_file = os.path.join(data_dir(), "300985.pkl")
         with open(data_file, "rb") as f:
             bars = pickle.load(f)
-            
 
         vec = volume_features(bars)
         exp = [0, 1, -1, 1, 0.482, 0.025, 1, 0.278, 0.42]
         np.testing.assert_array_almost_equal(exp, vec, 3)
+
+    def test_relation_with_prev_high(self):
+        data_file = os.path.join(data_dir(), "300985.pkl")
+        with open(data_file, "rb") as f:
+            bars = pickle.load(f)
+
+        features = relation_with_prev_high(bars["close"], 30)
+        np.testing.assert_array_almost_equal([1, -0.07], features[-1], 3)

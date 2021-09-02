@@ -101,8 +101,8 @@ async def make_dataset(
     end: Frame = None,
     main_frame=FrameType.DAY,
     has_register_ipo=False,
-    notes:str=None,
-    epoch = 100
+    notes: str = None,
+    epoch=100,
 ) -> DataBunch:
     """生成数据集
 
@@ -171,14 +171,16 @@ async def make_dataset(
         xbars = bars[:-target_win]
         ybars = bars[-target_win:]
 
-        if np.count_nonzero(np.isfinite(xbars["close"])) < len(xbars) * 0.95 or np.count_nonzero(np.isfinite(ybars["close"])) < len(ybars):
+        if np.count_nonzero(np.isfinite(xbars["close"])) < len(
+            xbars
+        ) * 0.95 or np.count_nonzero(np.isfinite(ybars["close"])) < len(ybars):
             continue
 
-        side_bar_end = xbars["frame"][-1]
+        xend = xbars["frame"][-1]
 
         # get the target value
         try:
-            y_, bucket_idx = target_transformer(ybars, xbars)
+            y_, bucket_idx = target_transformer(ybars, xbars, code)
             if buckets[bucket_idx] >= capacity:
                 continue
         except NoTargetError:
@@ -202,7 +204,7 @@ async def make_dataset(
                 if side_bars_len is None or transformer is None:
                     raise ValueError("side_bars_len, transformer are all required")
 
-                side_bar_tail = tf.combine_time(side_bar_end, hour=15)
+                side_bar_tail = tf.combine_time(xend, hour=15)
                 side_bar_head = tf.shift(side_bar_tail, -side_bars_len, frame_type)
                 side_bars = await sec.load_bars(
                     side_bar_head, side_bar_tail, frame_type
@@ -236,7 +238,9 @@ async def make_dataset(
             break
 
         if i >= total * epoch:
-            logger.info("have searched more than %s times of total space, stopped", epoch)
+            logger.info(
+                "have searched more than %s times of total space, stopped", epoch
+            )
             break
 
     ds = DataBunch(X, y, raw, desc=notes)
