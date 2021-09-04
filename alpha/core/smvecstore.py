@@ -144,6 +144,10 @@ class SmallSizeVectorStore:
         if metric == "L2":
             d = euclidean_distances(self.vectors, vec.reshape(1, -1)).flatten()
 
+            # let the distance dis-correlated with dimension of features
+            n = len(vec)
+            d = d / n
+
         elif metric == "Cosine":
             d = cosine_distances(self.vectors, vec.reshape(1, -1)).flatten()
 
