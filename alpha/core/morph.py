@@ -32,7 +32,7 @@ import numpy as np
 from omicron.core.timeframe import tf
 from omicron.core.types import FrameType
 
-from alpha.core.features import fillna, moving_average
+from alpha.core.features import fillna, moving_average, weighted_moving_average
 from alpha.core.smvecstore import SmallSizeVectorStore
 
 logger = logging.getLogger(__name__)
@@ -40,15 +40,34 @@ logger = logging.getLogger(__name__)
 
 class MorphFeatures:
     def __init__(
-        self, frame_type: FrameType, wins=None, flen=10, threshold=1e-3
+        self, frame_type: FrameType, wins=None, flen=10, thresholds=None
     ) -> None:
         self.frame_type = frame_type
         self.wins = wins or [5, 10, 20, 60]
         self.flen = flen
-        self.threshold = threshold
-        self.store = SmallSizeVectorStore(name=f"morph_{frame_type.value}", columns={})
+        self.thresholds = thresholds or {
+            5: 1e-2,
+            10: 5e-3,
+            20: 3e-3,
+            60: 1e-3,
+        }
 
-    def load_store(self, ft: FrameType = None, path: str = None) -> None:
+        self.default_threshold = 1e-3
+
+        self.stores = {}
+        for win in self.wins:
+            self.stores[win] = SmallSizeVectorStore(
+                f"morph_{frame_type.value}_{win}"
+            )
+
+    def get_threshold(self, win:int) -> float:
+        if win in self.thresholds:
+            return self.thresholds[win]
+        else:
+            return self.default_threshold
+
+    @staticmethod
+    def load(ft: FrameType = None, path: str = None) -> None:
         """load store from disk
 
         each frame type has its own store
@@ -57,17 +76,27 @@ class MorphFeatures:
         if path is None:
             path = os.path.expanduser(f"~/alpha/data/morph_{ft.value}.pkl")
         with open(path, "rb") as f:
-            self.store = pickle.load(f)
+            return pickle.load(f)
 
-    def save_store(self, path: str = None) -> None:
+    def dump(self, path: str = None) -> None:
         if path is None:
             path = os.path.expanduser(f"~/alpha/data/morph_{self.frame_type.value}.pkl")
         with open(path, "wb") as f:
-            pickle.dump(self.store, f)
+            pickle.dump(self, f)
 
-    async def add_morph_pattern(
+    async def encode(
         self, code: str, end: Frame, frame_type: FrameType = FrameType.DAY
     ):
+        """transform moving average trend line into morph features
+
+        Args:
+            code (str): [description]
+            end (Frame): [description]
+            frame_type (FrameType, optional): [description]. Defaults to FrameType.DAY.
+
+        Raises:
+            ValueError: [description]
+        """
         end = tf.shift(arrow.get(end), 0, frame_type)
         n = max(self.wins) + self.flen - 1
         start = tf.shift(end, -n + 1, frame_type)
@@ -76,18 +105,21 @@ class MorphFeatures:
         bars = await sec.load_bars(start, end, frame_type)
 
         close = bars["close"]
-        if np.count_nonzero(np.isfinite(close)) < n * 0.9:
+        if np.count_nonzero(np.isfinite(close)) < n * 0.9 or not np.all(np.isfinite(close[-3:])):
             raise ValueError(f"not enough data for {code}")
 
         close = fillna(close.copy())
-        vec = []
-        for win in self.wins:
-            ma = moving_average(close, win)[-self.flen :]
-            vec.extend(ma / ma[0])
 
-        res = self.store.search_vec(vec, threshold=self.threshold, n=1)
-        if res and len(res) > 0:
-            logger.info("same morph already exists: %s", res["id_"])
-            return res["id_"]
-        else:
-            return self.store.insert([vec])
+        features = []
+        for win in self.wins:
+            ma = weighted_moving_average(close, win)[-self.flen :]
+            vec = ma / ma[0]
+
+            store = self.stores[win]
+            res = store.search_vec(vec, threshold=self.get_threshold(win), n=1)
+            if res is not None and len(res) > 0:
+                features.append(res["id_"][0])
+            else:
+                features.append(store.insert([vec])[0])
+
+        return features
