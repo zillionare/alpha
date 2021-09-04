@@ -13,7 +13,7 @@ class TestMorphFeatures(unittest.IsolatedAsyncioTestCase):
         await omicron.init()
 
     async def test_morph_features(self):
-        morph = MorphFeatures(FrameType.DAY)
+        morph = MorphFeatures(FrameType.DAY, flen=20)
         code = "300688.XSHE"
         id_ = await morph.add_morph_pattern(
             code,
@@ -25,8 +25,9 @@ class TestMorphFeatures(unittest.IsolatedAsyncioTestCase):
         id_ = await morph.add_morph_pattern(code, "20210830")
 
         id_ = await morph.add_morph_pattern(code, "20210827")
+        self.assertEqual(0, id_[0])
 
         morph.save_store("/tmp/morph_test.pkl")
         morph.load_store(path="/tmp/morph_test.pkl")
-        id_ = await morph.add_morph_pattern(code, "20210827")
+        id_ = await morph.add_morph_pattern(code, "20210809")
         self.assertEqual(1, id_[0])

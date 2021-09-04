@@ -39,10 +39,13 @@ logger = logging.getLogger(__name__)
 
 
 class MorphFeatures:
-    def __init__(self, frame_type: FrameType, wins=None, flen=10) -> None:
+    def __init__(
+        self, frame_type: FrameType, wins=None, flen=10, threshold=1e-3
+    ) -> None:
         self.frame_type = frame_type
         self.wins = wins or [5, 10, 20, 60]
         self.flen = flen
+        self.threshold = threshold
         self.store = SmallSizeVectorStore(name=f"morph_{frame_type.value}", columns={})
 
     def load_store(self, ft: FrameType = None, path: str = None) -> None:
@@ -82,7 +85,7 @@ class MorphFeatures:
             ma = moving_average(close, win)[-self.flen :]
             vec.extend(ma / ma[0])
 
-        res = self.store.search_vec(vec, threshold=1e-2, n=1)
+        res = self.store.search_vec(vec, threshold=self.threshold, n=1)
         if res and len(res) > 0:
             logger.info("same morph already exists: %s", res["id_"])
             return res["id_"]
