@@ -15,22 +15,25 @@ from high score to low score, we'll have 5 kinds:
 
 """
 
+import datetime
 import os
 import pickle
 from typing import List, NewType, Union
-import datetime
+
 import arrow
 from omicron.models.security import Security
 
 # define new types
 Frame = NewType("Frame", (str, datetime.date, datetime.datetime))
 
+import logging
+
 import numpy as np
+from omicron.core.timeframe import tf
 from omicron.core.types import FrameType
+
 from alpha.core.features import fillna, moving_average
 from alpha.core.smvecstore import SmallSizeVectorStore
-from omicron.core.timeframe import tf
-import logging
 
 logger = logging.getLogger(__name__)
 

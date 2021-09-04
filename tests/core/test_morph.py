@@ -1,8 +1,10 @@
+import unittest
+
+import omicron
 from omicron.core.types import FrameType
+
 from alpha.core.morph import MorphFeatures
 from tests import init_test_env
-import unittest
-import omicron
 
 
 class TestMorphFeatures(unittest.IsolatedAsyncioTestCase):
