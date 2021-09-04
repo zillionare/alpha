@@ -14,18 +14,29 @@ logger = logging.getLogger(__name__)  # pylint: disable=invalid-name
 
 
 class SmallSizeVectorStore:
-    def __init__(self, name: str, columns: dict, vector_type: str = "<f4"):
+    def __init__(self, name: str, columns: dict = None, vector_type: str = "<f4"):
         self.name = name
         self.vector_type = vector_type
 
         # maintain the order of columns
+        if columns is None:
+            columns = {"id_": "<i4"}
+        else:
+            if "id_" not in columns:
+                columns["id_"] = "<i4"
+
         self.colnames = list(columns.keys())
         self.columns = columns
 
         self.vectors = None
         self.meta = None
 
-    def _insert_one(self, meta_item: dict, vector):
+    def _insert_one(self, vector, meta_item: dict = None):
+        if meta_item is None:
+            meta_item = {"id_": len(self.vectors) if self.vectors is not None else 0}
+        if "id_" not in meta_item:
+            meta_item["id_"] = len(self.vectors) if self.vectors is not None else 0
+
         meta = np.array(
             [tuple(meta_item[col] for col in self.colnames)],
             dtype=[(col, self.columns[col]) for col in self.colnames],
@@ -45,24 +56,29 @@ class SmallSizeVectorStore:
         self.vectors = vectors_
         self.meta = meta_
 
-        return len(self.vectors) - 1
+        return meta["id_"][0]
 
-    def insert(self, meta_items: Union[dict, List[dict]], vectors):
+    def insert(self, vectors, meta_items: Union[dict, List[dict]] = None):
         """insert item to store"""
+        ids = []
+        if meta_items is None:
+            for vector in vectors:
+                ids.append(self._insert_one(vector))
+            return ids
+
         item = meta_items if isinstance(meta_items, dict) else meta_items[0]
         diff = set(self.columns.keys()) - set(item.keys())
-        if diff:
+        if diff and diff != {"id_"}:
             raise ValueError(f"these columns {diff} are required")
 
         if isinstance(meta_items, dict):
-            return self._insert_one(meta_items, vectors)
+            return self._insert_one(vectors, meta_items)
 
-        ids = []
         if len(meta_items) != len(vectors):
             raise ValueError("length of meta and vectors should be same")
 
         for item, vector in zip(meta_items, vectors):
-            ids.append(self._insert_one(item, vector))
+            ids.append(self._insert_one(vector, item))
 
         return ids
 
@@ -115,7 +131,12 @@ class SmallSizeVectorStore:
         """search vector in store
 
         supported metrics are `L2`, `Cosine`
+
+        return:
+            (distance, index)
         """
+        if self.vectors is None:
+            return None
 
         if isinstance(vec, list):
             vec = np.array(vec)
@@ -130,7 +151,7 @@ class SmallSizeVectorStore:
         d_lt_threshold = d[pos_all_lt_threshold]
         indices = pos_all_lt_threshold[np.argsort(d_lt_threshold)[:n]]
 
-        meta = self[indices]
+        meta = self.meta[indices]
         res_type = np.dtype(meta.dtype.descr + [("d", "<f4")])
         res = np.empty(meta.shape, dtype=res_type)
         for col in meta.dtype.names:

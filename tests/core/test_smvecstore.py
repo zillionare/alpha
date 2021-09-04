@@ -14,12 +14,15 @@ class TestSmallSizeVectorStore(unittest.TestCase):
     def test_all_in_one(self):
         store = SmallSizeVectorStore("test", {"desc": "O", "flag": "<i4"})
 
-        rid = store.insert({"flag": 1, "desc": "one"}, [1, 2, 3])
+        rid = store.insert(
+            [1, 2, 3],
+            {"flag": 1, "desc": "one"},
+        )
         self.assertEqual(rid, 0)
 
         rids = store.insert(
-            [{"flag": -1, "desc": "two"}, {"flag": -1, "desc": "three"}],
             [[1, 2, 0], [1, 0, 3]],
+            [{"flag": -1, "desc": "two"}, {"flag": -1, "desc": "three"}],
         )
         self.assertListEqual(rids, [1, 2])
 
@@ -50,5 +53,5 @@ class TestSmallSizeVectorStore(unittest.TestCase):
 
         store.remove("flag", 1)
         self.assertEqual(2, len(store))
-        store.remove("flag", -1, {"desc": "two"})
+        store.remove("flag", -1, desc= "two")
         self.assertListEqual([1.0, 0.0, 3.0], store.vectors[0].tolist())
