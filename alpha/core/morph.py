@@ -15,91 +15,73 @@ from high score to low score, we'll have 5 kinds:
 
 """
 
-from typing import List
+import os
+import pickle
+from typing import List, NewType, Union
+import datetime
+import arrow
+from omicron.models.security import Security
+
+# define new types
+Frame = NewType("Frame", (str, datetime.date, datetime.datetime))
 
 import numpy as np
-from alpha.core.features import moving_average
+from omicron.core.types import FrameType
+from alpha.core.features import fillna, moving_average
 from alpha.core.smvecstore import SmallSizeVectorStore
+from omicron.core.timeframe import tf
+import logging
+
+logger = logging.getLogger(__name__)
 
 
-class MorphaFeatures:
-    def __init__(self) -> None:
-        self.wins = [5, 10, 20]
-        self.samples = 5
-        self.flen = 7
-        self.stores = {}
+class MorphFeatures:
+    def __init__(self, frame_type: FrameType, wins=None, flen=10) -> None:
+        self.frame_type = frame_type
+        self.wins = wins or [5, 10, 20, 60]
+        self.flen = flen
+        self.store = SmallSizeVectorStore(name=f"morph_{frame_type.value}", columns={})
 
-        self.nbars = max(self.wins) + self.flen + self.samples - 1
-        for win in self.wins:
-            name = f"store_ma{win}"
-            params = {"acc": "<f4", "b": "<f4", "pcr": "<f4", "vx": "<f4"}
-            store = SmallSizeVectorStore(name, params)
+    def load_store(self, ft: FrameType = None, path: str = None) -> None:
+        """load store from disk
 
-            self.stores[win] = store
+        each frame type has its own store
 
-        self.build()
-
-    def scale(self, x):
-        if min(x) < 1:
-            x += -min(x) + 1
-
-        return x
-
-    def build(self) -> None:
-        """build features for model"""
-        for a in [i / 20000 for i in range(-20, 20)]:
-            # b= 0.1对应每天涨停的情况
-            for b in [i / 200 for i in range(-20, 20)]:
-                p = np.poly1d((a, b, 1))
-
-                # use same price serices for all ma2
-                y = p(np.arange(self.nbars))
-                y = self.scale(y)
-
-                # vx is the distance to the end of bars
-                vx = self.nbars - 1 - (-b) / (2 * (a or 1e-13))
-                vx = np.tanh(vx * 2 / self.nbars)
-
-                for win in self.wins:
-                    store = self.stores[win]
-                    ma = moving_average(y, win)
-                    for j in range(-self.samples + 1, 1):
-                        vec = ma[len(ma) + j - self.flen : len(ma) + j]
-                        pcr = ma[len(ma) - 1 + j] / ma[len(ma) + j - 2] - 1
-                        store._insert_one(
-                            {
-                                "acc": a,
-                                "b": b,
-                                "pcr": pcr,
-                                "vx": vx,
-                            },
-                            vec,
-                        )
-
-    def xtransform(self, close: np.ndarray) -> List:
-        """transform x to features
-
-        :param x:
-        :return:
         """
+        if path is None:
+            path = os.path.expanduser(f"~/alpha/data/morph_{ft.value}.pkl")
+        with open(path, "rb") as f:
+            self.store = pickle.load(f)
+
+    def save_store(self, path: str = None) -> None:
+        if path is None:
+            path = os.path.expanduser(f"~/alpha/data/morph_{self.frame_type.value}.pkl")
+        with open(path, "wb") as f:
+            pickle.dump(self.store, f)
+
+    async def add_morph_pattern(
+        self, code: str, end: Frame, frame_type: FrameType = FrameType.DAY
+    ):
+        end = tf.shift(arrow.get(end), 0, frame_type)
+        n = max(self.wins) + self.flen - 1
+        start = tf.shift(end, -n + 1, frame_type)
+
+        sec = Security(code)
+        bars = await sec.load_bars(start, end, frame_type)
+
+        close = bars["close"]
+        if np.count_nonzero(np.isfinite(close)) < n * 0.9:
+            raise ValueError(f"not enough data for {code}")
+
+        close = fillna(close.copy())
         vec = []
-
-        if len(close) < self.nbars:
-            raise DataError("not enough data")
-
-        close = close[-self.nbars :]
-
-        if np.count_nonzero(np.isfinite(close)) != len(close):
-            raise DataError("data contains np.NaN or None")
-
-        close = self.scale(close / close[0])
-        dtypes = None
         for win in self.wins:
             ma = moving_average(close, win)[-self.flen :]
-            matched = self.stores[win].search_vec(ma, threshold=999, n=1)
-            dtypes = matched.dtype
-            if matched and len(matched) == 1:
-                # acc, b, pcr, vx, d(distance)
-                vec.append(matched[0].tolist())
+            vec.extend(ma / ma[0])
 
-        return np.array(vec, dtype=dtypes)
+        res = self.store.search_vec(vec, threshold=1e-2, n=1)
+        if res and len(res) > 0:
+            logger.info("same morph already exists: %s", res["id_"])
+            return res["id_"]
+        else:
+            return self.store.insert([vec])
