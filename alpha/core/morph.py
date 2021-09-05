@@ -107,34 +107,16 @@ class MorphFeatures:
         with open(path, "wb") as f:
             pickle.dump(self, f)
 
-    async def encode(
-        self, code: str, end: Frame, frame_type: FrameType = FrameType.DAY
-    ):
+    def encode(self, close: np.array) -> List[np.array]:
         """transform moving average trend line into morph features
 
+        close should NOT contains nan
         Args:
-            code (str): [description]
-            end (Frame): [description]
-            frame_type (FrameType, optional): [description]. Defaults to FrameType.DAY.
+            close: close price array
 
         Raises:
             ValueError: [description]
         """
-        end = tf.shift(arrow.get(end), 0, frame_type)
-        n = max(self.wins) + self.flen - 1
-        start = tf.shift(end, -n + 1, frame_type)
-
-        sec = Security(code)
-        bars = await sec.load_bars(start, end, frame_type)
-
-        close = bars["close"]
-        if np.count_nonzero(np.isfinite(close)) < n * 0.9 or not np.all(
-            np.isfinite(close[-3:])
-        ):
-            raise ValueError(f"not enough data for {code}")
-
-        close = fillna(close.copy())
-
         features = []
         for win in self.wins:
             ma = weighted_moving_average(close, win)[-self.flen :]
