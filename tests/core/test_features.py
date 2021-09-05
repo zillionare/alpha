@@ -15,6 +15,7 @@ from alpha.core.features import (
     reverse_moving_average,
     transform_y_by_change_pct,
     volume_features,
+    weighted_moving_average,
 )
 from tests import data_dir
 
@@ -131,3 +132,10 @@ class TestFeatures(unittest.TestCase):
 
         features = relation_with_prev_high(bars["close"], 30)
         np.testing.assert_array_almost_equal([1, -0.07], features[-1], 3)
+
+    def test_weighted_moving_average(self):
+        data = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+        wma = weighted_moving_average(data, 5)
+        print(wma)
+        ma = moving_average(data, 5)
+        print(ma)

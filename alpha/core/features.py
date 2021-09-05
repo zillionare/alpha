@@ -84,6 +84,21 @@ def moving_average(ts: np.array, win: int):
     return np.convolve(ts, np.ones(win) / win, "valid")
 
 
+def weighted_moving_average(ts: np.array, win: int) -> np.array:
+    """计算加权移动平均
+
+    Args:
+        ts (np.array): [description]
+        win (int): [description]
+
+    Returns:
+        np.array: [description]
+    """
+    w = [2 * (i + 1) / (win * (win + 1)) for i in range(win)]
+
+    return np.convolve(ts, w, "valid")
+
+
 def fillna(ts: np.array):
     """将ts中的NaN替换为其前值
 
@@ -503,6 +518,7 @@ def volume_features(bars: np.array, win: int = 80):
     vec.extend(vr)
     return vec
 
+
 def relation_with_prev_high(close, win=20):
     """当前bar与前高的关系
 
@@ -525,13 +541,14 @@ def relation_with_prev_high(close, win=20):
     prev_high = close[prev_high_idx]
 
     if c0 > prev_high:
-        vec.append(np.tanh(2 * (win - prev_high_idx - 1)/win))
+        vec.append(np.tanh(2 * (win - prev_high_idx - 1) / win))
     else:
-        vec.append(-np.tanh(2 * (win - prev_high_idx - 2)/win))
+        vec.append(-np.tanh(2 * (win - prev_high_idx - 2) / win))
 
     vec.append(np.tanh(c0 / prev_high - 1))
 
     return vec
+
 
 def relationship_with_prev_low(close, win=20):
     """当前bar与前低的关系
@@ -554,15 +571,16 @@ def relationship_with_prev_low(close, win=20):
     prev_low = close[prev_low_idx]
 
     if c0 > prev_low:
-        vec.append(np.tanh(2 * (win - prev_low_idx - 1)/win))
+        vec.append(np.tanh(2 * (win - prev_low_idx - 1) / win))
     else:
-        vec.append(-np.tanh(2 * (win - prev_low_idx - 2)/win))
+        vec.append(-np.tanh(2 * (win - prev_low_idx - 2) / win))
 
     vec.append(np.tanh(c0 / prev_low - 1))
 
     return vec
 
-def long_short_features(bars: np.array, flen:int=10):
+
+def long_short_features(bars: np.array, flen: int = 10):
     """最近`flen`个bar的阴阳线排列特征
 
     Args:
@@ -573,11 +591,14 @@ def long_short_features(bars: np.array, flen:int=10):
 
     return np.where(bars["close"] > bars["open"], 1, -1)[-flen:]
 
+
 def roc_features(close: np.array, flen: int = 10):
     if len(close) < flen + 1:
-        raise ValueError(f"close length must be larger than {flen} + 1, actual {len(close)}")
+        raise ValueError(
+            f"close length must be larger than {flen} + 1, actual {len(close)}"
+        )
 
     if np.count_nonzero(np.isfinite(close)) != len(close):
         raise ValueError("close should not contains np.nan")
 
-    return (close[1:]/close[:-1] - 1)[-flen:]
+    return (close[1:] / close[:-1] - 1)[-flen:]
