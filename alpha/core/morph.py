@@ -40,7 +40,7 @@ logger = logging.getLogger(__name__)
 
 class MorphFeatures:
     def __init__(
-        self, frame_type: FrameType, wins=None, flen=10, thresholds=None
+        self, frame_type: FrameType, wins=None, flen=20, thresholds=None
     ) -> None:
         self.frame_type = frame_type
         self.wins = wins or [5, 10, 20, 60]
@@ -78,7 +78,7 @@ class MorphFeatures:
             return self.default_threshold
 
     @staticmethod
-    def load(ft: FrameType = None, path: str = None) -> None:
+    def load(ft: FrameType = None, path: str = None) -> "MorphFeatures":
         """load store from disk
 
         each frame type has its own store

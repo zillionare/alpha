@@ -1,7 +1,7 @@
 import unittest
 from re import T
-import numpy as np
 
+import numpy as np
 from omicron.core.types import FrameType
 
 from alpha.core.morph import MorphFeatures
@@ -51,7 +51,7 @@ class TestMorphFeatures(unittest.IsolatedAsyncioTestCase):
         morph.dump("/tmp/morph_test.pkl")
         morph.load(path="/tmp/morph_test.pkl")
         features = morph.encode(close[:-5])
-        self.assertEqual([2,2,2,2], features)
+        self.assertEqual([2, 2, 2, 2], features)
 
         morph.dump("/tmp/morph_test.pkl")
         morph.load(path="/tmp/morph_test.pkl")
