@@ -43,6 +43,8 @@ def predict_by_moving_average(
 ) -> float:
     """predict the next ith value by fitted moving average
 
+    make sure ts is not too long and not too short
+
     Args:
         ts (np.array): the time series
         i (int): the index of the value to be predicted, start from 1
@@ -58,7 +60,8 @@ def predict_by_moving_average(
     if len(ma) < n:
         raise ValueError(f"{len(ma)} < {n}, can't predict")
 
-    coef, pmae = polyfit(ma[-n:], degree=2)
+    ma = ma[-n:]
+    coef, pmae = polyfit(ma, degree=2)
     if pmae > err_threshold:
         return None, None
 
