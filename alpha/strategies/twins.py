@@ -2,16 +2,25 @@ import asyncio
 import functools
 import logging
 import os
-from math import copysign
-from typing import List
+import pickle
+from math import copysign, e
 
 import arrow
-
 import cfg4py
 import fire
 import numpy as np
 import omicron
 import pandas as pd
+from numpy.typing import ArrayLike
+from omicron import cache
+from omicron.core.timeframe import tf
+from omicron.core.types import Frame, FrameType
+from omicron.models.security import Security
+from scipy.stats import randint, uniform
+from sklearn.metrics import classification_report
+from sklearn.model_selection import RandomizedSearchCV
+from xgboost.sklearn import XGBClassifier
+
 from alpha.core.features import (
     fillna,
     moving_average,
@@ -20,14 +29,12 @@ from alpha.core.features import (
     relative_strength_index,
     top_n_argpos,
     volume_features,
+    weighted_moving_average,
 )
+from alpha.core.morph import MorphFeatures
 from alpha.core.smvecstore import SmallSizeVectorStore
 from alpha.utils import round
-from numpy.typing import ArrayLike
-from omicron import cache
-from omicron.core.timeframe import tf
-from omicron.core.types import Frame, FrameType
-from omicron.models.security import Security
+from alpha.utils.data.databunch import DataBunch
 
 cfg = cfg4py.init("/apps/alpha/alpha/config")
 logger = logging.getLogger(__name__)
@@ -38,32 +45,62 @@ class Twins:
 
     def __init__(self, name: str, *args, **kwargs):
         self.name = name
-        self.store = SmallSizeVectorStore(
-            name,
-            {
-                "op": "<i4",
-                "code": "O",
-                "end": "O",
-                "desc": "O",
-            },
-        )
+
         self.nbars = kwargs.get("nbars", 81)
         self.metric = "L2"
-        self.ma_wins = [5, 10, 20, 60, 120, 250]
+        self.ma_wins = [5, 10, 20, 60]
         self.vol_win = 80
+        self.flen = 20
 
-    def load(self, model: str) -> None:
-        if os.path.exists(model):
-            self.store = SmallSizeVectorStore.load(model)
-        elif model.startswith("v"):
-            path = os.path.expanduser(
-                f"~/alpha/data/{self.name}/{self.name}-{model}.pkl"
-            )
-            self.store = SmallSizeVectorStore.load(path)
+        self.day_morph = MorphFeatures.load(FrameType.DAY)
+
+        self.X = []
+        self.y = []
+        self.meta = []
+
+        # the machine learning model
+        self.model = None
+        self.version = 1
+
+        os.makedirs(os.path.expanduser(f"~/alpha/data/twins"), exist_ok=True)
+
+    def __str__(self):
+        bins = [-10, -0.2, -0.1, -0.05, 0, 0.05, 0.1, 0.2, 10]
+        count, bins = np.histogram(self.y, bins=bins)
+
+        count = "".join(map(lambda x: f"{x:>7}", count))
+        bins = "".join(map(lambda x: f"{x:>7}", bins))
+
+        dist = f"{bins}\n  {count}"
+        return (
+            f"Twins {self.name}\n patterns: {len(self.X)}, with distrubutions:\n{dist}"
+        )
+
+    @classmethod
+    def from_model(model: str) -> "Twins":
+        if not os.path.exists(model):
+            model = os.path.expanduser(f"~/alpha/data/twins/{model}.pkl")
+
+        with open(model, "rb") as f:
+            return pickle.load(f)
+
+    def find_pattern(self, code: str, end: str, frame_type: str = "1d"):
+        meta = np.array(
+            self.meta, dtype=[("code", "S11"), ("end", "U20"), ("frame_type", "S4")]
+        )
+
+        found = meta
+        for col, val in (("code", code), ("frame_type", frame_type), ("end", end)):
+            found = found[found[col] == val]
+
+        return found
 
     async def add_pattern(
-        self, op: int, code: str, end: str, desc: str, frame_type: str = "30m"
+        self, op: int, code: str, end: str, frame_type: str = "1d"
     ) -> None:
+        if self.find_pattern(code, end, frame_type).shape[0] > 0:
+            return "already exists"
+
         sec = Security(self.canonicalize(code))
         end = arrow.get(end)
         ft = FrameType(frame_type)
@@ -71,13 +108,44 @@ class Twins:
         start = tf.shift(end, -self.nbars + 1, ft)
         bars = await sec.load_bars(start, end, ft)
         if (
-            np.count_nonzero(bars["close"] == None) > len(bars) * 0.1
+            np.count_nonzero(np.isfinite(bars["close"])) < len(bars) * 0.9
             or len(bars) < self.nbars
         ):
             return None
 
         vec = self.x_transform(bars)
-        self.store.insert({"op": op, "desc": desc, "end": end, "code": code}, vec)
+
+        self.meta.append((code, end, frame_type))
+        self.X.append(vec)
+        self.y.append(op)
+
+        return self._describe_vec(vec)
+
+    def _describe_vec(self, vec):
+        """对一个特征向量进行描述
+
+        Args:
+            vec ([type]): [description]
+
+        Returns:
+            [type]: [description]
+        """
+        # 成交量特征: 方向 3, 间隔 3， 量比 3
+        vol = f"成交量： 方向({self.vol_win}): {vec[:3]} 间隔: {np.round(vec[3:6], 2)} 量比: {np.round(vec[6:9], 2)}"
+
+        # RSI特征: 最后4周期
+        rsi = f"RSI<最后4>: {np.round(vec[9:13], 2)}"
+
+        # 与前高关系
+        prev_high = f"前高({max(self.ma_wins)}): {vec[13]:.1f}<tan> 前高比: {vec[14]:.0%}"
+
+        # 与前低关系
+        prev_low = f"前低({max(self.ma_wins)}): {vec[15]:.1f}<tan> 前低比: {vec[16]:.0%}"
+
+        # 发散程度
+        div = f"发散程度: {vec[17]:.2f}"
+
+        return f"{vol}\n{rsi}\n{prev_high}\n{prev_low}\n{div}"
 
     async def add_patterns(self, path: str):
         """add pattern from file
@@ -101,7 +169,7 @@ class Twins:
         else:
             return code + ".XSHE"
 
-    def x_transform(self, bars, flen: int = 10):
+    def x_transform(self, bars):
         """
         1. 均线使用5, 10, 20, 60各`flen`根,计算ma,及ma之间的发散程度。共需要66个周期的close
         2. 计算60周期以来最大的3次成交量的方向、间隔，如果成交量大于成交均量1倍
@@ -110,43 +178,45 @@ class Twins:
         Args:
             bars ([type]): [description]
         """
-        morph = []
         vec = []
         close = bars["close"]
-        if np.count_nonzero(np.isfinite(close)) < len(close) * 0.9:
-            return None
 
         close = fillna(close.copy())
-        mas = []
-        for win in self.ma_wins:
-            ma = moving_average(close, win)[-flen:]
-            ma = ma/ma[0]
-            morph.extend(ma)
-            mas.append(ma[-1])
 
+        # 成交量特征
         vec.extend(volume_features(bars, self.vol_win))
 
         # RSI
         rsi = relative_strength_index(close)[-4:]
         vec.extend(rsi)
 
-        # 各均线的发散程度？太发散则有回归需求；太聚拢则有发散需求
-        diverge = (mas[0] - mas[-1])/(mas[0] + mas[-1])
-        vec.append(diverge)
-
-        # 成交价变化特征
-        vec.extend(self.price_features(close, flen))
-
         # 与前高的关系
-        vec.extend(relation_with_prev_high(close[-60:]))
+        n = max(self.ma_wins)
+        vec.extend(relation_with_prev_high(close[-n:], n))
 
         # 与前低的关系
-        vec.extend(relationship_with_prev_low(close[-60:]))
+        vec.extend(relationship_with_prev_low(close[-n:], n))
+
+        mas = []
+        for win in self.ma_wins:
+            ma = moving_average(close, win)
+            mas.append(ma[-1])
+
+        # 各均线的发散程度？太发散则有回归需求；太聚拢则有发散需求
+        divergency = (mas[0] - mas[-1]) / (mas[0] + mas[-1])
+        vec.append(divergency)
+
+        # len(vec) == 18 till now
+        # moving average line's morph feature, dim is 4
+        vec.extend(self.day_morph.encode(close))
+
+        # 成交价变化特征
+        vec.extend(self.price_features(close, self.flen))
 
         return vec
 
     def price_features(self, close: np.array, flen: int = 10):
-        """计算收盘价的特征
+        """计算收盘价的特征， 最近`flen`根收盘价的变化率，即最高价位置
 
         Args:
             close (np.array): 收盘价序列
@@ -162,15 +232,41 @@ class Twins:
 
         return vec
 
-    async def train(self, datafile: str, version=None):
+    async def train(self, datafile: str, params=None):
         """训练模型"""
-        await self.add_patterns(datafile)
+        params = params or {
+            "colsample_bytree": uniform(0.7, 0.3),
+            "gamma": uniform(0, 0.5),
+            "learning_rate": uniform(0.01, 1),
+            "max_depth": randint(2, 6),
+            "n_estimators": randint(80, 150),
+            "subsample": uniform(0.6, 0.4),
+        }
 
-        save_to = os.path.expanduser(f"~/alpha/data/{self.name}/")
-        os.makedirs(save_to, exist_ok=True)
+        model = XGBClassifier()
 
-        version = version or str(arrow.now().datetime)
-        self.store.save(os.path.join(save_to, f"{self.name}-{version}.pkl"))
+        search = RandomizedSearchCV(
+            model,
+            param_distributions=params,
+            random_state=78,
+            n_iter=200,
+            cv=10,
+            verbose=1,
+            n_jobs=1,
+            return_train_score=True,
+            refit=True,  # do the refit oursel
+        )
+
+        ds = DataBunch(self.X, self.y)
+        ds.train_test_split()
+        fit_params = {"eval_set": [(ds.X_test, ds.y_test)], "early_stopping_rounds": 10}
+
+        search.fit(ds.X_train, ds.y_train, **fit_params)
+        model = search.best_estimator_
+        preds = model.predict(ds.X_test)
+        report = classification_report(ds.y_test, preds)
+
+        return model, report
 
     async def predict(
         self,
@@ -181,7 +277,7 @@ class Twins:
         top_n: int = 1,
     ):
         """预测"""
-        if not self.store:
+        if not self.stores:
             raise ValueError("please load store before make prediction")
 
         sec = Security(self.canonicalize(code))
@@ -207,7 +303,7 @@ class Twins:
         if vec is None:
             return None
 
-        res = self.store.search_vec(vec, threshold, metric=self.metric)
+        res = self.store.nearest_vec(vec, threshold, metric=self.metric)
         if threshold is not None:
             return res[res["d"] < threshold][:n]
         else:
@@ -367,16 +463,26 @@ class Twins:
         """
         删除模式
         """
-        return self.store.remove("code", code, end=arrow.get(end))
+        return self.morph_store.remove("code", code, end=arrow.get(end))
 
-    def save(self, model: str):
-        if os.path.exists(os.path.expanduser(model)):
-            self.store.save(model)
-        elif model.startswith("v"):
-            path = os.path.expanduser(
-                f"~/alpha/data/{self.name}/{self.name}-{model}.pkl"
-            )
-            self.store.save(path)
+    def save(self, model: str = None):
+        if model is None:
+            model = os.path.expanduser(f"~/alpha/data/twins/twins-v{self.version}.pkl")
+
+        with open(model, "wb") as f:
+            pickle.dump(self, f)
+
+        logger.info(f"twins has been saved to {model}")
+
+    @staticmethod
+    def load(model: str):
+        if not os.path.exists(os.path.expanduser(model)) and model.startswith("v"):
+            path = os.path.expanduser(f"~/alpha/data/twins/twins-{model}.pkl")
+        else:
+            path = os.path.expanduser(model)
+
+        with open(path, "rb") as f:
+            return pickle.load(f)
 
 
 def async_run_command(func):
