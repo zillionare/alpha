@@ -133,10 +133,9 @@ class TestFeatures(unittest.TestCase):
             30.6 , 32.69, 39.23, 47.08, 56.5 , 47.99, 43.7 , 40.66, 39.  ,
             40.14, 39.7 , 40.25
             ]
-       # fmt: on
+        # fmt: on
         preds, pmae = predict_by_moving_average(ts, 5, err_threshold=1)
         self.assertAlmostEqual(25.98, preds[0], 2)
-
 
     def test_volume_features(self):
         data_file = os.path.join(data_dir(), "300985.pkl")
@@ -153,7 +152,34 @@ class TestFeatures(unittest.TestCase):
             bars = pickle.load(f)
 
         features = relation_with_prev_high(bars["close"], 30)
-        np.testing.assert_array_almost_equal([1, -0.07], features[-1], 3)
+        np.testing.assert_array_almost_equal([-0.067, -0.07], features, 3)
+
+        # 000155, 2021-08-19
+        # fmt: off
+        close = [
+            11.07    , 11.76    , 11.78    , 12.36    , 12.34    , 12.2     ,
+            11.94    , 11.88    , 11.68    , 11.33    , 11.47    , 10.84    ,
+            10.4     , 10.96    , 10.5     , 10.56    , 11.42    , 12.03    ,
+            12.37    , 12.66    , 12.82    , 12.5     , 12.02    , 12.2     ,
+            12.33    , 13.07    , 14.379999, 14.11    , 15.39    , 14.260001,
+            14.69    , 14.44    , 15.21    , 14.75    , 15.549999, 16.3     ,
+            15.95    , 16.28    , 15.91    , 15.19    , 15.16    , 14.820001,
+            15.140001, 15.710001, 14.969999, 14.42    , 14.15    , 14.47    ,
+            14.31    , 13.780001, 13.86    , 14.      , 14.03    , 13.28    ,
+            12.38    , 12.620001, 12.99    , 13.07    , 13.18    , 13.59    ,
+            13.16    , 13.190001, 13.47    , 13.65    , 13.809999, 13.29    ,
+            14.079999, 15.15    , 14.359999, 15.140001, 15.19    , 15.93    ,
+            17.21    , 18.93    , 17.46    , 17.87    , 18.21    , 17.29    ,
+            19.02    , 20.35    , 21.02    , 21.16    , 21.77    , 19.59    ,
+            18.75    , 19.58    , 20.89    , 20.8     , 20.      , 22.      ,
+            24.2     , 25.410002, 24.03    , 24.93    , 26.17    , 25.57    ,
+            27.5     , 24.94    , 23.9     , 24.15
+        ]
+       # fmt: on
+        features = relation_with_prev_high(close, 30)
+        np.testing.assert_array_almost_equal([-0.133, -0.12], features, 3)
+
+
 
     def test_weighted_moving_average(self):
         data = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]

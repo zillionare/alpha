@@ -522,7 +522,7 @@ def volume_features(bars: np.array, win: int = 80):
     return vec
 
 
-def relation_with_prev_high(close, win=20):
+def relation_with_prev_high(close, win=20)->List:
     """当前bar与前高的关系
 
     返回二维向量。
@@ -533,8 +533,11 @@ def relation_with_prev_high(close, win=20):
 
     Args:
         close ([type]): [description]
+    Returns:
+        relation: [distance, difference]
     """
     vec = []
+    close = close[-win:]
     c0 = close[-1]
 
     if np.isnan(c0):
