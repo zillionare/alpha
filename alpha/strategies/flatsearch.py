@@ -3,11 +3,12 @@ import os
 import pickle
 
 import cfg4py
+from pymilvus import Milvus
+from pymongo import MongoClient
+
 from alpha.config import get_config_dir
 from alpha.core.features import moving_average
 from alpha.core.vecstore import VecCollection
-from pymilvus import Milvus
-from pymongo import MongoClient
 
 cfg = cfg4py.init(get_config_dir())
 

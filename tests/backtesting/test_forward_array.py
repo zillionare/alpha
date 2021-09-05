@@ -1,6 +1,7 @@
 import unittest
 
 import numpy as np
+
 from alpha.backtesting.forward_array import ForwardArray
 
 

@@ -1,8 +1,7 @@
-import os
-from tests import data_dir
 import itertools
-import unittest
+import os
 import pickle
+import unittest
 
 import numpy as np
 
@@ -17,6 +16,7 @@ from alpha.core.features import (
     transform_y_by_change_pct,
     volume_features,
 )
+from tests import data_dir
 
 
 class TestFeatures(unittest.TestCase):

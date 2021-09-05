@@ -2,6 +2,7 @@ import unittest
 
 import numpy as np
 import omicron
+
 from alpha.strategies.z03 import Z03
 from tests import init_test_env
 

@@ -3,7 +3,7 @@
 import logging
 import pickle
 from sqlite3 import DataError
-from typing import Any, List, Union
+from typing import Any, Callable, List, Union
 
 import numpy as np
 import pandas as pd
@@ -125,7 +125,7 @@ class SmallSizeVectorStore:
         with open(path, "wb") as f:
             pickle.dump(self, f)
 
-    def search_vec(
+    def nearest_vec(
         self, vec: Union[np.array, List], threshold, n: int = 1, metric="L2"
     ):
         """search vector in store
@@ -164,7 +164,7 @@ class SmallSizeVectorStore:
 
         return res
 
-    def get_vectors(self, col: str, value: Any):
+    def find_vectors(self, col: str, value: Any):
         """locate and return vectore by `col`"""
         if col not in self.columns:
             raise ValueError(f"{col} is not a valid column")
@@ -175,3 +175,27 @@ class SmallSizeVectorStore:
     def show_samples(self):
         """turn `self.meta` as a dataframe"""
         return pd.DataFrame(self.meta.tolist(), columns=self.colnames)
+
+    def sorted(self, sorter: Callable, by_vectors=True):
+        """sort store by `sorter` and change the id_ to its new order
+
+        This is useful when you want the ids to be meaninful after sorting, especially when you want to use the id_ in machine learnging algorithms, like decision trees.
+        """
+        if by_vectors:
+            indices = sorter(self.vectors)
+        else:
+            indices = sorter(self.meta)
+
+        try:
+            vectors = self.vectors[indices]
+            meta = self.meta[indices]
+
+            self.vectors = vectors
+            self.meta = meta
+
+            for i in range(len(self.meta)):
+                self.meta["id_"][i] = i
+
+            return self
+        except Exception as e:
+            raise e

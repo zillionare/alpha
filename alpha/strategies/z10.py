@@ -5,19 +5,19 @@ from typing import List
 from xml.sax.handler import feature_string_interning
 
 import arrow
-
 import cfg4py
 import numpy as np
-from alpha import utils
-from alpha.core.errors import NoFeaturesError, NoTargetError
-from alpha.core.features import fillna, moving_average, relative_strength_index
-from alpha.strategies.base_xgboost_strategy import BaseXGBoostStrategy
-from alpha.utils.data import DataBunch
 from omicron.core.timeframe import tf
 from omicron.core.types import FrameType
 from omicron.models.securities import Securities
 from omicron.models.security import Security
 from sklearn.metrics import make_scorer, max_error, mean_absolute_error
+
+from alpha import utils
+from alpha.core.errors import NoFeaturesError, NoTargetError
+from alpha.core.features import fillna, moving_average, relative_strength_index
+from alpha.strategies.base_xgboost_strategy import BaseXGBoostStrategy
+from alpha.utils.data import DataBunch
 
 logger = logging.getLogger(__name__)
 

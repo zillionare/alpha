@@ -2,27 +2,26 @@ import logging
 import os
 
 import arrow
-from alpha.utils.data import make_dataset
-from sklearn.metrics import mean_absolute_error
-
 import cfg4py
 import numpy as np
+from omicron.core.timeframe import tf
+from omicron.core.types import FrameType
+from omicron.models.security import Security
+from sklearn.metrics import mean_absolute_error
+
 from alpha.core.features import (
     fillna,
     moving_average,
     polyfit,
+    predict_by_moving_average,
     relative_strength_index,
     top_n_argpos,
     transform_to_change_pct,
     transform_y_by_change_pct,
-    predict_by_moving_average,
     volume_features,
 )
 from alpha.strategies.base_xgboost_strategy import BaseXGBoostStrategy
-from alpha.utils.data import DataBunch
-from omicron.core.timeframe import tf
-from omicron.core.types import FrameType
-from omicron.models.security import Security
+from alpha.utils.data import DataBunch, make_dataset
 
 cfg = cfg4py.init()
 

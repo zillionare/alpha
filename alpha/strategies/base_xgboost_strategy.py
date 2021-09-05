@@ -9,7 +9,6 @@ from typing import Callable, List, NewType, Tuple, Union
 
 import numpy as np
 import xgboost
-from alpha.utils.data import DataBunch
 from numpy.typing import ArrayLike
 from omicron.core.timeframe import tf
 from omicron.core.types import FrameType
@@ -28,6 +27,8 @@ from sklearn.model_selection import (
     RepeatedStratifiedKFold,
 )
 from xgboost import XGBClassifier, XGBModel, XGBRegressor
+
+from alpha.utils.data import DataBunch
 
 logger = logging.getLogger(__name__)
 

@@ -9,16 +9,16 @@ import sys
 from warnings import simplefilter
 
 import arrow
-
 import cfg4py
 import fire
 import numpy as np
 import omicron
 import psutil
-from alpha.utils.data import even_distributed_dataset, load_data
 from omicron import cache
 from omicron.core.types import FrameType
 from omicron.models.securities import Securities
+
+from alpha.utils.data import even_distributed_dataset, load_data
 
 
 def async_run_command(func):

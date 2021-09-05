@@ -1,9 +1,10 @@
-from alpha.core.features import moving_average
 import pickle
 
 import numpy as np
 from sklearn.model_selection import train_test_split
 from sklearn.utils import Bunch, shuffle
+
+from alpha.core.features import moving_average
 
 
 class DataBunch(Bunch):

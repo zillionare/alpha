@@ -6,16 +6,16 @@ import random
 from typing import Callable, List, NewType, Tuple
 
 import arrow
-
 import numpy as np
-from alpha.core.errors import NoFeaturesError, NoTargetError
-from alpha.utils.data.databunch import DataBunch
 from omicron import cache
 from omicron.core.timeframe import tf
 from omicron.core.types import FrameType
 from omicron.models.securities import Securities
 from omicron.models.security import Security
 from sklearn.inspection import permutation_importance
+
+from alpha.core.errors import NoFeaturesError, NoTargetError
+from alpha.utils.data.databunch import DataBunch
 
 logger = logging.getLogger(__name__)
 

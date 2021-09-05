@@ -2,6 +2,7 @@ import time
 import unittest
 
 import numpy as np
+
 from alpha.core.morphalpatterns import MorphaFeatures
 
 

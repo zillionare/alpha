@@ -3,9 +3,10 @@ import unittest
 import cfg4py
 import numpy as np
 from pymilvus import Milvus
+from pymongo import MongoClient
+
 from alpha.config import get_config_dir
 from alpha.core.veccollection import VecCollection
-from pymongo import MongoClient
 
 
 class TestVecCollection(unittest.TestCase):

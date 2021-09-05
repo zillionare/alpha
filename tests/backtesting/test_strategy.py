@@ -2,6 +2,7 @@ import logging
 import unittest
 
 import omicron
+
 from alpha.backtesting.broker import Broker
 from alpha.backtesting.forward_array import ForwardArray
 from alpha.backtesting.strategy import Strategy

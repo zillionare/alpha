@@ -3,15 +3,15 @@ import os
 from random import sample
 
 import arrow
-
 import cfg4py
 import numpy as np
-from alpha.core.features import fillna, ma_permutation, transform_y_by_change_pct
-from alpha.strategies.base_xgboost_strategy import BaseXGBoostStrategy
-from alpha.utils.data import DataBunch
 from omicron.core.timeframe import tf
 from omicron.core.types import FrameType
 from omicron.models.security import Security
+
+from alpha.core.features import fillna, ma_permutation, transform_y_by_change_pct
+from alpha.strategies.base_xgboost_strategy import BaseXGBoostStrategy
+from alpha.utils.data import DataBunch
 
 logger = logging.getLogger(__name__)
 

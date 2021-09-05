@@ -1,8 +1,9 @@
 import logging
 
 import numpy as np
-from alpha.backtesting.strategy import Strategy
 from omicron.core.talib import moving_average, rolling
+
+from alpha.backtesting.strategy import Strategy
 
 logger = logging.getLogger()
 

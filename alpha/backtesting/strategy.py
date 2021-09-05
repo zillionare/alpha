@@ -7,14 +7,15 @@ from typing import Callable, Tuple, Union
 
 import numpy as np
 import pandas as pd
+from numpy.typing import ArrayLike
+from omicron.models.security import Security
+
 from alpha.backtesting.broker import Broker
 from alpha.backtesting.errors import OutOfMoneyError
 from alpha.backtesting.forward_array import ForwardArray
 from alpha.backtesting.order import Order
 from alpha.backtesting.position import Position
 from alpha.backtesting.trade import Trade
-from numpy.typing import ArrayLike
-from omicron.models.security import Security
 
 logger = logging.getLogger()
 

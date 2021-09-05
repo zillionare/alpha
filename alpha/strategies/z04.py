@@ -5,9 +5,14 @@ from ctypes import Union
 from typing import Callable
 
 import arrow
-
 import cfg4py
 import numpy as np
+from numpy.typing import ArrayLike
+from omicron.core.timeframe import tf
+from omicron.core.types import FrameType
+from omicron.models.securities import Securities
+from omicron.models.security import Security
+
 from alpha.core.features import (
     fillna,
     ma_permutation,
@@ -17,11 +22,6 @@ from alpha.core.features import (
 )
 from alpha.strategies.base_xgboost_strategy import BaseXGBoostStrategy
 from alpha.utils.data import DataBunch
-from numpy.typing import ArrayLike
-from omicron.core.timeframe import tf
-from omicron.core.types import FrameType
-from omicron.models.securities import Securities
-from omicron.models.security import Security
 
 cfg = cfg4py.init()
 
