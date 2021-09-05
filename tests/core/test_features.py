@@ -143,8 +143,8 @@ class TestFeatures(unittest.TestCase):
             bars = pickle.load(f)
 
         vec = volume_features(bars)
-        exp = [0, 1, -1, 1, 0.482, 0.025, 1, 0.278, 0.42]
-        np.testing.assert_array_almost_equal(exp, vec, 3)
+        exp = [0, 1, -1, 80, 21, 1, 1, 6.6, 10.4]
+        np.testing.assert_array_almost_equal(exp, vec, 1)
 
     def test_relation_with_prev_high(self):
         data_file = os.path.join(data_dir(), "300985.pkl")
@@ -175,11 +175,9 @@ class TestFeatures(unittest.TestCase):
             24.2     , 25.410002, 24.03    , 24.93    , 26.17    , 25.57    ,
             27.5     , 24.94    , 23.9     , 24.15
         ]
-       # fmt: on
+        # fmt: on
         features = relation_with_prev_high(close, 30)
         np.testing.assert_array_almost_equal([-0.133, -0.12], features, 3)
-
-
 
     def test_weighted_moving_average(self):
         data = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]

@@ -460,7 +460,7 @@ def volume_features(bars: np.array, win: int = 80):
     成交量方向：如果当前股价上涨则成交量方向为1，下跌则为-1，平盘则为0
     如果存在上下影线，则成交量需要进行调整，调整方法是乘以实体比例。
 
-    特征共有9个，高成交量位置、成交量量比、成交量方向
+    特征共有9个，成交量方向，高成交量位置、成交量量比
     Args:
         bars: 行情数据
         win (int, optional): [description]. Defaults to 80.
@@ -490,7 +490,7 @@ def volume_features(bars: np.array, win: int = 80):
     flags = np.sign(close[1:] - close[:-1])
 
     volume = bars["volume"][-win:]
-    avg = np.mean(volume)
+    avg = np.nanmean(volume)
 
     # 根据open, high, low, close 计算实体比例
     br = np.abs(_open - close[-win:]) / (high - low)
@@ -498,9 +498,12 @@ def volume_features(bars: np.array, win: int = 80):
 
     indice = top_n_argpos(volume, 3)
     valid_indice = []
+
+    top_vol_sum = 0
     for i in indice:
         if volume[i] > avg:
             valid_indice.append(i)
+            top_vol_sum += volume[i]
 
     indice = sorted(valid_indice)
 
@@ -510,19 +513,20 @@ def volume_features(bars: np.array, win: int = 80):
     vec.extend(flags)
 
     # 最大成交量的间隔
-    dist = [np.tanh(2 * (win - i - 1) / win) for i in indice]
-    # 距离越远，值越大。因此左填充1
-    dist = np.pad(dist, (3 - len(dist), 0), "constant", constant_values=1)
+    dist = [(win - i - 1) for i in indice]
+    # 距离越远，影响越小。因此左填充win
+    dist = np.pad(dist, (3 - len(dist), 0), "constant", constant_values=win)
     vec.extend(dist)
 
-    # 最大成交量的量比，按10倍进行scale
-    vr = [np.tanh(volume[i] / (10 * avg)) for i in indice]
+    # 最大成交量与均量的量比，均量扣除最大成交量自身
+    avg = (np.nansum(volume) - top_vol_sum) / (len(volume) - len(valid_indice))
+    vr = [(volume[i] / avg) for i in indice]
     vr = np.pad(vr, (3 - len(vr), 0), "constant", constant_values=1)
     vec.extend(vr)
     return vec
 
 
-def relation_with_prev_high(close, win=20)->List:
+def relation_with_prev_high(close, win=20) -> List:
     """当前bar与前高的关系
 
     返回二维向量。
@@ -568,6 +572,7 @@ def relationship_with_prev_low(close, win=20):
         win (int, optional): [description]. Defaults to 20.
     """
     vec = []
+    close = close[-win:]
     c0 = close[-1]
 
     if np.isnan(c0):
