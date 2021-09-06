@@ -43,16 +43,15 @@ logger = logging.getLogger(__name__)
 class Twins:
     """寻找相似图形来选股的策略。"""
 
-    def __init__(self, name: str, *args, **kwargs):
-        self.name = name
-
+    def __init__(self, frame_type: FrameType, *args, **kwargs):
         self.nbars = kwargs.get("nbars", 81)
         self.metric = "L2"
         self.ma_wins = [5, 10, 20, 60]
         self.vol_win = 80
         self.flen = 20
 
-        self.day_morph = MorphFeatures.load(FrameType.DAY)
+        self.frame_type = FrameType(frame_type)
+        self.morph = MorphFeatures.load(self.frame_type)
 
         self.X = []
         self.y = []
@@ -72,9 +71,7 @@ class Twins:
         bins = "".join(map(lambda x: f"{x:>7}", bins))
 
         dist = f"{bins}\n  {count}"
-        return (
-            f"Twins {self.name}\n patterns: {len(self.X)}, with distrubutions:\n{dist}"
-        )
+        return f"Twins {self.version}\n patterns: {len(self.X)}, with distrubutions:\n{dist}"
 
     @classmethod
     def from_model(model: str) -> "Twins":
@@ -208,7 +205,7 @@ class Twins:
 
         # len(vec) == 18 till now
         # moving average line's morph feature, dim is 4
-        vec.extend(self.day_morph.encode(close))
+        vec.extend(self.morph.encode(close))
 
         # 成交价变化特征
         vec.extend(self.price_features(close, self.flen))
@@ -467,7 +464,9 @@ class Twins:
 
     def save(self, model: str = None):
         if model is None:
-            model = os.path.expanduser(f"~/alpha/data/twins/twins-v{self.version}.pkl")
+            model = os.path.expanduser(
+                f"~/alpha/data/twins/twins-{self.frame_type.value}-v{self.version}.pkl"
+            )
 
         with open(model, "wb") as f:
             pickle.dump(self, f)
@@ -475,11 +474,15 @@ class Twins:
         logger.info(f"twins has been saved to {model}")
 
     @staticmethod
-    def load(model: str):
-        if not os.path.exists(os.path.expanduser(model)) and model.startswith("v"):
-            path = os.path.expanduser(f"~/alpha/data/twins/twins-{model}.pkl")
+    def load(frame_type: FrameType = None, version: int = None, path: str = None):
+        if path is None:
+            assert frame_type is not None and version is not None
+            frame_type = FrameType(frame_type)
+            path = os.path.expanduser(
+                f"~/alpha/data/twins/twins-{frame_type.value}-v{version}.pkl"
+            )
         else:
-            path = os.path.expanduser(model)
+            path = os.path.expanduser(path)
 
         with open(path, "rb") as f:
             return pickle.load(f)
@@ -522,7 +525,7 @@ async def predict(
     if os.path.exists(model):
         s.load(model)
     elif model.lower().startswith("v"):
-        path = os.path.expanduser(f"~/alpha/data/{s.name}/{s.name}-{model}.pkl")
+        path = os.path.expanduser(f"~/alpha/data/{s.version}/{s.version}-{model}.pkl")
         s.load(path)
     print(await s.predict(code, end, ft, threshold=threshold))
 
@@ -536,7 +539,7 @@ async def test(
     if os.path.exists(model):
         s.load(model)
     elif model.lower().startswith("v"):
-        path = os.path.expanduser(f"~/alpha/data/{s.name}/{s.name}-{model}.pkl")
+        path = os.path.expanduser(f"~/alpha/data/{s.version}/{s.version}-{model}.pkl")
         s.load(path)
 
     df = await s.test(code, n, end, ft, threshold)

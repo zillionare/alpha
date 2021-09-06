@@ -834,7 +834,7 @@ class TestTwins(unittest.TestCase):
 
         twins = Twins("test")
         # this is temporay hack, to correct the issue with previous dumped data
-        twins.day_morph.flen = 20
+        twins.morph.flen = 20
 
         vec = twins.x_transform(bars)
         print(twins._describe_vec(vec))
