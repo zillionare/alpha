@@ -250,12 +250,12 @@ async def make_dataset(
 
 async def even_distributed_dataset(
     total: int,
-    buckets_size: int,
+    buckets: List[int],
     bars_len: int,
     target_to_bucket: Callable,
     save_to: str,
     has_register_ipo=False,
-    start="2010-01-01",
+    start="2019-01-01",
     meta: dict = {},
     frame_type: FrameType = FrameType.DAY,
 ):
@@ -267,7 +267,7 @@ async def even_distributed_dataset(
 
     Args:
         total: 总数
-        buckets_size: 桶个数
+        buckets: 存放bucket的数组
         bars_len: 每个桶的bars长度
         target_to_bucket: 将目标值映射到桶的函数
         has_register_ipo: 是否包含注册制股票
@@ -276,8 +276,7 @@ async def even_distributed_dataset(
     """
     data = []
 
-    buckets = [0] * buckets_size
-    capacity = int(total / buckets_size) + 1
+    capacity = int(total / len(buckets)) + 1
 
     start = tf.shift(arrow.get(start), 0, frame_type)
     end_date = tf.day_shift(arrow.now(), 0)
@@ -320,11 +319,7 @@ async def even_distributed_dataset(
 
     meta.update(
         {
-            "buckets_size": buckets_size,
-            "bars_len": bars_len,
             "capacity": capacity,
-            "total": total,
-            "start": start,
             "has_register_ipo": has_register_ipo,
         }
     )

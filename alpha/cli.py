@@ -97,36 +97,62 @@ async def train(strategy: str, version: str = None, ds: str = None):
 
 @async_run_command
 async def make_even_distributed_dataset(
-    total: int, save_to: str, bars_len: int = 300, frame_type: str = "1d"
+    total: int,
+    save_to: str,
+    bars_len: int = 300,
+    frame_type: str = "1d",
+    start="2020-1-4 15:00",
+    has_register_ipo=False,
 ):
-    buckets_size = 21
+    bins = [-0.2, -0.1, -0.05, 0, 0.05, 0.1, 0.2]
+    buckets = [0] * (len(bins) + 1)
+    ylen = 10
 
     def target_to_bucket(bars):
         close = bars["close"]
-        c0 = close[-11]
-        c_ = close[-10:]
+        c0 = close[-ylen - 1]
+        yclose = close[-ylen:]
 
-        if np.isfinite(c0) and np.count_nonzero(np.isfinite(c_)) > 0.9 * len(c_):
-            minc, maxc = min(c_), max(c_)
-            pcr_minus = minc / c0 - 1
-            pcr_plus = maxc / c0 - 1
-            if abs(pcr_minus) >= abs(pcr_plus):
-                return pcr_minus, int(pcr_minus * 100) + buckets_size // 2
+        if np.isfinite(c0) and np.count_nonzero(np.isfinite(yclose)) > 0.9 * len(
+            yclose
+        ):
+            max_adv = max(yclose) / c0 - 1
+            max_dec = abs(min(yclose) / c0 - 1)
+
+            agg = max if max_adv > max_dec else min
+            y = agg(yclose) / c0 - 1
+
+            for i, bin in enumerate(bins):
+                if y < bin:
+                    return y, i
             else:
-                return pcr_plus, int(pcr_plus * 100) + buckets_size // 2
+                return y, i + 1
         else:
             return None, None
 
-    meta = {"target_win": 10}
+    reg = 'reg' if has_register_ipo else 'noreg'
+    file = os.path.join(
+        save_to, f"ds_even_{frame_type}_{ylen}_{bars_len}_{total}_{reg}.pkl"
+    )
+    meta = (
+        {
+            "target_win": ylen,
+            "frame_type": frame_type,
+            "bins": bins,
+            "bars_len": bars_len,
+            "total": total,
+            "start": start,
+        },
+    )
 
     await even_distributed_dataset(
         total,
-        buckets_size,
+        buckets,
         bars_len,
         target_to_bucket,
-        save_to,
+        file,
         meta=meta,
-        start="2015-10-09 10:00",
+        start=start,
         frame_type=FrameType(frame_type),
     )
 
