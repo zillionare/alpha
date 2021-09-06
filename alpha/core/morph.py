@@ -61,7 +61,7 @@ class MorphFeatures:
             self.stores[win] = SmallSizeVectorStore(f"morph_{frame_type.value}_{win}")
 
     def __str__(self) -> str:
-        desc = f"FrameType: {self.frame_type.value}\n"
+        desc = f"FrameType: {self.frame_type.value} feature dim: {self.flen}\n"
         desc += f"thresholds:\n{self.thresholds}\n"
         for win in self.wins:
             desc += f"{win}: {len(self.stores[win])}\n"

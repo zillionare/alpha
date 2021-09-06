@@ -33,7 +33,7 @@ def draw_trendline(
     for i, win in enumerate(ma_wins):
         ax.text(0, 0.7 + 0.05 * i, f"ma{win}", color=cm[win], transform=ax.transAxes)
     # the raw data
-    ax.plot(close[-n:], ".", color=cm["raw"], label="raw")
+    ax.plot(close[-n:], color=cm["raw"], label="raw")
     for win in ma_wins:
         ypred, err = predict_by_moving_average(xclose, win, ylen, err_threshold=1)
 
