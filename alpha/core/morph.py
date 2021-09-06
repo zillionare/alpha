@@ -84,10 +84,14 @@ class MorphFeatures:
         each frame type has its own store
 
         """
-        if path is None:
-            path = os.path.expanduser(f"~/alpha/data/morph_{ft.value}.pkl")
-        with open(path, "rb") as f:
-            return pickle.load(f)
+        try:
+            if path is None:
+                path = os.path.expanduser(f"~/alpha/data/morph_{ft.value}.pkl")
+            with open(path, "rb") as f:
+                return pickle.load(f)
+        except FileNotFoundError:
+            logger.warning(f"{path} not found, model will contains emtpy morph library")
+            return None
 
     def dump(self, path: str = None) -> None:
         """save store to disk
