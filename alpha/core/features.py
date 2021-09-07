@@ -120,6 +120,7 @@ def fillna(ts: np.array):
     np.maximum.accumulate(idx, out=idx)
     return ts[idx]
 
+
 def replace_zero(ts: np.array, replacement=None) -> np.array:
     """将ts中的0替换为前值, 处理volume数据时常用用到"""
     if replacement is not None:
@@ -548,9 +549,9 @@ def relation_with_prev_high(close, win=20) -> List:
 
     返回二维向量。
 
-    第一维为当前bar到前高的距离。取值范围[-1,1]，当取值为零时，意味着正在不断创新高；为正数时，意味着刚突破前高，数值越大，越远。为负，意味着还未突破前高。
+    第一维为当前bar到前高的距离。取值范围[-1,win]，当取值为零时，意味着正在不断创新高；为正数时，意味着刚突破前高，数值越大，越远。取-1时，意味着还未突破前高。
 
-    第二维为股价与前高的差值，通过np.tanh进行scale
+    第二维为股价与前高的涨跌幅。
 
     Args:
         close ([type]): [description]
@@ -568,11 +569,11 @@ def relation_with_prev_high(close, win=20) -> List:
     prev_high = close[prev_high_idx]
 
     if c0 > prev_high:
-        vec.append((win - prev_high_idx - 1) / win)
+        vec.append((win - 2) - prev_high_idx)
     else:
-        vec.append(-(win - prev_high_idx - 2) / win)
+        vec.append(-1)
 
-    vec.append(np.tanh(c0 / prev_high - 1))
+    vec.append(c0 / prev_high - 1)
 
     return vec
 
