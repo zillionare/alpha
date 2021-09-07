@@ -1,5 +1,13 @@
-from unittest import result
+import logging
+
 import arrow
+import numpy as np
+import pandas as pd
+from omicron.core.timeframe import tf
+from omicron.core.types import FrameType
+from omicron.models.securities import Securities
+from omicron.models.security import Security
+
 from alpha.core.features import (
     fillna,
     predict_by_moving_average,
@@ -9,13 +17,6 @@ from alpha.core.features import (
     top_n_argpos,
     volume_features,
 )
-from omicron.core.types import FrameType
-from omicron.models.securities import Securities
-from omicron.models.security import Security
-from omicron.core.timeframe import tf
-import numpy as np
-import logging
-import pandas as pd
 
 logger = logging.getLogger(__name__)
 
@@ -38,43 +39,61 @@ class WildGuess(object):
                 end = arrow.now().date()
             else:
                 end = tf.floor(arrow.now(), frame_type)
-            
+
         codes = codes or Securities().choose(["stock"])
         for code in codes:
-            sec = Security(code)
-
-            start = tf.day_shift(end, -self.nbars + 1)
-
-            bars = await sec.load_bars(start, end, FrameType.DAY)
-            if (
-                bars is None
-                or len(bars) != self.nbars
-                or np.count_nonzero(np.isnan(bars["close"])) > len(bars) * 0.1
-            ):
-                continue
-
             try:
-                result = self.guess(bars, code, frame_type)
-            except Exception:
-                continue
-            
-            if result is None:
-                continue
+                sec = Security(code)
 
-            pred_profit, ypred, pred_credits, rsi, vf, rh = result
+                start = tf.shift(end, -self.nbars + 1, frame_type)
 
-            if pred_profit < profit:
-                logger.debug("%s is predictable, but potential profit is low")
+                bars = await sec.load_bars(start, end, frame_type)
+                if (
+                    bars is None
+                    or len(bars) != self.nbars
+                    or np.count_nonzero(np.isnan(bars["close"])) > len(bars) * 0.1
+                ):
+                    continue
+
+                try:
+                    result = self.guess(bars, code, frame_type)
+                except Exception:
+                    continue
+
+                if result is None:
+                    continue
+
+                pred_profit, ypred, pred_credits, rsi, vf, rh = result
+
+                if pred_profit < profit:
+                    logger.debug("%s is predictable, but potential profit is low")
+                    continue
+
+                vec = [sec.display_name, code, pred_profit, ypred, pred_credits]
+                vec.extend(rsi)
+                vec.extend(vf)
+                vec.extend(rh)
+                results.append(vec)
+                print(f"{code} {pred_profit:.0%}")
+            except Exception as e:
                 continue
-
-            vec = [code, pred_profit, ypred, pred_credits]
-            vec.extend(rsi)
-            vec.extend(vf)
-            vec.extend(rh)
-            results.append(vec)
 
         df = pd.DataFrame(
-            results, columns=["code", "pred_profit", "ypred", "pred_credits", "rsi_1", "rsi_2", "rsi_3", "vf_1", "vf_2", "vf_3", "rh_20", "rh_60", "rh_120"]
+            results,
+            columns=[
+                "name",
+                "code",
+                "pred_profit",
+                "ypred",
+                "pred_credits",
+                "rsi_1",
+                "rsi_2",
+                "rsi_3",
+                "vf_1",
+                "vf_2",
+                "vf_3",
+                "rh",
+            ],
         )
         return df
 
@@ -110,9 +129,8 @@ class WildGuess(object):
 
         volume = replace_zero(bars["volume"].copy())
 
-
         # 涨跌
-        flags = np.sign(close[1:] - close[:-1])[-win:]
+        flags = np.where((close > _open)[1:] & (close[1:] > close[:-1]), 1, -1)
 
         vr = volume[-win:] / avg
         indice = top_n_argpos(vr, 3)
@@ -158,7 +176,6 @@ class WildGuess(object):
         pred_profit = ypred / c0 - 1
 
         rh = []
-        for win in [20, 60, 120]:
-            rh.append(relation_with_prev_high(close, 60)[0])
+        rh.append(relation_with_prev_high(close, len(close))[0])
 
         return pred_profit, ypred, pred_credits, rsi[-3:], vf, rh

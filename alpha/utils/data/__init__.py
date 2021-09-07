@@ -278,44 +278,48 @@ async def even_distributed_dataset(
 
     capacity = int(total / len(buckets)) + 1
 
-    start = tf.shift(arrow.get(start), 0, frame_type)
+    start = tf.day_shift(arrow.get(start), 0)
+    if frame_type in tf.minute_level_frames:
+        start = tf.combine_time(start, hour=15)
+
     end_date = tf.day_shift(arrow.now(), 0)
     end = tf.shift(tf.combine_time(end_date, hour=15), 0, frame_type)
 
     for i, (tail, code) in enumerate(dataset_scope(start, end, frame_type=frame_type)):
-        sec = Security(code)
-        head = tf.shift(tail, -bars_len + 1, frame_type)
-
-        _head, _tail = await cache.get_bars_range(code, frame_type)
-        if _head is None or _tail is None or _head >= head or _tail <= tail:
-            continue
-
-        bars = await sec.load_bars(head, tail, frame_type)
-        if len(bars) != bars_len:
-            continue
-
-        close = bars["close"]
-        if np.count_nonzero(np.isfinite(close)) < bars_len * 0.9:
-            continue
-
-        target, bucket_idx = target_to_bucket(bars)
-        if target is None:
-            continue
-
         try:
+            sec = Security(code)
+            head = tf.shift(tail, -bars_len + 1, frame_type)
+
+            _head, _tail = await cache.get_bars_range(code, frame_type)
+            if _head is None or _tail is None or _head >= head or _tail <= tail:
+                continue
+
+            bars = await sec.load_bars(head, tail, frame_type)
+            if len(bars) != bars_len:
+                continue
+
+            close = bars["close"]
+            if np.count_nonzero(np.isfinite(close)) < bars_len * 0.9:
+                continue
+
+            target, bucket_idx = target_to_bucket(bars)
+            if target is None:
+                continue
+
             if buckets[bucket_idx] >= capacity:
                 continue
-        except IndexError:
+
+            buckets[bucket_idx] += 1
+            data.append((code, target, bars))
+
+            if len(data) >= total * 0.95 or i >= total * 100:
+                break
+
+            if len(data) % int(total / 100) == 0:
+                logger.info("%s samples collected: %s", len(data), buckets)
+        except Exception as e:
+            logger.exception(e)
             continue
-
-        buckets[bucket_idx] += 1
-        data.append((code, target, bars))
-
-        if len(data) >= total * 0.95 or i >= total * 100:
-            break
-
-        if len(data) % int(total / 100) == 0:
-            logger.info("%s samples collected: %s", len(data), buckets)
 
     meta.update(
         {
@@ -323,6 +327,7 @@ async def even_distributed_dataset(
             "has_register_ipo": has_register_ipo,
         }
     )
+
     with open(save_to, "wb") as f:
         pickle.dump({"data": data, "meta": meta}, f)
 
