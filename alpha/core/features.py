@@ -112,10 +112,24 @@ def fillna(ts: np.array):
         raise ValueError("all of ts are NaN")
 
     if ts[0] is None or math.isnan(ts[0]):
-        idx = np.argmin(np.isnan(ts))
+        idx = np.argwhere(~np.isnan(ts))[0]
         ts[0] = ts[idx]
 
     mask = np.isnan(ts)
+    idx = np.where(~mask, np.arange(mask.size), 0)
+    np.maximum.accumulate(idx, out=idx)
+    return ts[idx]
+
+def replace_zero(ts: np.array) -> np.array:
+    """将ts中的0替换为前值, 处理volume数据时常用用到"""
+    if np.all(ts == 0):
+        raise ValueError("all of ts are 0")
+
+    if ts[0] == 0:
+        idx = np.argwhere(ts != 0)[0]
+        ts[0] = ts[idx]
+
+    mask = ts == 0
     idx = np.where(~mask, np.arange(mask.size), 0)
     np.maximum.accumulate(idx, out=idx)
     return ts[idx]

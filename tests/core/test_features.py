@@ -12,6 +12,7 @@ from alpha.core.features import (
     pos_encode_v2,
     predict_by_moving_average,
     relation_with_prev_high,
+    replace_zero,
     reverse_moving_average,
     transform_y_by_change_pct,
     volume_features,
@@ -185,3 +186,19 @@ class TestFeatures(unittest.TestCase):
         print(wma)
         ma = moving_average(data, 5)
         print(ma)
+
+    def test_replace_zero(self):
+        arr = np.array([0, 1, 2, 3, 4])
+        actual = replace_zero(arr)
+        self.assertListEqual([1, 1, 2, 3, 4], actual.tolist())
+
+        arr = np.array([1, 0, 2, 3, 4])
+        self.assertListEqual([1, 1, 2, 3, 4], replace_zero(arr).tolist())
+
+        arr = np.array([1, 2, 3, 0, 4])
+        self.assertListEqual([1, 2, 3, 3, 4], replace_zero(arr).tolist())
+
+        arr = np.array([1, 2, 3, 4, 0])
+        self.assertListEqual([1, 2, 3, 4, 4], replace_zero(arr).tolist())
+
+
