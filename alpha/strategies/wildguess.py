@@ -1,5 +1,3 @@
-
-
 from alpha.core.features import predict_by_moving_average
 from types import FrameType
 import numpy as np
@@ -9,31 +7,29 @@ class WildGuess(object):
     """
     A strategy that guesses randomly.
     """
+
     def __init__(self) -> None:
         self.ma_wins = [5, 10, 20, 30, 60]
 
-
-    def scan(self, ):
+    def scan(
+        self,
+    ):
         pass
 
-    def get_pmae_err_threshold(self, win, frame_type:FrameType=FrameType.MIN30):
+    def get_pmae_err_threshold(self, win, frame_type: FrameType = FrameType.MIN30):
         if frame_type == FrameType.MIN30:
             return {
                 5: 3e-3,
                 10: 1e-3,
             }.get(win, 1e-4)
         elif frame_type == FrameType.DAY:
-            return {
-                5: 8e-3,
-                10: 5e-3,
-                20: 3e-3
-            }.get(win, 1e-3)
+            return {5: 8e-3, 10: 5e-3, 20: 3e-3}.get(win, 1e-3)
 
     def _score_prediction(self, ypreds, threshold=1e-2):
         ymean = np.array(ypreds).flatten().mean()
 
         ypreds = np.array(ypreds)
-        norm = ypreds/ymean
+        norm = ypreds / ymean
 
         results = [[]] * ypreds.shape[0]
         for i, x in enumerate(norm):
@@ -51,11 +47,13 @@ class WildGuess(object):
         return ypreds[idx], counts[idx]
 
     def guess(self, bars):
-        close = bars['close']
+        close = bars["close"]
 
         y_preds = []
         for win in self.ma_wins:
-            _ypreds, _ = predict_by_moving_average(close, win, 5, self.get_pmae_err_threshold(win))
+            _ypreds, _ = predict_by_moving_average(
+                close, win, 5, self.get_pmae_err_threshold(win)
+            )
 
             if _ypreds is not None:
                 y_preds.append(_ypreds)
@@ -65,5 +63,3 @@ class WildGuess(object):
 
         if len(y_preds) == 1:
             return y_preds[0][0]
-
-
