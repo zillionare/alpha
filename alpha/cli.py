@@ -130,7 +130,7 @@ async def make_even_distributed_dataset(
         else:
             return None, None
 
-    reg = 'reg' if has_register_ipo else 'noreg'
+    reg = "reg" if has_register_ipo else "noreg"
     file = os.path.join(
         save_to, f"ds_even_{frame_type}_{ylen}_{bars_len}_{total}_{reg}.pkl"
     )
