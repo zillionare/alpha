@@ -124,7 +124,7 @@ def replace_zero(ts: np.array, replacement=None) -> np.array:
     """将ts中的0替换为前值, 处理volume数据时常用用到"""
     if replacement is not None:
         return np.where(ts == 0, replacement, ts)
-        
+
     if np.all(ts == 0):
         raise ValueError("all of ts are 0")
 
@@ -568,9 +568,9 @@ def relation_with_prev_high(close, win=20) -> List:
     prev_high = close[prev_high_idx]
 
     if c0 > prev_high:
-        vec.append(np.tanh(2 * (win - prev_high_idx - 1) / win))
+        vec.append((win - prev_high_idx - 1) / win)
     else:
-        vec.append(-np.tanh(2 * (win - prev_high_idx - 2) / win))
+        vec.append(-(win - prev_high_idx - 2) / win)
 
     vec.append(np.tanh(c0 / prev_high - 1))
 

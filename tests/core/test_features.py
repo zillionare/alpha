@@ -76,13 +76,13 @@ class TestFeatures(unittest.TestCase):
 
     def test_transform_by_advance(self):
         ts = [10, 10.1, 10.2, 10.3]
-        self.assertEqual(0, transform_y_by_change_pct(ts, (0.95, 1.05)))
+        self.assertEqual(0, transform_y_by_change_pct(ts, (0.95, 1.05)), 10)
 
         ts = [10, 10.1, 10.2, 10.6]
-        self.assertEqual(1, transform_y_by_change_pct(ts, (0.95, 1.05)))
+        self.assertEqual(1, transform_y_by_change_pct(ts, (0.95, 1.05)), 10)
 
         ts = [10, 10.1, 10.2, 9.5]
-        self.assertEqual(-1, transform_y_by_change_pct(ts, (0.95, 1.05)))
+        self.assertEqual(-1, transform_y_by_change_pct(ts, (0.95, 1.05)), 10)
 
     def test_reverse_moving_average(self):
         c = np.arange(10)
