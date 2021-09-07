@@ -201,4 +201,5 @@ class TestFeatures(unittest.TestCase):
         arr = np.array([1, 2, 3, 4, 0])
         self.assertListEqual([1, 2, 3, 4, 4], replace_zero(arr).tolist())
 
-
+        arr = np.array([1, 2, 0, 4, 5])
+        self.assertListEqual([1, 2, 0.001, 4, 5], replace_zero(arr, 0.001).tolist())

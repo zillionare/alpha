@@ -120,8 +120,11 @@ def fillna(ts: np.array):
     np.maximum.accumulate(idx, out=idx)
     return ts[idx]
 
-def replace_zero(ts: np.array) -> np.array:
+def replace_zero(ts: np.array, replacement=None) -> np.array:
     """将ts中的0替换为前值, 处理volume数据时常用用到"""
+    if replacement is not None:
+        return np.where(ts == 0, replacement, ts)
+        
     if np.all(ts == 0):
         raise ValueError("all of ts are 0")
 
