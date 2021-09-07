@@ -1,14 +1,15 @@
-from alpha.strategies.wildguess import WildGuess
-from alpha.core.features import predict_by_moving_average
-import unittest
 import datetime
+import unittest
+
+import arrow
+import cfg4py
 import numpy as np
+import omicron
 from dateutil.tz import tzfile
 
-import omicron
-import cfg4py
 from alpha.config import get_config_dir
-import arrow
+from alpha.core.features import predict_by_moving_average
+from alpha.strategies.wildguess import WildGuess
 
 
 class TestWildGuess(unittest.IsolatedAsyncioTestCase):
@@ -18,7 +19,9 @@ class TestWildGuess(unittest.IsolatedAsyncioTestCase):
 
     async def test_scan(self):
         guess = WildGuess()
-        df = await guess.scan(frame_type="1d", codes=["600163.XSHG"], end=arrow.get("2021-09-01").date())
+        df = await guess.scan(
+            frame_type="1d"
+        )
         self.assertEqual(1, len(df))
 
     def test_volume_features(self):

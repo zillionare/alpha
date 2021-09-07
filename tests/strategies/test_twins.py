@@ -1,7 +1,9 @@
-from alpha.strategies.twins import Twins
-import unittest
 import datetime
+import unittest
+
 import numpy as np
+
+from alpha.strategies.twins import Twins
 
 
 class TestTwins(unittest.TestCase):
