@@ -6,7 +6,7 @@ import numpy as np
 from alpha.strategies.twins import Twins
 
 
-class TestTwins(unittest.TestCase):
+class TestHydra(unittest.TestCase):
     def test_xtransform(self):
         """Test xtransform()"""
         bars = np.array(
