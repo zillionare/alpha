@@ -13,10 +13,8 @@ from alpha.core.features import (
     predict_by_moving_average,
     relation_with_prev_high,
     relative_strength_index,
-    replace_zero,
-    top_n_argpos,
-    volume_features,
 )
+from alpha.features.volume import top_volume_direction
 
 logger = logging.getLogger(__name__)
 
@@ -106,42 +104,6 @@ class WildGuess(object):
         elif frame_type == FrameType.DAY:
             return {5: 8e-3, 10: 5e-3, 20: 3e-3}.get(win, 3e-3)
 
-    def volume_features(self, bars):
-        """this version is not for machine learning
-
-        Args:
-            bars ([type]): [description]
-        """
-        win = 10
-
-        close = fillna(bars["close"].copy())
-
-        high = bars["high"].copy()
-        low = bars["low"].copy()
-        _open = bars["open"].copy()
-
-        close = fillna(close.copy())
-        high = fillna(high)
-        low = fillna(low)
-        _open = fillna(_open)
-
-        avg = np.nanmean(bars["volume"][-win:])
-
-        volume = replace_zero(bars["volume"].copy())
-
-        # 涨跌
-        flags = np.where((close > _open)[1:] & (close[1:] > close[:-1]), 1, -1)
-
-        vr = volume[-win:] / avg
-        indice = top_n_argpos(vr, 3)
-
-        # 加上方向
-        vr *= flags[-win:]
-
-        # 按时间先后排列
-        indice = np.sort(indice)
-        return vr[indice]
-
     def guess(self, bars, code: str, frame_type: FrameType):
         close = bars["close"]
 
@@ -179,3 +141,30 @@ class WildGuess(object):
         rh.append(relation_with_prev_high(close, len(close))[0])
 
         return pred_profit, ypred, pred_credits, rsi[-3:], vf, rh
+
+    def clams(self, bars, code: str, adv: float, frame_type: FrameType = FrameType.DAY):
+        """涨幅3~5%，两连阳，均线5,10,20预测向上，放量，连续上涨不超过adv%"""
+        close = bars["close"]
+        vf = top_volume_direction(bars)
+
+        if vf[-1] < 2:
+            logger.debug("volume of %s is not increased", code)
+            return None
+
+        pcr = close[1:] / close[:-1]
+        if np.any(pcr[-2:] < 1.01) or not (1.025 <= pcr[-1] <= 1.06):
+            logger.debug("%s is not continuousely increasing", code)
+            return None
+
+        for win in [5, 10, 20]:
+            _ypreds, _ = predict_by_moving_average(
+                close, win, 5, self.get_pmae_err_threshold(win, frame_type)
+            )
+
+            if _ypreds is None:
+                logger.debug("can not predict trend of %s", code)
+                continue
+
+            if _ypreds[-1] < close[-1] and win in [20, 30, 60, 120]:
+                logger.debug("%s is not going up", code)
+                return None

@@ -1,12 +1,12 @@
-from alpha.core.features import fillna, replace_zero, top_n_argpos
 import numpy as np
+
+from alpha.core.features import fillna, replace_zero, top_n_argpos
 
 
 def top_volume_direction(bars: np.array, n=10):
     """计算`n`周期内，最大3次成交量的方向和量能变化的幅度
 
     成交量方向：如果当前股价上涨则成交量方向为1，下跌则为-1
-    如果存在上下影线，则成交量需要进行调整，调整方法是乘以实体比例。成交量方向叠加在量能变化幅度上。
 
     args:
         bars: 包含了OHLC和volumne的行情数据，类型为numpy structured array
@@ -14,22 +14,13 @@ def top_volume_direction(bars: np.array, n=10):
 
     """
     close = fillna(bars["close"].copy())
-
-    high = bars["high"].copy()
-    low = bars["low"].copy()
-    _open = bars["open"].copy()
-
-    close = fillna(close.copy())
-    high = fillna(high)
-    low = fillna(low)
-    _open = fillna(_open)
+    open_ = fillna(bars["open"].copy())
 
     avg = np.nanmean(bars["volume"][-n:])
-
     volume = replace_zero(bars["volume"].copy())
 
     # 涨跌
-    flags = np.where((close > _open)[1:] & (close[1:] > close[:-1]), 1, -1)
+    flags = np.where((close > open_)[1:] & (close[1:] > close[:-1]), 1, -1)
 
     vr = volume[-n:] / avg
     indice = top_n_argpos(vr, 3)

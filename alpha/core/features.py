@@ -55,7 +55,7 @@ def predict_by_moving_average(
     """
     ma = moving_average(ts, win)
 
-    n = 10 if win > 7 else 7
+    n = 7 if win == 5 else 20
 
     if len(ma) < n:
         raise ValueError(f"{len(ma)} < {n}, can't predict")
@@ -122,7 +122,11 @@ def fillna(ts: np.array):
 
 
 def replace_zero(ts: np.array, replacement=None) -> np.array:
-    """将ts中的0替换为前值, 处理volume数据时常用用到"""
+    """将ts中的0替换为前值, 处理volume数据时常用用到
+
+    如果提供了replacement, 则替换为replacement
+
+    """
     if replacement is not None:
         return np.where(ts == 0, replacement, ts)
 
@@ -470,6 +474,7 @@ def bolling_band(prices, period, num_std_dev=2.0):
         bbs[idx, 5] = (prices[idx] - bbs[idx, 2]) / bbs[idx, 4]
 
     return bbs
+
 
 def relation_with_prev_high(close, win=20) -> List:
     """当前bar与前高的关系

@@ -1,121 +1,160 @@
-
 """2021年9月初，中关村"""
 
-from matplotlib.pyplot import close
-from pyrsistent import v
-from alpha.core.features import predict_by_moving_average, replace_zero
-from typing import List
+import datetime
+import logging
+from typing import List, NewType
+
 import arrow
 import numpy as np
 import pandas as pd
+from arrow import Arrow
 from omicron.core.timeframe import tf
 from omicron.core.types import FrameType
 from omicron.models.securities import Securities
 from omicron.models.security import Security
-import logging
+
+from alpha.core.features import (
+    fillna,
+    moving_average,
+    predict_by_moving_average,
+    relative_strength_index,
+    replace_zero,
+)
+from alpha.features.volume import top_volume_direction
+
+Frame = NewType("Frame", (datetime.date, datetime.datetime, str, Arrow))
 
 logger = logging.getLogger(__name__)
 
+
 class ZGCStrategy(object):
     """中关村"""
+
     def __init__(self) -> None:
-        self.ma_wins = [5, 10, 20]
-        self.nbars = 40
+        self.ma_day_wins = [5, 10, 20, 60]
+        self.ma_min_wins = [5, 10, 20, 60]
+        self.nbars = 80
+        self.profit = {FrameType.MIN30: 0.05, FrameType.DAY: 0.15}
+        self.bias = {FrameType.MIN30: 0.03, FrameType.DAY: 0.05}
         super().__init__()
 
     def get_pmae_err_threshold(self, win, frame_type: FrameType = FrameType.MIN30):
         if frame_type == FrameType.MIN30:
-            return {
-                5: 3e-3,
-                10: 1e-3,
-            }.get(win, 1e-4)
+            return {5: 3e-3, 10: 1e-3, 20: 1e-3}.get(win, 1e-4)
         elif frame_type == FrameType.DAY:
             return {5: 8e-3, 10: 5e-3, 20: 3e-3}.get(win, 3e-3)
 
-    async def scan(self, frame_type: FrameType, profit=0.15, codes:List=None, end=None):
+    async def scan(self, codes: List = None, end=None):
         """
         刷新
         """
         results = []
-        frame_type = FrameType(frame_type)
-
-        if end is None:
-            if frame_type == FrameType.DAY:
-                end = arrow.now().date()
-            else:
-                end = tf.floor(arrow.now(), frame_type)
+        end = tf.floor(arrow.get(end or arrow.now()), FrameType.MIN30)
 
         codes = codes or Securities().choose(["stock"])
         for code in codes:
             try:
                 sec = Security(code)
 
-                start = tf.shift(end, -self.nbars + 1, frame_type)
-
-                bars = await sec.load_bars(start, end, frame_type)
-                if (
-                    bars is None
-                    or len(bars) != self.nbars
-                    or np.count_nonzero(np.isnan(bars["close"])) > len(bars) * 0.1
-                ):
+                result = await self.check_long_signal(end, sec, FrameType.MIN30)
+                if result is None:
                     continue
 
-                close = bars["close"].copy()
-                ypred = self.predict_profit(close, frame_type)
-                if ypred is None or ypred < profit:
+                ypred_30, rsi_30 = result
+
+                result = await self.check_long_signal(end, sec, FrameType.DAY)
+                if result is None:
                     continue
 
-                if self.slzl(bars):
-                    print(sec.display_name, f"{ypred:.0%}")
-                    results.append((sec.display_name, ypred))
+                ypred_day, rsi_day = result
+                print(
+                    f"{sec.display_name:<8}\t{ypred_day:.0%}\t{rsi_day:.0f}\t{ypred_30:.0%}\t{rsi_30:.0f}"
+                )
 
+                results.append((sec.display_name, ypred_30, rsi_30, ypred_day, rsi_day))
             except Exception as e:
                 logger.exception(e)
                 continue
-        return pd.DataFrame(results, columns=["name", "profit"])
+        return pd.DataFrame(results, columns=["name", "profit_min", "rsi_min", "profit_day", "rsi_day"])
+
+    async def check_long_signal(
+        self, end: Frame, sec: Security, frame_type: FrameType = FrameType.MIN30
+    ):
+        """
+        买入
+        """
+        nbars = 100
+        start = tf.shift(end, -nbars + 1, frame_type)
+        bars = await sec.load_bars(start, end, frame_type)
+
+        if (
+            bars is None
+            or len(bars) != nbars
+            or np.count_nonzero(np.isfinite(bars["close"])) < nbars * 0.9
+        ):
+            return None
+
+        open_ = fillna(bars["open"].copy())
+        close = fillna(bars["close"].copy())
+
+        # 如果存在高开大阴线，则不操作
+        if self.is_gap_blackline(bars):
+            return None
+
+        # # 最后两周期下跌
+        # if np.all(close[-2:] < close[-3:-1]):
+        #     return None
+
+        # 当前股价依托ma10或者ma20
+        ma10 = moving_average(close, 10)
+        ma20 = moving_average(close, 20)
+
+        c = close[-1]
+        if c / ma10[-1] - 1 > self.bias[frame_type] and c / ma20[-1] > self.bias[frame_type]:
+            return None
+
+        vol_win = 16 if frame_type == FrameType.MIN30 else 10
+        vf = top_volume_direction(bars, vol_win)
+        indice = np.argsort(np.abs(vf))
+        vf = vf[indice]
+
+        # 最大成交量方向为下跌
+        if vf[-1] < 0:
+            return None
+
+        ypred = self.predict_profit(close, frame_type)
+        if ypred is None or ypred < self.profit[frame_type]:
+            return None
+
+        rsi = relative_strength_index(close, 14)
+        return ypred, rsi[1]
 
     def predict_profit(self, close, frame_type, ylen=5):
         """
         预测盈利
         """
         ypred = 0
-        for win in self.ma_wins:
+        for win in self.ma_min_wins:
             _ypreds, _ = predict_by_moving_average(
-                close, win, 5, self.get_pmae_err_threshold(win, frame_type)
+                close, win, ylen, self.get_pmae_err_threshold(win, frame_type)
             )
 
             if _ypreds is None:
                 continue
 
-            # 如果长线看空，则不操作
-            if _ypreds[-1] < close[-1] and win in [10, 20]:
+            # 如果长线明显看空，则不操作
+            short = 0.98 if frame_type == FrameType.MIN30 else 0.95
+            if _ypreds[-1] < close[-1] * short and win in [10, 20, 60]:
                 return None
 
             ypred = max(ypred, max(_ypreds))
 
-        return ypred/close[-1] - 1
+        return ypred / close[-1] - 1
 
-    def slzl(self, bars):
-        """
-        三周期内是否缩量整理
-        """
-        volume = replace_zero(bars["volume"].copy())[-21:]
+    def is_gap_blackline(self, bars):
+        """最后一周期是否为跳空高开阴线"""
+        close = bars["close"][-2:]
+        open_ = bars["open"][-2:]
 
-        vcr = volume[1:]/volume[:-1]
-        var = (volume/np.mean(volume))[-20:]
-
-        open_ = bars["open"]
-        close = bars["close"]
-
-        flags = np.where((close > open_)[1:] & (close[1:] > close[:-1]), 1, -1)
-
-        vcr = vcr[-3:]
-        var = var[-3:]
-        flags = flags[-3:]
-
-        if (vcr[0] > 2 or var[0] > 5) and flags[0] == 1: # 三日前放量涨
-            if np.all(vcr[1:] < 0.85) and np.all(flags[1:] == -1):
-                # 后两日缩量跌
-                return True
-        return False
-
+        if open_[1] > close[0] and close[1] < close[0]:
+            return True

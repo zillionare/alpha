@@ -329,6 +329,7 @@ async def even_distributed_dataset(
     )
 
     with open(save_to, "wb") as f:
+        logger.info("save dataset to %s", save_to)
         pickle.dump({"data": data, "meta": meta}, f)
 
 

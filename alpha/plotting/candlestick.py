@@ -7,6 +7,7 @@ from typing import Optional, Tuple
 # matplotlib.use("TkAgg")
 import matplotlib.pyplot as plt
 import numpy as np
+import arrow
 
 
 from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
@@ -37,7 +38,7 @@ class Candlestick:
         if gridspec_kw is None:
             gridspec_kw = {"height_ratios": [3, 1] * int(row / 2)}
         self.dpi = dpi
-        self.bw = (fig_size[0] * 4)/ plot_window_size
+        self.bw = (fig_size[0] * 4) / plot_window_size
         self.ma_lw = ma_lw
         self.lfs = lfs
         self.fig, self.axes = plt.subplots(
@@ -45,8 +46,15 @@ class Candlestick:
         )
         # todo: parameterize
         plt.subplots_adjust(hspace=0)
-        self.cm = {5: "b", 10: "g", 20: "c", 60: "m", 120: "y", 250: "tab:orange", "raw": "tab:gray"}
-
+        self.cm = {
+            5: "b",
+            10: "g",
+            20: "c",
+            60: "m",
+            120: "y",
+            250: "tab:orange",
+            "raw": "tab:gray",
+        }
 
     def init_fig(self, y_lims=None):
         for i, ax in enumerate(self.axes):
@@ -80,7 +88,7 @@ class Candlestick:
         ma_groups,
         ax_candle_stick=None,
         ax_volume=None,
-        name: str = None,
+        title: str = None,
     ):
         """
         draw candlestick (with ma) and volume for given quotes
@@ -90,7 +98,7 @@ class Candlestick:
             ma_groups: hint for drawing which moving average line
             ax_candle_stick: the axis to draw the candlestick
             ax_volume: the axis to draw the volume n_bars
-            name: for debug only
+            title: the title of the fig
         return:
         """
         n = self.plot_window_size
@@ -128,14 +136,15 @@ class Candlestick:
 
         volume = bars["volume"][-n:]
         frames = self.format_frames(bars["frame"][-n:])
-        ax_volume.bar(
-            range(n), volume, color=np.where(ups, "r", "g"), width=self.bw
-        )
+        ax_volume.bar(range(n), volume, color=np.where(ups, "r", "g"), width=self.bw)
 
-        positions = list(np.arange(n//8 + 1) * 8)
+        positions = list(np.arange(n // 8 + 1) * 8)
         labels = [frames[i] for i in positions]
         ax_volume.set_xticks(positions)
         ax_volume.set_xticklabels(labels, rotation=45)
+
+        if title:
+            self.fig.suptitle(title, fontsize=self.lfs)
 
     def format_frames(self, frames):
         if frames[0].hour != 0:
@@ -187,13 +196,18 @@ class Candlestick:
             Rectangle(
                 (i - self.bw / 2.0, min(o[i], c[i])),
                 width=self.bw,
-                lw=self.bw/4,
+                lw=self.bw / 4,
                 height=abs(o[i] - c[i]),
             )
             for i in range(len(bars))
         ]
 
-        up_bottom = np.vstack((np.arange(len(bars)), np.where(o >= c, o, c), ))
+        up_bottom = np.vstack(
+            (
+                np.arange(len(bars)),
+                np.where(o >= c, o, c),
+            )
+        )
         up_top = np.vstack((np.arange(len(bars)), h))
 
         up = zip(np.transpose(up_top), np.transpose(up_bottom))
@@ -203,8 +217,10 @@ class Candlestick:
 
         down = zip(np.transpose(down_top), np.transpose(down_bottom))
 
-        ax.add_collection(LineCollection(up, colors=edgecolor, linewidths=self.bw/2))
-        ax.add_collection(LineCollection(down, colors=edgecolor, linewidths=self.bw/2))
+        ax.add_collection(LineCollection(up, colors=edgecolor, linewidths=self.bw / 2))
+        ax.add_collection(
+            LineCollection(down, colors=edgecolor, linewidths=self.bw / 2)
+        )
 
         rect_pc = PatchCollection(rects, edgecolor=edgecolor, facecolor=facecolor)
         ax.add_collection(rect_pc)

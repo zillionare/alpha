@@ -40,7 +40,7 @@ cfg = cfg4py.init("/apps/alpha/alpha/config")
 logger = logging.getLogger(__name__)
 
 
-class Twins:
+class Hydra:
     """寻找相似图形来选股的策略。"""
 
     def __init__(self, frame_type: FrameType, *args, **kwargs):
@@ -74,7 +74,7 @@ class Twins:
         return f"Twins {self.version}\n patterns: {len(self.X)}, with distrubutions:\n{dist}"
 
     @classmethod
-    def from_model(model: str) -> "Twins":
+    def from_model(model: str) -> "Hydra":
         if not os.path.exists(model):
             model = os.path.expanduser(f"~/alpha/data/twins/{model}.pkl")
 
@@ -503,7 +503,7 @@ def async_run_command(func):
 
 @async_run_command
 async def train(datafile: str, version=None):
-    s = Twins("sv-30m")
+    s = Hydra("sv-30m")
     await s.train(datafile, version)
 
 
@@ -520,7 +520,7 @@ async def predict(
         ft (str, optional): [description]. Defaults to '30m'.
         threshold ([type], optional): Defaults to 3e-2. according to test, even x == y, L2 (sqrt(dot(x,x) - 2 * dot(x,y) + dot(y,y)) will still get 0.0015. so it's better to choose 3e-2 ad threshold
     """
-    s = Twins("sv-30m")
+    s = Hydra("sv-30m")
 
     if os.path.exists(model):
         s.load(model)
@@ -534,7 +534,7 @@ async def predict(
 async def test(
     model: str, code: str, n: int = 10, end: str = None, ft: str = "30m", threshold=3e-3
 ):
-    s = Twins("sv-30m")
+    s = Hydra("sv-30m")
 
     if os.path.exists(model):
         s.load(model)

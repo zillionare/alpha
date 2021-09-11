@@ -1,11 +1,14 @@
-from alpha.features.volume import top_volume_direction
-import pickle
-from tests import data_dir
-import unittest
-import os
-import numpy as np
 import datetime
+import os
+import pickle
+import unittest
+
+import numpy as np
 from dateutil.tz import tzfile
+
+from alpha.features.volume import top_volume_direction
+from tests import data_dir
+
 
 class TestVolumeFeatures(unittest.TestCase):
     def test_volume_features(self):

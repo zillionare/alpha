@@ -135,13 +135,13 @@ async def make_even_distributed_dataset(
         save_to, f"ds_even_{frame_type}_{ylen}_{bars_len}_{total}_{reg}.pkl"
     )
     meta = {
-            "target_win": ylen,
-            "frame_type": frame_type,
-            "bins": bins,
-            "bars_len": bars_len,
-            "total": total,
-            "start": start,
-        }
+        "target_win": ylen,
+        "frame_type": frame_type,
+        "bins": bins,
+        "bars_len": bars_len,
+        "total": total,
+        "start": start,
+    }
 
     await even_distributed_dataset(
         total,

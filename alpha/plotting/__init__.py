@@ -1,13 +1,23 @@
 import matplotlib.pyplot as plt
 import numpy as np
+import arrow
 
 from alpha.core.features import moving_average, predict_by_moving_average
 
 cm = {5: "b", 10: "g", 20: "c", 60: "m", 120: "y", 250: "tab:orange", "raw": "tab:gray"}
 
 
+def _format_frames(frames):
+    if frames[0].hour != 0:
+        fmt = "YY-MM-DD HH:mm"
+    else:
+        fmt = "YY-MM-DD"
+
+    return [arrow.get(frame).format(fmt) for frame in frames]
+
+
 def draw_trendline(
-    close, ylen, ma_wins=None, canvas_size=60, desc: str = None, save_to: str = None
+    bars, ylen, ma_wins=None, canvas_size=60, desc: str = None, save_to: str = None
 ):
     """
     Draws moving average trendline on a graph.
@@ -19,6 +29,7 @@ def draw_trendline(
 
     ma_wins = ma_wins or [5, 10, 20, 60]
 
+    close = bars["close"]
     if max(ma_wins) + canvas_size - 1 > len(close):
         raise ValueError("canvas_size is too big for the data")
 
@@ -39,11 +50,30 @@ def draw_trendline(
 
         ma = moving_average(xclose, win)[-n:]
         # moving average line
-        ax.plot(ma[:-ylen], color=cm[win], label=f"MA{win}")
+        ax.plot(
+            np.arange(n - ylen - len(ma[:-ylen]), n - ylen), ma[:-ylen], color=cm[win]
+        )
+        ax.plot(np.arange(n - ylen, n), ma[-ylen:], color=cm[win])
 
         # 预测延伸线
         ax.plot(np.arange(n - ylen, n), ypred, color=cm[win], linestyle="--")
         ax.text(n, ypred[-1], f"{err:.3f}", color=cm[win])
+
+    minc = min(close)
+    maxc = max(close)
+    splitter_y = np.arange(int(minc * 20), int(maxc * 20)) / 20
+    splitter_x = [n - ylen] * len(splitter_y)
+    ax.plot(splitter_x, splitter_y, "r:")
+
+    frames = _format_frames(bars["frame"][-n:])
+    if n // ylen * ylen == n:
+        positions = list(np.arange(n // ylen) * ylen)
+    else:
+        positions = list(np.arange(n // ylen + 1) * ylen)
+
+    labels = [frames[i] for i in positions]
+    ax.set_xticks(positions)
+    ax.set_xticklabels(labels, rotation=45)
 
     if save_to:
         fig.savefig(save_to)

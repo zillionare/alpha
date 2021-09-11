@@ -19,9 +19,7 @@ class TestWildGuess(unittest.IsolatedAsyncioTestCase):
 
     async def test_scan(self):
         guess = WildGuess()
-        df = await guess.scan(
-            frame_type="1d"
-        )
+        df = await guess.scan(frame_type="1d")
         self.assertEqual(1, len(df))
 
     def test_volume_features(self):
