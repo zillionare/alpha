@@ -18,6 +18,23 @@ yarl = ">=1.0,<2.0"
 speedups = ["aiodns", "brotlipy", "cchardet"]
 
 [[package]]
+name = "aioproc"
+version = "0.2.2"
+description = "Skeleton project created by Python Project Wizard (ppw)."
+category = "main"
+optional = false
+python-versions = ">=3.8,<4.0"
+
+[package.dependencies]
+fire = ">=0.4.0,<0.5.0"
+mkdocs-material-extensions = ">=1.0.1,<2.0.0"
+
+[package.extras]
+test = ["black (==20.8b1)", "isort (==5.6.4)", "flake8 (==3.8.4)", "flake8-docstrings (>=1.6.0,<2.0.0)", "pytest (==6.1.2)", "pytest-cov (==2.10.1)"]
+dev = ["tox (>=3.20.1,<4.0.0)", "virtualenv (>=20.2.2,<21.0.0)", "pip (>=20.3.1,<21.0.0)", "twine (>=3.3.0,<4.0.0)", "pre-commit (>=2.12.0,<3.0.0)", "toml (>=0.10.2,<0.11.0)"]
+doc = ["mkdocs (>=1.1.2,<2.0.0)", "mkdocs-include-markdown-plugin (>=1.0.0,<2.0.0)", "mkdocs-material (>=6.1.7,<7.0.0)", "mkdocstrings (>=0.13.6,<0.14.0)", "mkdocs-autorefs (==0.1.1)"]
+
+[[package]]
 name = "aioredis"
 version = "1.3.1"
 description = "asyncio (PEP 3156) Redis support"
@@ -1565,7 +1582,7 @@ test = ["pytest", "black", "isort", "flake8", "flake8-docstrings", "pytest-cov"]
 [metadata]
 lock-version = "1.1"
 python-versions = ">=3.8,<3.9"
-content-hash = "bc4c92629937c3f38e8bfe84acbfb9270dd58e05bb8488bcf221d637353d9706"
+content-hash = "d5133c8f808a774d26dc7eee6e7888fccb43aac2895ac65935e466a4899088fe"
 
 [metadata.files]
 aiohttp = [
@@ -1606,6 +1623,10 @@ aiohttp = [
     {file = "aiohttp-3.7.4-cp39-cp39-win32.whl", hash = "sha256:fbd3b5e18d34683decc00d9a360179ac1e7a320a5fee10ab8053ffd6deab76e0"},
     {file = "aiohttp-3.7.4-cp39-cp39-win_amd64.whl", hash = "sha256:40bd1b101b71a18a528ffce812cc14ff77d4a2a1272dfb8b11b200967489ef3e"},
     {file = "aiohttp-3.7.4.tar.gz", hash = "sha256:5d84ecc73141d0a0d61ece0742bb7ff5751b0657dab8405f899d3ceb104cc7de"},
+]
+aioproc = [
+    {file = "aioproc-0.2.2-py3-none-any.whl", hash = "sha256:663cb8cd699571f66fb01b751512b805b391f70369a271e5c05405b0a85454e9"},
+    {file = "aioproc-0.2.2.tar.gz", hash = "sha256:6ec47176cefddc0a5f0a821c03a78c8f24affcf90eda5af6e14385c275694c69"},
 ]
 aioredis = [
     {file = "aioredis-1.3.1-py3-none-any.whl", hash = "sha256:b61808d7e97b7cd5a92ed574937a079c9387fdadd22bfbfa7ad2fd319ecc26e3"},
