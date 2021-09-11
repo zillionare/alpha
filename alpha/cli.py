@@ -17,6 +17,7 @@ import psutil
 from omicron import cache
 from omicron.core.types import FrameType
 from omicron.models.securities import Securities
+from aioproc import aiofunc
 
 from alpha.utils.data import even_distributed_dataset, load_data
 
@@ -155,6 +156,22 @@ async def make_even_distributed_dataset(
     )
 
 
+@async_run_command
+async def mpscan(strategy: str, *args, **kwargs):
+    secs = Securities().choose(["stock"])
+    await cache.sys.delete(f"scan.scope.{strategy}")
+    await cache.sys.delete(f"scan.result.{strategy}")
+    await cache.sys.lpush(f"scan.scope.{strategy}", *secs)
+
+    procs = []
+    for i in range(20):
+        procs.append(aiofunc(
+            "alpha.strategies", "scan", args=(strategy, *args), kwargs= kwargs, delay=2
+        ))
+
+    results = await asyncio.gather(*procs)
+    print(results)
+
 def main():
     simplefilter("ignore")
 
@@ -164,6 +181,7 @@ def main():
             "ds": make_dataset,
             "train": train,
             "make_even_ds": make_even_distributed_dataset,
+            "mpscan": mpscan
         }
     )
 

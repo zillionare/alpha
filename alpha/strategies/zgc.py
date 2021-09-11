@@ -1,11 +1,19 @@
 """2021年9月初，中关村"""
 
+import asyncio
 import datetime
+import functools
+import itertools
+import json
 import logging
+import os
 from typing import List, NewType
 
 import arrow
+import cfg4py
+import fire
 import numpy as np
+import omicron
 import pandas as pd
 from arrow import Arrow
 from omicron.core.timeframe import tf
@@ -27,15 +35,15 @@ Frame = NewType("Frame", (datetime.date, datetime.datetime, str, Arrow))
 logger = logging.getLogger(__name__)
 
 
-class ZGCStrategy(object):
+class Zgc(object):
     """中关村"""
 
     def __init__(self) -> None:
         self.ma_day_wins = [5, 10, 20, 60]
         self.ma_min_wins = [5, 10, 20, 60]
         self.nbars = 80
-        self.profit = {FrameType.MIN30: 0.05, FrameType.DAY: 0.15}
-        self.bias = {FrameType.MIN30: 0.03, FrameType.DAY: 0.05}
+        self.profit = {FrameType.MIN30: 0.05, FrameType.DAY: 0.25}
+        self.bias = {FrameType.MIN30: 0.05, FrameType.DAY: 0.15}
         super().__init__()
 
     def get_pmae_err_threshold(self, win, frame_type: FrameType = FrameType.MIN30):
@@ -51,31 +59,43 @@ class ZGCStrategy(object):
         results = []
         end = tf.floor(arrow.get(end or arrow.now()), FrameType.MIN30)
 
-        codes = codes or Securities().choose(["stock"])
-        for code in codes:
+        async def get_code(codes):
+            if codes is None:
+                return await omicron.cache.sys.lpop("scan.scope.Zgc")
+            else:
+                return codes.pop()
+
+        while (code:=await get_code(codes)) is not None:
             try:
                 sec = Security(code)
-
-                result = await self.check_long_signal(end, sec, FrameType.MIN30)
-                if result is None:
-                    continue
-
-                ypred_30, rsi_30 = result
 
                 result = await self.check_long_signal(end, sec, FrameType.DAY)
                 if result is None:
                     continue
 
                 ypred_day, rsi_day = result
+                result = await self.check_long_signal(end, sec, FrameType.MIN30)
+                if result is None:
+                    continue
+
+                ypred_30, rsi_30 = result
+
                 print(
                     f"{sec.display_name:<8}\t{ypred_day:.0%}\t{rsi_day:.0f}\t{ypred_30:.0%}\t{rsi_30:.0f}"
                 )
 
-                results.append((sec.display_name, ypred_30, rsi_30, ypred_day, rsi_day))
+                results.append((sec.display_name, ypred_day, rsi_day, ypred_30, rsi_30, ))
             except Exception as e:
                 logger.exception(e)
                 continue
-        return pd.DataFrame(results, columns=["name", "profit_min", "rsi_min", "profit_day", "rsi_day"])
+
+        if codes is not None: # single process, called directly
+            return pd.DataFrame(
+                results, columns=["name", "profit_day", "rsi_day", "profit_min", "rsi_min"]
+            )
+        else:
+            for r in results:
+                await omicron.cache.sys.lpush("scan.result.Zgc", json.dumps([r[0], float(r[1]), float(r[2]), float(r[3]), float(r[4])]))
 
     async def check_long_signal(
         self, end: Frame, sec: Security, frame_type: FrameType = FrameType.MIN30
@@ -110,7 +130,10 @@ class ZGCStrategy(object):
         ma20 = moving_average(close, 20)
 
         c = close[-1]
-        if c / ma10[-1] - 1 > self.bias[frame_type] and c / ma20[-1] > self.bias[frame_type]:
+        if (
+            c / ma10[-1] - 1 > self.bias[frame_type]
+            and c / ma20[-1] > self.bias[frame_type]
+        ):
             return None
 
         vol_win = 16 if frame_type == FrameType.MIN30 else 10
@@ -158,3 +181,11 @@ class ZGCStrategy(object):
 
         if open_[1] > close[0] and close[1] < close[0]:
             return True
+
+    async def read_cached_results(self):
+        data = await omicron.cache.sys.lrange("scan.result.Zgc", 0, -1)
+
+        results = []
+        for d in data:
+            results.append(json.loads(d))
+        return pd.DataFrame(results, columns=["name", "profit_day", "rsi_day", "profit_min", "rsi_min"])

@@ -9,7 +9,7 @@ from dateutil.tz import tzfile
 
 from alpha.config import get_config_dir
 from alpha.core.features import predict_by_moving_average
-from alpha.strategies.zgc import ZGCStrategy
+from alpha.strategies.zgc import Zgc
 
 
 class TestZGC(unittest.IsolatedAsyncioTestCase):
@@ -18,7 +18,7 @@ class TestZGC(unittest.IsolatedAsyncioTestCase):
         await omicron.init()
 
     async def test_scan(self):
-        zgc = ZGCStrategy()
+        zgc = Zgc()
 
         # MIN30没有信号
         df = await zgc.scan(codes=["000700.XSHE"], end=arrow.get("2021-09-08 15:00"))
