@@ -20,7 +20,11 @@ class TestZGC(unittest.IsolatedAsyncioTestCase):
     async def test_scan(self):
         zgc = Zgc()
 
+        df = await zgc.scan(codes=["300157.XSHE"], end=arrow.get("2021-09-10 15:00"))
         # MIN30没有信号
+        df = await zgc.scan(codes=["600282.XSHG"], end=arrow.get("2021-09-10 15:00"))
+        self.assertEqual(len(df), 0)
+
         df = await zgc.scan(codes=["000700.XSHE"], end=arrow.get("2021-09-08 15:00"))
         self.assertEqual(0, len(df))
 
@@ -30,7 +34,7 @@ class TestZGC(unittest.IsolatedAsyncioTestCase):
         df = await zgc.scan(codes=["000931.XSHE"], end=arrow.get("2021-08-27 14:00"))
         self.assertEqual(0, len(df))
 
-        df = await zgc.scan(codes=["000931.XSHE"], end=arrow.get("2021-08-27 15:00"))
+        df = await zgc.scan(codes=["000931.XSHE"], end=arrow.get("2021-08-30 15:00"))
         self.assertEqual(1, len(df))
 
         df = await zgc.scan(codes=["000520.XSHE"])
