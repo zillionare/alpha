@@ -2,7 +2,7 @@
 
 import datetime
 from io import BytesIO
-from typing import Optional, Union
+from typing import NewType, Optional, Union
 
 import arrow
 
@@ -15,10 +15,10 @@ from matplotlib.collections import LineCollection, PatchCollection
 from matplotlib.lines import Line2D
 from matplotlib.patches import Rectangle
 from omicron.core.talib import moving_average
-from omicron.core.types import FrameType
 from omicron.core.timeframe import tf
+from omicron.core.types import FrameType
 from omicron.models.security import Security
-from typing import NewType
+
 Frame = NewType("Frame", (datetime.date, datetime.datetime, arrow.Arrow, str))
 
 
@@ -29,16 +29,16 @@ Frame = NewType("Frame", (datetime.date, datetime.datetime, arrow.Arrow, str))
 class Candlestick:
     def __init__(
         self,
-        frames:dict=None,
+        frames: dict = None,
         fig_size=(12, 10),
         dpi=60,
         plot_window_size: int = 60,
         lfs=12,
-        ma_lw=0.6
+        ma_lw=0.6,
     ):
         self.frames = frames or {
             "1d": [5, 10, 20, 60, 120, 250],
-            "30m": [5, 10, 20, 60]
+            "30m": [5, 10, 20, 60],
         }
 
         row = len(self.frames) * 2
@@ -55,13 +55,20 @@ class Candlestick:
         self.fig = plt.figure(figsize=fig_size, dpi=dpi)
         self.axes = []
 
-        sub_height = 1/len(self.frames) * 0.8
-        sub_gap = 1/len(self.frames) * 0.2
+        sub_height = 1 / len(self.frames) * 0.8
+        sub_gap = 1 / len(self.frames) * 0.2
 
         for i in range(len(self.frames)):
-            gs = GridSpec(2, 1, hspace=0, top=1-i*(sub_height + sub_gap), bottom=1-(i+1)*(sub_height), height_ratios=[3,1])
-            self.axes.append(self.fig.add_subplot(gs[0,0]))
-            self.axes.append(self.fig.add_subplot(gs[1,0]))
+            gs = GridSpec(
+                2,
+                1,
+                hspace=0,
+                top=1 - i * (sub_height + sub_gap),
+                bottom=1 - (i + 1) * (sub_height),
+                height_ratios=[3, 1],
+            )
+            self.axes.append(self.fig.add_subplot(gs[0, 0]))
+            self.axes.append(self.fig.add_subplot(gs[1, 0]))
 
         self.cm = {
             5: "b",
@@ -93,14 +100,14 @@ class Candlestick:
 
         # self.axes[-1].spines["bottom"].set_visible(False)
 
-        #self.fig.tight_layout(h_pad=0)
+        # self.fig.tight_layout(h_pad=0)
         # self.fig.canvas.draw()
 
     def close(self):
         self.fig.close()
 
-    async def plot(self, code:str, end:Frame, title:str=None):
-        #self.init_fig()
+    async def plot(self, code: str, end: Frame, title: str = None):
+        # self.init_fig()
 
         sec = Security(code)
         end = arrow.get(end)
@@ -111,12 +118,12 @@ class Candlestick:
             ma_wins = self.frames[ft]
             nbars = max(ma_wins) + self.plot_window_size
             frame_type = FrameType(ft)
-            start = tf.shift(end, -nbars + 1,frame_type)
+            start = tf.shift(end, -nbars + 1, frame_type)
 
             bars = await sec.load_bars(start, end, frame_type)
 
             candlestick_ax = self.axes[2 * i]
-            volume_ax = self.axes[2 * i+1]
+            volume_ax = self.axes[2 * i + 1]
 
             self.plot_(bars, ma_wins, candlestick_ax, volume_ax)
 
@@ -186,7 +193,7 @@ class Candlestick:
             self.fig.suptitle(title, fontsize=self.lfs)
 
     def format_frames(self, frames):
-        if hasattr(frames[0], 'hour') and frames[0].hour != 0:
+        if hasattr(frames[0], "hour") and frames[0].hour != 0:
             fmt = "YY-MM-DD HH:mm"
         else:
             fmt = "YY-MM-DD"

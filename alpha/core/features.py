@@ -66,7 +66,10 @@ def predict_by_moving_average(
         return None, None
 
     fitma = np.polyval(coef, np.arange(len(ma) + n_preds))
-    preds = [reverse_moving_average(fitma, i, win) for i in range(len(fitma) - n_preds, len(fitma))]
+    preds = [
+        reverse_moving_average(fitma, i, win)
+        for i in range(len(fitma) - n_preds, len(fitma))
+    ]
 
     return preds, pmae
 

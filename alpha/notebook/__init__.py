@@ -1,4 +1,5 @@
 import pickle
+
 import arrow
 import cfg4py
 import matplotlib.pyplot as plt
@@ -14,9 +15,9 @@ from omicron.models.security import Security
 from alpha.config import get_config_dir
 from alpha.core.features import fillna, moving_average, predict_by_moving_average
 from alpha.core.morph import MorphFeatures
+from alpha.features.volume import top_volume_direction
 from alpha.plotting import draw_trendline
 from alpha.plotting.candlestick import Candlestick
-from alpha.features.volume import top_volume_direction
 
 
 async def init_notebook():
@@ -24,4 +25,23 @@ async def init_notebook():
     await omicron.init()
     clear_output()
 
-__all__ = ['plt', 'np', 'omicron', 'pd', 'tf', 'FrameType', 'Securities', 'Security', 'Candlestick', 'fillna', 'draw_trendline', 'predict_by_moving_average', 'moving_average', 'init_notebook', 'MorphFeatures', 'top_volume_direction', 'arrow']
+
+__all__ = [
+    "plt",
+    "np",
+    "omicron",
+    "pd",
+    "tf",
+    "FrameType",
+    "Securities",
+    "Security",
+    "Candlestick",
+    "fillna",
+    "draw_trendline",
+    "predict_by_moving_average",
+    "moving_average",
+    "init_notebook",
+    "MorphFeatures",
+    "top_volume_direction",
+    "arrow",
+]

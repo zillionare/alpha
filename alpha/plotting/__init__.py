@@ -1,6 +1,6 @@
+import arrow
 import matplotlib.pyplot as plt
 import numpy as np
-import arrow
 
 from alpha.core.features import moving_average, predict_by_moving_average
 
