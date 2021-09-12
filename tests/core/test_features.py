@@ -15,7 +15,6 @@ from alpha.core.features import (
     replace_zero,
     reverse_moving_average,
     transform_y_by_change_pct,
-    volume_features,
     weighted_moving_average,
 )
 from tests import data_dir
@@ -112,9 +111,9 @@ class TestFeatures(unittest.TestCase):
         np.testing.assert_array_almost_equal([1.261, 1.308, 1.359], preds, 3)
         self.assertTrue(pmae < 0.001)
 
-        ts = [f(i) for i in range(19)]
+        ts = [f(i) for i in range(29)]
         preds, pmae = predict_by_moving_average(ts, 10)
-        self.assertAlmostEqual(1.774, preds[0], 3)
+        self.assertAlmostEqual(2.744, preds[0], 3)
         self.assertTrue(pmae < 0.001)
 
         # fmt: off

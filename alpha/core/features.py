@@ -65,12 +65,10 @@ def predict_by_moving_average(
     if pmae > err_threshold:
         return None, None
 
-    preds = []
-    for i in range(1, n_preds + 1):
-        ma_pred = np.polyval(coef, np.arange(len(ma) + i))
-        preds.append(reverse_moving_average(ma_pred, len(ma_pred) - 1, win))
+    fitma = np.polyval(coef, np.arange(len(ma) + n_preds))
+    preds = [reverse_moving_average(fitma, i, win) for i in range(len(fitma))]
 
-    return preds, pmae
+    return preds[-n_preds:], pmae
 
 
 def moving_average(ts: np.array, win: int):
