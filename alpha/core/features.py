@@ -55,7 +55,7 @@ def predict_by_moving_average(
     """
     ma = moving_average(ts, win)
 
-    n = 7 if win == 5 else 20
+    n = {5: 7, 10: 10}.get(win, 15)
 
     if len(ma) < n:
         raise ValueError(f"{len(ma)} < {n}, can't predict")
@@ -66,9 +66,9 @@ def predict_by_moving_average(
         return None, None
 
     fitma = np.polyval(coef, np.arange(len(ma) + n_preds))
-    preds = [reverse_moving_average(fitma, i, win) for i in range(len(fitma))]
+    preds = [reverse_moving_average(fitma, i, win) for i in range(len(fitma) - n_preds, len(fitma))]
 
-    return preds[-n_preds:], pmae
+    return preds, pmae
 
 
 def moving_average(ts: np.array, win: int):
