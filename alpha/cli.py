@@ -6,6 +6,7 @@ import importlib.util
 import os
 import pickle
 import sys
+import time
 from warnings import simplefilter
 
 import arrow
@@ -14,12 +15,27 @@ import fire
 import numpy as np
 import omicron
 import psutil
+from aioproc import aioprocess
 from omicron import cache
 from omicron.core.types import FrameType
 from omicron.models.securities import Securities
-from aioproc import aiofunc
 
 from alpha.utils.data import even_distributed_dataset, load_data
+
+
+class ShowOutput:
+    def __init__(self, encoding="utf-8"):
+        self.encoding = encoding
+
+    async def __call__(self, stream):
+        while True:
+            line = await stream.readline()
+            line = line.decode(self.encoding)
+
+            if not line:
+                break
+
+            print(line)
 
 
 def async_run_command(func):
@@ -158,19 +174,29 @@ async def make_even_distributed_dataset(
 
 @async_run_command
 async def mpscan(strategy: str, *args, **kwargs):
+    t0 = time.time()
+    # init tasks and result set
     secs = Securities().choose(["stock"])
-    await cache.sys.delete(f"scan.scope.{strategy}")
-    await cache.sys.delete(f"scan.result.{strategy}")
-    await cache.sys.lpush(f"scan.scope.{strategy}", *secs)
+    await cache.sys.delete(f"scan.scope.{strategy.lower()}")
+    await cache.sys.delete(f"scan.result.{strategy.lower()}")
+    await cache.sys.lpush(f"scan.scope.{strategy.lower()}", *secs)
 
-    procs = []
-    for i in range(20):
-        procs.append(aiofunc(
-            "alpha.strategies", "scan", args=(strategy, *args), kwargs= kwargs, delay=2
-        ))
+    cpus = psutil.cpu_count()
 
-    results = await asyncio.gather(*procs)
-    print(results)
+    stdout = ShowOutput()
+    stderr = ShowOutput()
+    args = " ".join([f"'{arg}'" for arg in args])
+    kwargs = " ".join([f"--'{k}'='{v}'" for k, v in kwargs.items()])
+    cmd = f"{sys.executable} -m alpha.strategies scan {strategy} {args} {kwargs}"
+
+    tasks = []
+    for i in range(cpus):
+        task = aioprocess(cmd, stdout_handler=stdout, stderr_handler=stderr)
+        tasks.append(task)
+
+    await asyncio.wait(tasks)
+    print(f"done in {time.time() - t0}")
+
 
 def main():
     simplefilter("ignore")
@@ -181,7 +207,7 @@ def main():
             "ds": make_dataset,
             "train": train,
             "make_even_ds": make_even_distributed_dataset,
-            "mpscan": mpscan
+            "mpscan": mpscan,
         }
     )
 
