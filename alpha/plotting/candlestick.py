@@ -1,21 +1,26 @@
 # noinspection PyUnresolvedReferences
 
+import datetime
 from io import BytesIO
-from typing import Optional, Tuple
+from typing import Optional, Union
+
+import arrow
 
 # Cannot load backend 'TkAgg' which requires the 'tk' interactive framework, as 'headless' is currently running
 # matplotlib.use("TkAgg")
 import matplotlib.pyplot as plt
 import numpy as np
-import arrow
-
-
 from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
 from matplotlib.collections import LineCollection, PatchCollection
 from matplotlib.lines import Line2D
 from matplotlib.patches import Rectangle
-
 from omicron.core.talib import moving_average
+from omicron.core.types import FrameType
+from omicron.core.timeframe import tf
+from omicron.models.security import Security
+from typing import NewType
+Frame = NewType("Frame", (datetime.date, datetime.datetime, arrow.Arrow, str))
+
 
 # Cannot load backend 'TkAgg' which requires the 'tk' interactive framework, as 'headless' is currently running
 # matplotlib.use("TkAgg")
@@ -24,28 +29,40 @@ from omicron.core.talib import moving_average
 class Candlestick:
     def __init__(
         self,
-        row=2,
-        col=1,
-        gridspec_kw=None,
-        fig_size=(12, 8),
+        frames:dict=None,
+        fig_size=(12, 10),
         dpi=60,
         plot_window_size: int = 60,
         lfs=12,
-        ma_lw=0.6,
+        ma_lw=0.6
     ):
+        self.frames = frames or {
+            "1d": [5, 10, 20, 60, 120, 250],
+            "30m": [5, 10, 20, 60]
+        }
+
+        row = len(self.frames) * 2
+        col = 1
+
         # how many n_bars will be drawn in the fig
         self.plot_window_size = plot_window_size
-        if gridspec_kw is None:
-            gridspec_kw = {"height_ratios": [3, 1] * int(row / 2)}
+
         self.dpi = dpi
         self.bw = (fig_size[0] * 4) / plot_window_size
         self.ma_lw = ma_lw
         self.lfs = lfs
-        self.fig, self.axes = plt.subplots(
-            row, col, gridspec_kw=gridspec_kw, figsize=fig_size, sharex=True, dpi=dpi
-        )
-        # todo: parameterize
-        plt.subplots_adjust(hspace=0)
+
+        self.fig = plt.figure(figsize=fig_size, dpi=dpi)
+        self.axes = []
+
+        sub_height = 1/len(self.frames) * 0.8
+        sub_gap = 1/len(self.frames) * 0.2
+
+        for i in range(len(self.frames)):
+            gs = GridSpec(2, 1, hspace=0, top=1-i*(sub_height + sub_gap), bottom=1-(i+1)*(sub_height), height_ratios=[3,1])
+            self.axes.append(self.fig.add_subplot(gs[0,0]))
+            self.axes.append(self.fig.add_subplot(gs[1,0]))
+
         self.cm = {
             5: "b",
             10: "g",
@@ -59,14 +76,14 @@ class Candlestick:
     def init_fig(self, y_lims=None):
         for i, ax in enumerate(self.axes):
             ax.cla()
-            plt.setp(ax.get_xticklabels(), visible=False)
-            ax.xaxis.set_tick_params(length=0)
-            ax.yaxis.set_tick_params(labelsize=self.lfs)
-            ax.spines["top"].set_visible(False)
-            ax.spines["right"].set_visible(False)
+            # if i%2 == 0:
+            #     plt.setp(ax.get_xticklabels(), visible=False)
+            #     ax.xaxis.set_tick_params(length=0)
+            #     ax.grid(True, color="#cccccc", linestyle="-", linewidth="0.5")
 
-            if i % 2 == 0:
-                ax.grid(True, color="#cccccc", linestyle="-", linewidth="0.5")
+            ax.yaxis.set_tick_params(labelsize=self.lfs)
+            # ax.spines["top"].set_visible(False)
+            # ax.spines["right"].set_visible(False)
 
             if y_lims is not None and i % 2 == 0:
                 ax.set_ylim(y_lims[0])
@@ -74,20 +91,45 @@ class Candlestick:
             if y_lims is not None and i % 2 != 0:
                 ax.set_ylim(y_lims[1])
 
-        self.axes[-1].spines["bottom"].set_visible(False)
+        # self.axes[-1].spines["bottom"].set_visible(False)
 
-        self.fig.tight_layout(h_pad=0)
+        #self.fig.tight_layout(h_pad=0)
         # self.fig.canvas.draw()
 
     def close(self):
         self.fig.close()
 
-    def plot(
+    async def plot(self, code:str, end:Frame, title:str=None):
+        #self.init_fig()
+
+        sec = Security(code)
+        end = arrow.get(end)
+
+        plt.subplots_adjust(hspace=0)
+
+        for i, ft in enumerate(self.frames.keys()):
+            ma_wins = self.frames[ft]
+            nbars = max(ma_wins) + self.plot_window_size
+            frame_type = FrameType(ft)
+            start = tf.shift(end, -nbars + 1,frame_type)
+
+            bars = await sec.load_bars(start, end, frame_type)
+
+            candlestick_ax = self.axes[2 * i]
+            volume_ax = self.axes[2 * i+1]
+
+            self.plot_(bars, ma_wins, candlestick_ax, volume_ax)
+
+        title = title or f"{code} {self.format_frames([end])[0]}"
+        if title:
+            self.fig.suptitle(title, fontsize=self.lfs)
+
+    def plot_(
         self,
         bars: np.array,
         ma_groups,
-        ax_candle_stick=None,
-        ax_volume=None,
+        ax_candle_stick,
+        ax_volume,
         title: str = None,
     ):
         """
@@ -103,14 +145,11 @@ class Candlestick:
         """
         n = self.plot_window_size
         bars = bars.copy()
-        factor = np.max(bars["high"])
+        factor = np.nanmax(bars["high"])
         for key in ["open", "close", "high", "low"]:
             bars[key] = bars[key] / factor
 
         bars["volume"] /= np.nanmean(bars["volume"])
-
-        ax_candle_stick = ax_candle_stick or self.axes[0]
-        ax_volume = ax_volume or self.axes[1]
 
         ax_candle_stick.xaxis.set_visible(False)
         # draw candlestick
@@ -147,7 +186,7 @@ class Candlestick:
             self.fig.suptitle(title, fontsize=self.lfs)
 
     def format_frames(self, frames):
-        if frames[0].hour != 0:
+        if hasattr(frames[0], 'hour') and frames[0].hour != 0:
             fmt = "YY-MM-DD HH:mm"
         else:
             fmt = "YY-MM-DD"
