@@ -1,6 +1,7 @@
 # noinspection PyUnresolvedReferences
 
 import datetime
+import os
 from io import BytesIO
 from typing import NewType, Optional, Union
 
@@ -106,7 +107,7 @@ class Candlestick:
     def close(self):
         self.fig.close()
 
-    async def plot(self, code: str, end: Frame, title: str = None):
+    async def plot(self, code: str, end: Frame, title: str = None, save_to: str = None):
         # self.init_fig()
 
         sec = Security(code)
@@ -130,6 +131,10 @@ class Candlestick:
         title = title or f"{code} {self.format_frames([end])[0]}"
         if title:
             self.fig.suptitle(title, fontsize=self.lfs)
+
+        if save_to:
+            file = os.path.join(save_to, f"{code}_{end.format('YY-MM-DD')}.png")
+            self.fig.savefig(save_to, dpi=self.dpi)
 
     def plot_(
         self,

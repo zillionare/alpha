@@ -2,7 +2,14 @@ import json
 
 import pandas as pd
 from alpha.features.volume import top_volume_direction
-from alpha.core.features import fillna, moving_average, polyfit, predict_by_moving_average, relation_with_prev_high, relative_strength_index
+from alpha.core.features import (
+    fillna,
+    moving_average,
+    polyfit,
+    predict_by_moving_average,
+    relation_with_prev_high,
+    relative_strength_index,
+)
 import datetime
 from doctest import FAIL_FAST
 from typing import List, NewType
@@ -21,6 +28,7 @@ Frame = NewType("Frame", (datetime.date, datetime.datetime, str, Arrow))
 
 logger = logging.getLogger(__name__)
 
+
 class UpTurn:
     """
     寻找5周期均线向上拐头（加速度a > 0),预期5周期收益 > profit，并且其它周期也在拐头的股票。
@@ -29,7 +37,8 @@ class UpTurn:
     1. 下一周期上涨。最短周期均线已经拐头
     2. 其它周期也在拐头或者止跌中 （a >= 0)，并且如果上涨趋势持续，这些周期的均线也最终将向上
     """
-    def __init__(self)->None:
+
+    def __init__(self) -> None:
         self.name = self.__class__.__name__.lower()
         self.ma_min_wins = [5, 10, 20, 60]
         self.n_minbars = max(self.ma_min_wins) + 20
@@ -45,7 +54,7 @@ class UpTurn:
         elif frame_type == FrameType.DAY:
             return {5: 8e-3, 10: 5e-3}.get(win, 3e-3)
 
-    async def scan(self, end: Frame, codes: List=None, profit: float=0.1):
+    async def scan(self, end: Frame, codes: List = None, profit: float = 0.1):
         end = arrow.get(end)
 
         async def get_code(codes):
@@ -80,7 +89,9 @@ class UpTurn:
         features_.append(self.format_frame(features[-1]))
 
         tm = arrow.now().format("YYMMDD")
-        await omicron.cache.sys.lpush(f"scan.result.{self.name}.{tm}", json.dumps(features_))
+        await omicron.cache.sys.lpush(
+            f"scan.result.{self.name}.{tm}", json.dumps(features_)
+        )
 
     def format_frame(self, frame):
         if hasattr(frame, "hour") and frame.hour != 0:
@@ -101,20 +112,17 @@ class UpTurn:
 
         return True
 
-    def get_ma_fitlen(self, win:int):
-        return {
-            5: 7,
-            10: 10
-        }.get(win, 15)
+    def get_ma_fitlen(self, win: int):
+        return {5: 7, 10: 10}.get(win, 15)
 
-    async def xtransform(self, end: Frame, sec: Security, profit:float=0.1):
+    async def xtransform(self, end: Frame, sec: Security, profit: float = 0.1):
         frame_type = FrameType.MIN30
 
         features = []
         if end is None:
             end = tf.floor(arrow.now(), frame_type)
 
-        if not hasattr(end, 'hour'):
+        if not hasattr(end, "hour"):
             end = tf.combine_time(end, 15)
         elif end.hour == 0:
             end = tf.combine_time(end, 15)
@@ -127,7 +135,9 @@ class UpTurn:
 
         close = fillna(bars["close"].copy())
 
-        ypreds, _ = predict_by_moving_average(close, 5, 5, self.get_pmae_err_threshold(5, frame_type))
+        ypreds, _ = predict_by_moving_average(
+            close, 5, 5, self.get_pmae_err_threshold(5, frame_type)
+        )
 
         if ypreds is None:
             return None
@@ -141,10 +151,10 @@ class UpTurn:
 
         # m30 ma fit line coeffs
         for win in self.ma_min_wins:
-            ma = moving_average(close, win)[-self.get_ma_fitlen(win):]
+            ma = moving_average(close, win)[-self.get_ma_fitlen(win) :]
 
-            (a,b,c), pmae = polyfit(ma/ma[0])
-            features.extend((a,b, pmae))
+            (a, b, c), pmae = polyfit(ma / ma[0])
+            features.extend((a, b, pmae))
 
         # m30 volume features
         vf = top_volume_direction(bars, 16)
@@ -167,8 +177,8 @@ class UpTurn:
         for win in self.ma_day_wins:
             fit_len = self.get_ma_fitlen(win)
             ma = moving_average(close, win)[-fit_len:]
-            (a,b,_), pmae = polyfit(ma/ma[0])
-            features.extend((a,b, pmae))
+            (a, b, _), pmae = polyfit(ma / ma[0])
+            features.extend((a, b, pmae))
 
         # day level volume features
         vf = top_volume_direction(bars)
@@ -185,13 +195,21 @@ class UpTurn:
         return features
 
     def to_dataframe(self, features):
-        ma30m_coeffs = np.array([
-            (f"a30m{win}", f"b30m{win}", f"e30m{win}") for win in self.ma_min_wins
-        ]).flatten().tolist()
+        ma30m_coeffs = (
+            np.array(
+                [(f"a30m{win}", f"b30m{win}", f"e30m{win}") for win in self.ma_min_wins]
+            )
+            .flatten()
+            .tolist()
+        )
 
-        ma1d_coeffs = np.array([
-            (f"a1d{win}", f"b1d{win}", f"e1d{win}") for win in self.ma_day_wins
-        ]).flatten().tolist()
+        ma1d_coeffs = (
+            np.array(
+                [(f"a1d{win}", f"b1d{win}", f"e1d{win}") for win in self.ma_day_wins]
+            )
+            .flatten()
+            .tolist()
+        )
 
         cols = [
             "profit",
@@ -217,18 +235,8 @@ class UpTurn:
             "rh1d2",
             "code",
             "name",
-            "time"
+            "time",
         ]
 
         df = pd.DataFrame(features, columns=cols)
         return df
-
-
-
-
-
-
-
-
-
-

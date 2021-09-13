@@ -1,7 +1,5 @@
 """2021年9月初，中关村"""
 
-import pickle
-from alpha.plotting.candlestick import Candlestick
 import asyncio
 import datetime
 import functools
@@ -9,6 +7,7 @@ import itertools
 import json
 import logging
 import os
+import pickle
 from typing import List, NewType
 
 import arrow
@@ -31,6 +30,7 @@ from alpha.core.features import (
     replace_zero,
 )
 from alpha.features.volume import top_volume_direction
+from alpha.plotting.candlestick import Candlestick
 
 Frame = NewType("Frame", (datetime.date, datetime.datetime, str, Arrow))
 
@@ -111,7 +111,9 @@ class Zgc(object):
         if codes is not None:  # single process, called directly
             return pd.DataFrame(results, columns=self.cols)
         else:
-            await omicron.cache.sys.set(f"scan.scope.{self.name}", self.dump_results(results))
+            await omicron.cache.sys.set(
+                f"scan.scope.{self.name}", self.dump_results(results)
+            )
 
     def dump_results(self, results):
         data = []
@@ -122,7 +124,6 @@ class Zgc(object):
             data.append(tmp)
 
         return json.dumps(data)
-
 
     async def check_long_signal(
         self, end: Frame, sec: Security, frame_type: FrameType = FrameType.MIN30
@@ -225,14 +226,11 @@ class Zgc(object):
 
         return arrow.get(frame).format(fmt)
 
-    async def plot_results(self, results:pd.DataFrame, save_to:str=None):
+    async def plot_results(self, results: pd.DataFrame, save_to: str = None):
         save_to = save_to or "/tmp/zgc"
         os.makedirs(save_to, exist_ok=True)
 
-        cs = Candlestick({
-            "1d": [5, 10, 20, 60, 120],
-            "30m": [5, 10, 20, 60]
-        })
+        cs = Candlestick({"1d": [5, 10, 20, 60, 120], "30m": [5, 10, 20, 60]})
 
         for row in results.to_records(index=False):
             code = row["code"]
