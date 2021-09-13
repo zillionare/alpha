@@ -15,11 +15,13 @@ async def init():
 async def scan(strategy: str, *args, **kwargs):
     from alpha.cli import create_strategy
 
-    print(f"{strategy} strategy started: {os.getpid()}")
+    print(
+        f"{strategy}({os.getpid()}) strategy started with args:{args}, kwargs:{kwargs}"
+    )
     await init()
     s = create_strategy(strategy)
-    await s.scan(*args, *kwargs)
-    print(f"{strategy} strategy finished: {os.getpid()}")
+    await s.scan(*args, **kwargs)
+    print(f"{strategy}({os.getpid()}) strategy finished")
 
 
 expose({"scan": scan})

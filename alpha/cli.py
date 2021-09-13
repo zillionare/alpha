@@ -172,7 +172,6 @@ async def make_even_distributed_dataset(
     )
 
 
-@async_run_command
 async def mpscan(strategy: str, *args, **kwargs):
     t0 = time.time()
     # init tasks and result set
@@ -186,7 +185,8 @@ async def mpscan(strategy: str, *args, **kwargs):
     stdout = ShowOutput()
     stderr = ShowOutput()
     args = " ".join([f"'{arg}'" for arg in args])
-    kwargs = " ".join([f"--'{k}'='{v}'" for k, v in kwargs.items()])
+    kwargs = " ".join([f"'--{k}'='{v}'" for k, v in kwargs.items()])
+
     cmd = f"{sys.executable} -m alpha.strategies scan {strategy} {args} {kwargs}"
 
     tasks = []
@@ -207,7 +207,7 @@ def main():
             "ds": make_dataset,
             "train": train,
             "make_even_ds": make_even_distributed_dataset,
-            "mpscan": mpscan,
+            "mpscan": async_run_command(mpscan),
         }
     )
 
