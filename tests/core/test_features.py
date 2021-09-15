@@ -100,6 +100,7 @@ class TestFeatures(unittest.TestCase):
         def f(i):
             return 0.002 * i * i + 0.001 * i + 1
 
+        # ts[11:13]: 1.261, 1.218, 1.253
         ts = [f(i) for i in range(11)]
 
         preds, pmae = predict_by_moving_average(ts, 5)
@@ -111,31 +112,18 @@ class TestFeatures(unittest.TestCase):
         np.testing.assert_array_almost_equal([1.261, 1.308, 1.359], preds, 3)
         self.assertTrue(pmae < 0.001)
 
-        ts = [f(i) for i in range(29)]
+        ts = [f(i) for i in range(19)]
+        # to predict ts[19], origin is 1.741, should predict as 1.773
         preds, pmae = predict_by_moving_average(ts, 10)
-        self.assertAlmostEqual(2.744, preds[0], 3)
+        self.assertAlmostEqual(1.773, preds[0], 2)
         self.assertTrue(pmae < 0.001)
 
-        # fmt: off
-        ts = [
-            44.98, 44.98, 44.98, 44.98, 44.98, 44.98, 44.98, 44.98, 44.98,
-            44.98, 44.98, 44.98, 44.98, 44.98, 44.98, 44.98, 44.98, 44.98,
-            44.98, 44.98, 44.98, 44.98, 44.98, 44.98, 44.98, 44.98, 44.98,
-            44.98, 44.98, 44.98, 44.98, 44.98, 44.98, 44.98, 44.98, 44.98,
-            44.98, 44.98, 44.98, 44.98, 38.09, 36.64, 33.85, 33.32, 33.49,
-            33.52, 31.88, 31.94, 33.44, 32.25, 31.72, 31.79, 31.85, 32.75,
-            32.38, 33.89, 33.42, 31.97, 31.82, 32.09, 32.28, 32.71, 31.83,
-            31.32, 30.76, 30.99, 30.3 , 29.79, 28.59, 28.78, 28.  , 29.3 ,
-            29.02, 29.36, 28.9 , 28.62, 28.83, 28.94, 28.38, 28.89, 28.23,
-            27.92, 28.04, 28.57, 31.79, 30.43, 30.05, 30.18, 29.61, 30.12,
-            29.23, 29.48, 27.59, 26.19, 26.19, 26.18, 26.42, 27.76, 26.31,
-            25.43, 25.99, 26.69, 26.8 , 28.22, 27.78, 28.25, 29.73, 29.05,
-            30.6 , 32.69, 39.23, 47.08, 56.5 , 47.99, 43.7 , 40.66, 39.  ,
-            40.14, 39.7 , 40.25
-            ]
-        # fmt: on
-        preds, pmae = predict_by_moving_average(ts, 5, err_threshold=1)
-        self.assertAlmostEqual(25.98, preds[0], 2)
+        ts = [f(i) for i in range(39)]
+        # preds, pmae = predict_by_moving_average(ts, 10, 5)
+        # np.testing.assert_array_almost_equal((4.27, 4.44, 4.6, 4.77, 4.95), preds, 2)
+
+        preds, pmae = predict_by_moving_average(ts, 20, 5)
+        np.testing.assert_array_almost_equal((4.21, 4.37, 4.54, 4.7, 4.87), preds, 2)
 
     def test_relation_with_prev_high(self):
         # 中材科技， 2021-8-23 创40日新高， 20日不断新高

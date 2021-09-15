@@ -55,20 +55,23 @@ def predict_by_moving_average(
     """
     ma = moving_average(ts, win)
 
+    # how many ma values used to fit the trendline?
     n = {5: 7, 10: 10}.get(win, 15)
 
     if len(ma) < n:
         raise ValueError(f"{len(ma)} < {n}, can't predict")
 
-    ma = ma[-n:]
-    coef, pmae = polyfit(ma, degree=2)
+    coef, pmae = polyfit(ma[-n:], degree=2)
     if pmae > err_threshold:
         return None, None
 
-    fitma = np.polyval(coef, np.arange(len(ma) + n_preds))
+    # use negative index to align with original ma
+    istart = n - win if n < win else 0
+    fitma = np.polyval(coef, np.arange(istart, n + n_preds))
+
     preds = [
-        reverse_moving_average(fitma, i, win)
-        for i in range(len(fitma) - n_preds, len(fitma))
+        reverse_moving_average(fitma[: i + 1], i, win)
+        for i in range(len(ma), len(ma) + n_preds)
     ]
 
     return preds, pmae
