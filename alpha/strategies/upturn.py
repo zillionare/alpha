@@ -1,4 +1,6 @@
+from alpha.plotting.candlestick import Candlestick
 import json
+import os
 
 import pandas as pd
 from alpha.features.volume import top_volume_direction
@@ -55,7 +57,19 @@ class UpTurn:
             return {5: 8e-3, 10: 5e-3}.get(win, 3e-3)
 
     async def scan(self, end: Frame, codes: List = None, profit: float = 0.1):
-        end = arrow.get(end)
+        end = (
+            arrow.get(end, tzinfo="Asia/Shanghai").datetime
+            if end
+            else tf.floor(arrow.now(), FrameType.MIN1)
+        )
+
+        if not hasattr(end, "hour"):
+            end = tf.combine_time(end, 15)
+        elif end.hour == 0:
+            end = tf.combine_time(end, 15)
+
+        result_key = f"scan.result.{self.name}.{end.strftime('%y%m%d_%H%M')}"
+        await omicron.cache.sys.delete(result_key)
 
         async def get_code(codes):
             if codes is None:
@@ -75,11 +89,11 @@ class UpTurn:
                     continue
 
                 result.extend((code, sec.display_name, end))
-                await self.process_features(result)
+                await self.process_features(result, result_key)
             except Exception as e:
                 logger.exception(e)
 
-    async def process_features(self, features):
+    async def process_features(self, features, result_key: str):
         self.X.append(features)
 
         features_ = []
@@ -88,10 +102,7 @@ class UpTurn:
         features_.append(features[-2])
         features_.append(self.format_frame(features[-1]))
 
-        tm = arrow.now().format("YYMMDD")
-        await omicron.cache.sys.lpush(
-            f"scan.result.{self.name}.{tm}", json.dumps(features_)
-        )
+        await omicron.cache.sys.lpush(result_key, json.dumps(features_))
 
     def format_frame(self, frame):
         if hasattr(frame, "hour") and frame.hour != 0:
@@ -101,8 +112,8 @@ class UpTurn:
 
         return arrow.get(frame).format(fmt)
 
-    def is_bars_valid(self, bars):
-        if len(bars) != self.n_minbars:
+    def is_bars_valid(self, bars, n: int):
+        if len(bars) < n:
             return False
 
         close = bars["close"]
@@ -119,18 +130,11 @@ class UpTurn:
         frame_type = FrameType.MIN30
 
         features = []
-        if end is None:
-            end = tf.floor(arrow.now(), frame_type)
 
-        if not hasattr(end, "hour"):
-            end = tf.combine_time(end, 15)
-        elif end.hour == 0:
-            end = tf.combine_time(end, 15)
-
-        start = tf.shift(end, -self.n_minbars + 1, frame_type)
+        start = tf.shift(tf.floor(end, frame_type), -self.n_minbars + 1, frame_type)
         bars = await sec.load_bars(start, end, frame_type)
 
-        if not self.is_bars_valid(bars):
+        if not self.is_bars_valid(bars, self.n_minbars):
             return None
 
         close = fillna(bars["close"].copy())
@@ -166,9 +170,9 @@ class UpTurn:
 
         # day level features
         frame_type = FrameType.DAY
-        start = tf.shift(end.date(), -self.n_daybars + 1, frame_type)
+        start = tf.shift(tf.floor(end, FrameType.DAY), -self.n_daybars + 1, frame_type)
         bars = await sec.load_bars(start, end.date(), frame_type)
-        if not self.is_bars_valid(bars):
+        if not self.is_bars_valid(bars, self.n_daybars):
             return None
 
         close = fillna(bars["close"].copy())
@@ -239,4 +243,35 @@ class UpTurn:
         ]
 
         df = pd.DataFrame(features, columns=cols)
+        return df[["code", "name", "time", "profit", *cols[1:-3]]]
+
+    async def load_cached_results(self, tm: str):
+        key = f"scan.result.{self.name}.{tm}"
+        results = await omicron.cache.sys.lrange(key, 0, -1)
+        if results is None or len(results) == 0:
+            keys = await omicron.cache.sys.keys(f"scan.result.{self.name}.*")
+            print(f"{key} not found. Available keys are:{keys}")
+            return None
+
+        results = [json.loads(r) for r in results]
+        df = self.to_dataframe(results)
+        df["time"] = pd.to_datetime(df["time"])
         return df
+
+    async def plot(self, df: pd.DataFrame, save_to: str = None):
+        rsi30m = [f"rsi30m1", "rsi30m2", "rsi30m3", "rsi30m4", "rsi30m5"]
+        rsi1d = [f"rsi1d1", "rsi1d2", "rsi1d3", "rsi1d4", "rsi1d5"]
+        for row in df.to_records(index=False):
+            code = row["code"]
+            end = row["time"]
+            title = f"{code.split('.')[0]} {row['profit']:.0%}"
+            if any(np.array(row[rsi30m].tolist()) > 95) or any(
+                np.array(row[rsi1d].tolist()) > 95
+            ):
+                title += " *"
+
+            tm = end.strftime("%y%m%d_%H%M")
+            save_to = os.path.expanduser(save_to or f"~/alpha/scan/{self.name}/{tm}")
+            os.makedirs(save_to, exist_ok=True)
+            cs = Candlestick()
+            await cs.plot(code, end, title, save_to=save_to)

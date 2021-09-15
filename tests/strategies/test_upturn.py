@@ -3,6 +3,8 @@ import unittest
 import cfg4py
 import omicron
 from alpha.config import get_config_dir
+from omicron.models.securities import Securities
+
 
 class TestUpTurn(unittest.IsolatedAsyncioTestCase):
     async def asyncSetUp(self) -> None:
@@ -18,6 +20,16 @@ class TestUpTurn(unittest.IsolatedAsyncioTestCase):
         Test upturn
         """
         up = UpTurn()
-        await up.scan('2021-09-13', ['000001.XSHE'], profit=0.07)
+        await up.scan("2021-09-13", ["000001.XSHE"], profit=0.07)
 
         print(up.to_dataframe(up.X))
+
+    async def test_plot(self):
+        """
+        Test upturn
+        """
+        up = UpTurn()
+        codes = (Securities().choose(["stock"]))[:100]
+        await up.scan("2021-09-13", codes, profit=0.0)
+        df = up.to_dataframe(up.X)
+        await up.plot(df)
