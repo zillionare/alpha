@@ -65,9 +65,8 @@ def predict_by_moving_average(
     if pmae > err_threshold:
         return None, None
 
-    # use negative index to align with original ma
-    istart = n - win if n < win else 0
-    fitma = np.polyval(coef, np.arange(istart, n + n_preds))
+    # build the trendline with same length as ma
+    fitma = np.polyval(coef, np.arange(n - len(ma), n + n_preds))
 
     preds = [
         reverse_moving_average(fitma[: i + 1], i, win)
