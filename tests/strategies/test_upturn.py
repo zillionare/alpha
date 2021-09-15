@@ -20,7 +20,7 @@ class TestUpTurn(unittest.IsolatedAsyncioTestCase):
         Test upturn
         """
         up = UpTurn()
-        await up.scan("2021-09-13", ["000001.XSHE"], profit=0.07)
+        await up.scan("2021-09-14 14:50", ["000001.XSHE"], profit=0.07)
 
         print(up.to_dataframe(up.X))
 

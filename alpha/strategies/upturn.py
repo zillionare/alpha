@@ -49,6 +49,7 @@ class UpTurn:
         self.n_daybars = max(self.ma_day_wins) + 20
 
         self.X = []
+        self.y = []
 
     def get_pmae_err_threshold(self, win, frame_type: FrameType = FrameType.MIN30):
         if frame_type == FrameType.MIN30:
@@ -92,6 +93,7 @@ class UpTurn:
                 await self.process_features(result, result_key)
             except Exception as e:
                 logger.exception(e)
+
 
     async def process_features(self, features, result_key: str):
         self.X.append(features)
@@ -261,16 +263,18 @@ class UpTurn:
     async def plot(self, df: pd.DataFrame, save_to: str = None):
         rsi30m = [f"rsi30m1", "rsi30m2", "rsi30m3", "rsi30m4", "rsi30m5"]
         rsi1d = [f"rsi1d1", "rsi1d2", "rsi1d3", "rsi1d4", "rsi1d5"]
-        for row in df.to_records(index=False):
-            code = row["code"]
-            end = row["time"]
-            title = f"{code.split('.')[0]} {row['profit']:.0%}"
-            if any(np.array(row[rsi30m].tolist()) > 95) or any(
-                np.array(row[rsi1d].tolist()) > 95
+        for i in range(len(df)):
+            code = df.iloc[i]["code"]
+            end = df.iloc[i]["time"]
+            profit = df.iloc[i]["profit"]
+            title = f"{code.split('.')[0]} {profit:.0%}"
+
+            if any(np.array(df.iloc[i][rsi30m].tolist()) > 95) or any(
+                np.array(df.iloc[i][rsi1d].tolist()) > 95
             ):
                 title += " *"
 
-            tm = end.strftime("%y%m%d_%H%M")
+            tm = end.strftime("%d%m%y_%H%M")
             save_to = os.path.expanduser(save_to or f"~/alpha/scan/{self.name}/{tm}")
             os.makedirs(save_to, exist_ok=True)
             cs = Candlestick()
