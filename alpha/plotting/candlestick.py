@@ -19,6 +19,7 @@ from omicron.core.talib import moving_average
 from omicron.core.timeframe import tf
 from omicron.core.types import FrameType
 from omicron.models.security import Security
+from matplotlib.gridspec import GridSpec
 
 Frame = NewType("Frame", (datetime.date, datetime.datetime, arrow.Arrow, str))
 
@@ -107,7 +108,13 @@ class Candlestick:
     def close(self):
         self.fig.close()
 
-    async def plot(self, code: str, end: Frame, title: str = None, save_to: str = None):
+    async def plot(
+        self,
+        code: str,
+        end: Frame,
+        title: str = None,
+        save_to: str = None,
+    ):
         # self.init_fig()
 
         sec = Security(code)
@@ -134,7 +141,7 @@ class Candlestick:
 
         if save_to:
             file = os.path.join(save_to, f"{code}_{end.format('YY-MM-DD')}.png")
-            self.fig.savefig(save_to, dpi=self.dpi)
+            self.fig.savefig(file, dpi=self.dpi)
 
     def plot_(
         self,
