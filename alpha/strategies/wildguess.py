@@ -9,7 +9,7 @@ from omicron.models.securities import Securities
 from omicron.models.security import Security
 
 from alpha.core.features import (
-    fillna,
+    moving_average,
     predict_by_moving_average,
     relation_with_prev_high,
     relative_strength_index,
@@ -25,7 +25,7 @@ class WildGuess(object):
     """
 
     def __init__(self) -> None:
-        self.ma_wins = [5, 10, 20, 30, 60, 120]
+        self.ma_wins = [5, 10, 20, 30, 60]
         self.nbars = max(self.ma_wins) + 20
 
     async def scan(self, frame_type: str, codes: list = None, profit=0.15, end=None):
@@ -61,18 +61,16 @@ class WildGuess(object):
                 if result is None:
                     continue
 
-                pred_profit, ypred, pred_credits, rsi, vf, rh = result
+                pred_profit, up_trends, rsi, vf, rh = result
 
                 if pred_profit < profit:
-                    logger.debug("%s is predictable, but potential profit is low")
                     continue
 
-                vec = [sec.display_name, code, pred_profit, ypred, pred_credits]
+                print(f"{code} {pred_profit:.0%}")
+                vec = [sec.display_name, code, pred_profit, up_trends, rh]
                 vec.extend(rsi)
                 vec.extend(vf)
-                vec.extend(rh)
                 results.append(vec)
-                print(f"{code} {pred_profit:.0%}")
             except Exception as e:
                 continue
 
@@ -82,15 +80,14 @@ class WildGuess(object):
                 "name",
                 "code",
                 "pred_profit",
-                "ypred",
-                "pred_credits",
+                "up_trends",
+                "rh",
                 "rsi_1",
                 "rsi_2",
                 "rsi_3",
                 "vf_1",
                 "vf_2",
                 "vf_3",
-                "rh",
             ],
         )
         return df
@@ -107,64 +104,36 @@ class WildGuess(object):
     def guess(self, bars, code: str, frame_type: FrameType):
         close = bars["close"]
 
-        pred_credits = 0
-        ypred = 0
+        up_trends = 0
 
-        for win in self.ma_wins:
+        ypreds, _ = predict_by_moving_average(
+            close, 5, 5, self.get_pmae_err_threshold(5, frame_type)
+        )
+        if ypreds is None or ypreds[0] < close[-1]:
+            return None
+
+        pred_profit = ypreds[-1] / close[-1] - 1
+
+        for win in self.ma_wins[1:]:
             _ypreds, _ = predict_by_moving_average(
                 close, win, 5, self.get_pmae_err_threshold(win, frame_type)
             )
 
             if _ypreds is None:
-                logger.debug("can not predict trend of %s", code)
                 continue
 
-            # 如果长线看空，则不操作
-            if _ypreds[-1] < close[-1] and win in [20, 30, 60, 120]:
-                logger.debug("%s is not going up", code)
+            ma = moving_average(close, win)
+            if _ypreds[-1] <= ma[-1]:  # 均线是下降的
                 return None
 
-            pred_credits += 1
-            ypred = max(ypred, max(_ypreds))
+            up_trends += 1
 
-        rsi = relative_strength_index(close)
-        if np.any(rsi[-3:] > 90):
-            logger.debug("RSI of %s at %s is too high", code, bars["frame"][-5:])
+        rsi = relative_strength_index(close, 6)
+        if np.any(rsi[-3:] > 97):
             return None
 
-        vf = self.volume_features(bars)
+        vf = top_volume_direction(bars, n=16)
 
-        c0 = bars["close"][-1]
-        pred_profit = ypred / c0 - 1
+        rh = relation_with_prev_high(close, len(close))[0]
 
-        rh = []
-        rh.append(relation_with_prev_high(close, len(close))[0])
-
-        return pred_profit, ypred, pred_credits, rsi[-3:], vf, rh
-
-    def clams(self, bars, code: str, adv: float, frame_type: FrameType = FrameType.DAY):
-        """涨幅3~5%，两连阳，均线5,10,20预测向上，放量，连续上涨不超过adv%"""
-        close = bars["close"]
-        vf = top_volume_direction(bars)
-
-        if vf[-1] < 2:
-            logger.debug("volume of %s is not increased", code)
-            return None
-
-        pcr = close[1:] / close[:-1]
-        if np.any(pcr[-2:] < 1.01) or not (1.025 <= pcr[-1] <= 1.06):
-            logger.debug("%s is not continuousely increasing", code)
-            return None
-
-        for win in [5, 10, 20]:
-            _ypreds, _ = predict_by_moving_average(
-                close, win, 5, self.get_pmae_err_threshold(win, frame_type)
-            )
-
-            if _ypreds is None:
-                logger.debug("can not predict trend of %s", code)
-                continue
-
-            if _ypreds[-1] < close[-1] and win in [20, 30, 60, 120]:
-                logger.debug("%s is not going up", code)
-                return None
+        return pred_profit, up_trends, rsi[-3:], vf, rh

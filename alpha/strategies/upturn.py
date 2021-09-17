@@ -69,7 +69,7 @@ class UpTurn:
         elif end.hour == 0:
             end = tf.combine_time(end, 15)
 
-        result_key = f"scan.result.{self.name}.{end.strftime('%y%m%d_%H%M')}"
+        result_key = f"scan.result.{self.name}.{arrow.get(end).format('YYMMDD_HHmm')}"
         await omicron.cache.sys.delete(result_key)
 
         async def get_code(codes):
@@ -247,6 +247,11 @@ class UpTurn:
         df = pd.DataFrame(features, columns=cols)
         return df[["code", "name", "time", "profit", *cols[1:-3]]]
 
+    async def list_resultsets(self):
+        pattern = f"scan.result.{self.name}.*"
+        keys = await omicron.cache.sys.keys(pattern)
+        return [k.split(".")[-1] for k in keys]
+
     async def load_cached_results(self, tm: str):
         key = f"scan.result.{self.name}.{tm}"
         results = await omicron.cache.sys.lrange(key, 0, -1)
@@ -274,7 +279,7 @@ class UpTurn:
             ):
                 title += " *"
 
-            tm = end.strftime("%d%m%y_%H%M")
+            tm = arrow.get(end).format("YYMMDD_HHmm")
             save_to = os.path.expanduser(save_to or f"~/alpha/scan/{self.name}/{tm}")
             os.makedirs(save_to, exist_ok=True)
             cs = Candlestick()

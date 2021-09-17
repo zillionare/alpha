@@ -20,6 +20,7 @@ from omicron.core.timeframe import tf
 from omicron.core.types import FrameType
 from omicron.models.security import Security
 from matplotlib.gridspec import GridSpec
+import logging
 
 Frame = NewType("Frame", (datetime.date, datetime.datetime, arrow.Arrow, str))
 
@@ -27,7 +28,7 @@ Frame = NewType("Frame", (datetime.date, datetime.datetime, arrow.Arrow, str))
 # Cannot load backend 'TkAgg' which requires the 'tk' interactive framework, as 'headless' is currently running
 # matplotlib.use("TkAgg")
 
-
+logger = logging.getLogger(__name__)
 class Candlestick:
     def __init__(
         self,
@@ -126,9 +127,13 @@ class Candlestick:
             ma_wins = self.frames[ft]
             nbars = max(ma_wins) + self.plot_window_size
             frame_type = FrameType(ft)
-            start = tf.shift(end, -nbars + 1, frame_type)
+            start = tf.shift(tf.floor(end, frame_type), -nbars + 1, frame_type)
 
-            bars = await sec.load_bars(start, end, frame_type)
+            try:
+                bars = await sec.load_bars(start, end, frame_type)
+            except Exception as e:
+                logger.exception(e)
+                return
 
             candlestick_ax = self.axes[2 * i]
             volume_ax = self.axes[2 * i + 1]
