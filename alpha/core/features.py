@@ -39,7 +39,7 @@ def reverse_moving_average(ma: ArrayLike, i: int, win: int) -> float:
 
 
 def predict_by_moving_average(
-    ts: ArrayLike, win: int, n_preds: int = 1, err_threshold=1e-2
+    ts: ArrayLike, win: int, n_preds: int = 1, err_threshold=1e-2, n:int=None
 ) -> float:
     """predict the next ith value by fitted moving average
 
@@ -49,6 +49,7 @@ def predict_by_moving_average(
         ts (np.array): the time series
         i (int): the index of the value to be predicted, start from 1
         win (int): the window size
+        n (int): how many ma sample points used to polyfit the ma line
 
     Returns:
         float: the predicted value
@@ -56,7 +57,8 @@ def predict_by_moving_average(
     ma = moving_average(ts, win)
 
     # how many ma values used to fit the trendline?
-    n = {5: 7, 10: 10}.get(win, 15)
+    if n is None:
+        n = {5: 7, 10: 10}.get(win, 15)
 
     if len(ma) < n:
         raise ValueError(f"{len(ma)} < {n}, can't predict")
