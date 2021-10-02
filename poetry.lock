@@ -850,6 +850,17 @@ toml = "*"
 virtualenv = ">=20.0.8"
 
 [[package]]
+name = "pretty-html-table"
+version = "0.9.11"
+description = "Make pandas dataframe looking pretty again"
+category = "main"
+optional = false
+python-versions = "*"
+
+[package.dependencies]
+pandas = "*"
+
+[[package]]
 name = "protobuf"
 version = "3.17.3"
 description = "Protocol Buffers"
@@ -1582,7 +1593,7 @@ test = ["pytest", "black", "isort", "flake8", "flake8-docstrings", "pytest-cov"]
 [metadata]
 lock-version = "1.1"
 python-versions = ">=3.8,<3.9"
-content-hash = "d5133c8f808a774d26dc7eee6e7888fccb43aac2895ac65935e466a4899088fe"
+content-hash = "7ca28e585690b5083ec993dc71fafd49842ac42da8705fa963d7760c6c83e97a"
 
 [metadata.files]
 aiohttp = [
@@ -2324,6 +2335,10 @@ pluggy = [
 pre-commit = [
     {file = "pre_commit-2.14.1-py2.py3-none-any.whl", hash = "sha256:a22d12a02da4d8df314187dfe7a61bda6291d57992060522feed30c8cd658b68"},
     {file = "pre_commit-2.14.1.tar.gz", hash = "sha256:7977a3103927932d4823178cbe4719ab55bb336f42a9f3bb2776cff99007a117"},
+]
+pretty-html-table = [
+    {file = "pretty_html_table-0.9.11-py3-none-any.whl", hash = "sha256:377e49c803e26f6adb00faea803758e160cad59a0f5b27634013096e31b5c885"},
+    {file = "pretty_html_table-0.9.11.tar.gz", hash = "sha256:2848f97547c8e5cfaea22c8c26d296752a3107ca73ba01bdbc8f11e26ec6a92a"},
 ]
 protobuf = [
     {file = "protobuf-3.17.3-cp27-cp27m-macosx_10_9_x86_64.whl", hash = "sha256:ab6bb0e270c6c58e7ff4345b3a803cc59dbee19ddf77a4719c5b635f1d547aa8"},

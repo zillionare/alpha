@@ -18,6 +18,8 @@ from alpha.core.morph import MorphFeatures
 from alpha.features.volume import top_volume_direction
 from alpha.plotting import draw_trendline
 from alpha.plotting.candlestick import Candlestick
+from pretty_html_table import build_table
+from alpha.core.notify import send_html_email
 
 
 async def init_notebook():
@@ -46,4 +48,6 @@ __all__ = [
     "arrow",
     "pickle",
     "clear_output",
+    "send_html_email",
+    "build_table"
 ]
