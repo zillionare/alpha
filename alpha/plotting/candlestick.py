@@ -33,12 +33,24 @@ class Candlestick:
     def __init__(
         self,
         frames: dict = None,
-        fig_size=(12, 10),
         dpi=60,
-        plot_window_size: int = 60,
-        lfs=12,
-        ma_lw=0.6,
+        n_plot_bars: int = 60,
+        bw=20,
+        lw=16,
+        font_size=16,
+        hw_ratio = 0.75
     ):
+        """[summary]
+
+        Args:
+            frames (dict, optional): which level bars to draw. Defaults to "1d" and "30m".
+            dpi (int, optional): [description]. Defaults to 60.
+            n_plot_bars (int, optional): how many bars will be displayed on the canvas. Defaults to 60.
+            font_size (int, optional): label font size. Defaults to 12.
+            bw (int, optional): bar width in pixels, Defaults to 20.
+            lw (int, optional): line width in pixels, Defaults to 16.
+            hw_ratio (float, optional): the aspect ratio between height/width, Defaults to 0.75.
+        """
         self.frames = frames or {
             "1d": [5, 10, 20, 60, 120, 250],
             "30m": [5, 10, 20, 60],
@@ -47,15 +59,22 @@ class Candlestick:
         row = len(self.frames) * 2
         col = 1
 
+        plt.rc('font', family=['Microsoft YaHei', 'Heiti TC', 'Songti SC'], size=font_size)
+        plt.rcParams['axes.unicode_minus']=False
+
         # how many n_bars will be drawn in the fig
-        self.plot_window_size = plot_window_size
+        self.plot_window_size = n_plot_bars
 
         self.dpi = dpi
-        self.bw = (fig_size[0] * 4) / plot_window_size
-        self.ma_lw = ma_lw
-        self.lfs = lfs
 
-        self.fig = plt.figure(figsize=fig_size, dpi=dpi)
+        self.fig_size = (n_plot_bars * bw / dpi, n_plot_bars * bw * hw_ratio / dpi)
+
+        # bar width in inches
+        self.bw = bw * 2 / dpi
+        # line width of moving average line
+        self.lw = lw * 2/ dpi
+
+        self.fig = plt.figure(figsize=self.fig_size, dpi=dpi)
         self.axes = []
 
         sub_height = 1 / len(self.frames) * 0.8
@@ -76,10 +95,11 @@ class Candlestick:
         self.cm = {
             5: "b",
             10: "g",
-            20: "c",
+            20: "r",
+            30: "c",
             60: "m",
             120: "y",
-            250: "tab:orange",
+            250: "k",
             "raw": "tab:gray",
         }
 
@@ -91,7 +111,6 @@ class Candlestick:
             #     ax.xaxis.set_tick_params(length=0)
             #     ax.grid(True, color="#cccccc", linestyle="-", linewidth="0.5")
 
-            ax.yaxis.set_tick_params(labelsize=self.lfs)
             # ax.spines["top"].set_visible(False)
             # ax.spines["right"].set_visible(False)
 
@@ -142,11 +161,30 @@ class Candlestick:
 
         title = title or f"{code} {self.format_frames([end])[0]}"
         if title:
-            self.fig.suptitle(title, fontsize=self.lfs)
+            self.fig.suptitle(title)
 
         if save_to:
             file = os.path.join(save_to, f"{code}_{end.format('YY-MM-DD')}.png")
             self.fig.savefig(file, dpi=self.dpi)
+
+    def plot_bars(self, bars: np.array, title:str=None, save_as:str=None):
+        """给定一个bar数组，绘制k线图
+
+        要求在构造CandleStick对象时，指定一个与此对应的惟一的frame设置。
+
+        Args:
+            bars (np.array): [description]
+            title (str, optional): [description]. Defaults to None.
+            save_as (str, optional): [description]. Defaults to None.
+        """
+        assert len(self.frames) == 1
+
+        ma_groups = list(self.frames.values())[0]
+        self.plot_(bars, ma_groups, self.axes[0], self.axes[1], title)
+
+        if save_as:
+            self.fig.savefig(save_as, dpi=self.dpi)
+
 
     def plot_(
         self,
@@ -191,7 +229,7 @@ class Candlestick:
         # draw ma
         for i, win in enumerate(ma_groups or []):
             ma = moving_average(bars["close"], win)[-n:]
-            line = Line2D(range(len(ma)), ma, color=self.cm[win], linewidth=self.ma_lw)
+            line = Line2D(range(len(ma)), ma, color=self.cm[win], linewidth=self.lw)
             ax_candle_stick.add_line(line)
 
         # draw volume
@@ -201,17 +239,20 @@ class Candlestick:
         frames = self.format_frames(bars["frame"][-n:])
         ax_volume.bar(range(n), volume, color=np.where(ups, "r", "g"), width=self.bw)
 
-        positions = list(np.arange(n // 8 + 1) * 8)
-        labels = [frames[i] for i in positions]
-        ax_volume.set_xticks(positions)
+        label_pos = list(np.arange(n // 8 + 1) * 8)
+        if label_pos[-1] >= len(frames):
+            label_pos.pop(-1)
+
+        labels = [frames[i] for i in label_pos]
+        ax_volume.set_xticks(label_pos)
         ax_volume.set_xticklabels(labels, rotation=45)
 
         if title:
-            self.fig.suptitle(title, fontsize=self.lfs)
+            self.fig.suptitle(title)
 
     def format_frames(self, frames):
         if hasattr(frames[0], "hour") and frames[0].hour != 0:
-            fmt = "YY-MM-DD HH:mm"
+            fmt = "MM-DD HH:mm"
         else:
             fmt = "YY-MM-DD"
 
@@ -259,7 +300,7 @@ class Candlestick:
             Rectangle(
                 (i - self.bw / 2.0, min(o[i], c[i])),
                 width=self.bw,
-                lw=self.bw / 4,
+                lw=self.lw,
                 height=abs(o[i] - c[i]),
             )
             for i in range(len(bars))
@@ -280,9 +321,10 @@ class Candlestick:
 
         down = zip(np.transpose(down_top), np.transpose(down_bottom))
 
-        ax.add_collection(LineCollection(up, colors=edgecolor, linewidths=self.bw / 2))
+        # the line width sounds too wide, but it's the only normal way to draw the line
+        ax.add_collection(LineCollection(up, colors=edgecolor, linewidths=self.lw))
         ax.add_collection(
-            LineCollection(down, colors=edgecolor, linewidths=self.bw / 2)
+            LineCollection(down, colors=edgecolor, linewidths=self.lw)
         )
 
         rect_pc = PatchCollection(rects, edgecolor=edgecolor, facecolor=facecolor)
