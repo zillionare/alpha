@@ -1,5 +1,7 @@
 import os
 
-
 def get_config_dir():
-    return os.path.dirname(__file__)
+    if os.getenv("__cfg4py_server_role__", "DEV"):
+        return os.path.dirname(__file__)
+    else:
+        return os.path.expanduser("~/.zillionare/alpha")
