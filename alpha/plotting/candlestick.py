@@ -29,6 +29,8 @@ Frame = NewType("Frame", (datetime.date, datetime.datetime, arrow.Arrow, str))
 # matplotlib.use("TkAgg")
 
 logger = logging.getLogger(__name__)
+
+
 class Candlestick:
     def __init__(
         self,
@@ -36,9 +38,9 @@ class Candlestick:
         dpi=60,
         n_plot_bars: int = 60,
         bw=20,
-        lw=16,
-        font_size=16,
-        hw_ratio = 0.75
+        lw=20,
+        font_size=12,
+        hw_ratio=0.75,
     ):
         """[summary]
 
@@ -46,9 +48,9 @@ class Candlestick:
             frames (dict, optional): which level bars to draw. Defaults to "1d" and "30m".
             dpi (int, optional): [description]. Defaults to 60.
             n_plot_bars (int, optional): how many bars will be displayed on the canvas. Defaults to 60.
-            font_size (int, optional): label font size. Defaults to 12.
+            font_size (int, optional): label font size. Defaults to 16.
             bw (int, optional): bar width in pixels, Defaults to 20.
-            lw (int, optional): line width in pixels, Defaults to 16.
+            lw (int, optional): line width in pixels, Defaults to 20,
             hw_ratio (float, optional): the aspect ratio between height/width, Defaults to 0.75.
         """
         self.frames = frames or {
@@ -56,23 +58,25 @@ class Candlestick:
             "30m": [5, 10, 20, 60],
         }
 
-        row = len(self.frames) * 2
-        col = 1
-
-        plt.rc('font', family=['Microsoft YaHei', 'Heiti TC', 'Songti SC'], size=font_size)
-        plt.rcParams['axes.unicode_minus']=False
+        plt.rc(
+            "font", family=["Microsoft YaHei", "Heiti TC", "Songti SC"], size=font_size
+        )
+        plt.rcParams["axes.unicode_minus"] = False
 
         # how many n_bars will be drawn in the fig
         self.plot_window_size = n_plot_bars
 
         self.dpi = dpi
 
-        self.fig_size = (n_plot_bars * bw / dpi, n_plot_bars * bw * hw_ratio / dpi)
+        self.fig_size = (
+            n_plot_bars * bw / (2 * dpi),
+            n_plot_bars * bw * hw_ratio / (2 * dpi),
+        )
 
         # bar width in inches
-        self.bw = bw * 2 / dpi
+        self.bw = 1.8 * bw / dpi
         # line width of moving average line
-        self.lw = lw * 2/ dpi
+        self.lw = 1.8 * lw / dpi
 
         self.fig = plt.figure(figsize=self.fig_size, dpi=dpi)
         self.axes = []
@@ -167,7 +171,7 @@ class Candlestick:
             file = os.path.join(save_to, f"{code}_{end.format('YY-MM-DD')}.png")
             self.fig.savefig(file, dpi=self.dpi)
 
-    def plot_bars(self, bars: np.array, title:str=None, save_as:str=None):
+    def plot_bars(self, bars: np.array, title: str = None, save_as: str = None):
         """给定一个bar数组，绘制k线图
 
         要求在构造CandleStick对象时，指定一个与此对应的惟一的frame设置。
@@ -184,7 +188,6 @@ class Candlestick:
 
         if save_as:
             self.fig.savefig(save_as, dpi=self.dpi)
-
 
     def plot_(
         self,
@@ -299,7 +302,7 @@ class Candlestick:
         rects = [
             Rectangle(
                 (i - self.bw / 2.0, min(o[i], c[i])),
-                width=self.bw,
+                width=self.bw * 0.94,  # leave some space between bars
                 lw=self.lw,
                 height=abs(o[i] - c[i]),
             )
@@ -323,9 +326,7 @@ class Candlestick:
 
         # the line width sounds too wide, but it's the only normal way to draw the line
         ax.add_collection(LineCollection(up, colors=edgecolor, linewidths=self.lw))
-        ax.add_collection(
-            LineCollection(down, colors=edgecolor, linewidths=self.lw)
-        )
+        ax.add_collection(LineCollection(down, colors=edgecolor, linewidths=self.lw))
 
         rect_pc = PatchCollection(rects, edgecolor=edgecolor, facecolor=facecolor)
         ax.add_collection(rect_pc)

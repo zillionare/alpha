@@ -12,19 +12,22 @@ account = os.getenv("JQ_ACCOUNT")
 password = os.getenv("JQ_PASSWORD")
 
 jq.auth(account, password)
-valuations=jq.get_fundamentals(query(valuation))
+valuations = jq.get_fundamentals(query(valuation))
 secs = jq.get_all_securities()
 
+
 def get_name(code):
-    return secs[secs.index==code].iloc[0]["display_name"]
+    return secs[secs.index == code].iloc[0]["display_name"]
+
 
 def get_valuation(code):
-    return int(valuations[valuations.code==code].iloc[0]["market_cap"])
+    return int(valuations[valuations.code == code].iloc[0]["market_cap"])
 
-def choose_stocks(exclude_st=True, exclude_688=True, valuation_range=(100,2000)):
+
+def choose_stocks(exclude_st=True, exclude_688=True, valuation_range=(100, 2000)):
     result = secs
     if exclude_688:
-        result = result[result.index.str.startswith("688")==False]
+        result = result[result.index.str.startswith("688") == False]
     if exclude_st:
         result = result[result.display_name.str.find("ST") == -1]
 
@@ -37,6 +40,7 @@ def choose_stocks(exclude_st=True, exclude_688=True, valuation_range=(100,2000))
             pass
 
     return codes
+
 
 def top_n_argpos(ts: np.array, n: int) -> np.array:
     """get top n (max->min) elements and return argpos which its value ordered in descent
@@ -53,6 +57,7 @@ def top_n_argpos(ts: np.array, n: int) -> np.array:
     """
     return np.argsort(ts)[-n:][::-1]
 
+
 def moving_average(ts: np.array, win: int):
     """计算时间序列ts在win窗口内的移动平均
 
@@ -66,12 +71,23 @@ def moving_average(ts: np.array, win: int):
 
     return np.convolve(ts, np.ones(win) / win, "valid")
 
-def get_bars(code, n, end, unit='1d'):
+
+def get_bars(code, n, end, unit="1d"):
     fields = ["date", "open", "high", "low", "close", "volume"]
-    return jq.get_bars(code, n, unit=unit, end_dt=end, fq_ref_date=end, df=False, include_now=True, fields=fields)
+    return jq.get_bars(
+        code,
+        n,
+        unit=unit,
+        end_dt=end,
+        fq_ref_date=end,
+        df=False,
+        include_now=True,
+        fields=fields,
+    )
+
 
 def predict_by_moving_average(
-    ts, win: int, n_preds: int = 1, err_threshold=1e-2, n:int=None
+    ts, win: int, n_preds: int = 1, err_threshold=1e-2, n: int = None
 ) -> float:
     """predict the next ith value by fitted moving average
 
@@ -109,6 +125,7 @@ def predict_by_moving_average(
 
     return preds, pmae
 
+
 def polyfit(ts: np.array, degree: int = 2) -> tuple:
     """fit ts with np.polyfit, return coeff and pmae"""
     coeff = np.polyfit(np.arange(len(ts)), ts, degree)
@@ -136,45 +153,48 @@ def reverse_moving_average(ma, i: int, win: int) -> float:
     """
     return ma[i] * win - ma[i - 1] * win + np.mean(ma[i - win : i])
 
+
 import pickle
+
+
 def make_ds_month(path):
     end = arrow.get("2021-08-31").date()
     data = {}
-    for code in secs[secs.start_date < datetime.datetime(2018,1,1,0,0,0)].index:
-        bars = get_bars(code, 68, end, unit='1M')
+    for code in secs[secs.start_date < datetime.datetime(2018, 1, 1, 0, 0, 0)].index:
+        bars = get_bars(code, 68, end, unit="1M")
         data[code] = bars
 
     path = os.path.expanduser(path)
     with open(path, "wb") as f:
         pickle.dump(data, f, protocol=5)
 
+
 def load_monthly_bars():
     with open("/Users/aaronyang/data/monthly_bars.pkl", "rb") as f:
         return pickle.load(f)
 
+
 def search():
     results = []
-    pred_samples = {
-        5: 7,
-        10: 10,
-        20: 10
-    }
+    pred_samples = {5: 7, 10: 10, 20: 10}
     for code, bars in load_monthly_bars().items():
         for i in range(29, len(bars) - 1):
-            bars_ = bars[i-29: i]
+            bars_ = bars[i - 29 : i]
 
-            frame = bars_['date'][-1]
-            c0 = bars_['close'][-1]
-            c1 = bars[i]['close']
-            pcr = c1/c0 - 1
+            frame = bars_["date"][-1]
+            c0 = bars_["close"][-1]
+            c1 = bars[i]["close"]
+            pcr = c1 / c0 - 1
 
             row = [code, get_name(code), frame, pcr]
             for win in [5, 10, 20]:
-                ma = moving_average(bars_['close'], win)[-10:]
+                ma = moving_average(bars_["close"], win)[-10:]
                 ma /= ma[0]
-                (a,b,c), pmae = polyfit(ma)
+                (a, b, c), pmae = polyfit(ma)
 
-                ypreds, _ = predict_by_moving_average(bars_['close'], win, 1, 1, pred_samples[win])
+                ypreds, _ = predict_by_moving_average(
+                    bars_["close"], win, 1, 1, pred_samples[win]
+                )
                 if ypreds is not None:
                     pred = ypreds[0] / c0 - 1
                 else:
@@ -184,9 +204,28 @@ def search():
 
             results.append(row)
 
-    return pd.DataFrame(results, columns=["code", "name", "frame", "actual", "a5", "b5", "pmae5", "pred5",
-                                         "a10", "b10", "pmae10", "pred10",
-                                         "a20", "b20", "pmae20", "pred20"])
+    return pd.DataFrame(
+        results,
+        columns=[
+            "code",
+            "name",
+            "frame",
+            "actual",
+            "a5",
+            "b5",
+            "pmae5",
+            "pred5",
+            "a10",
+            "b10",
+            "pmae10",
+            "pred10",
+            "a20",
+            "b20",
+            "pmae20",
+            "pred20",
+        ],
+    )
+
 
 def preprocess(df):
     """prepare dataset for xgboost classification
@@ -197,12 +236,25 @@ def preprocess(df):
     3 可用20月线
     """
     return {
-        "X": df[["a5", "b5", "pmae5", "pred5",
-                "a10", "b10", "pmae10", "pred10",
-                "a20", "b20", "pmae20", "pred20"]].values,
-
-        "y": labelling(df)
+        "X": df[
+            [
+                "a5",
+                "b5",
+                "pmae5",
+                "pred5",
+                "a10",
+                "b10",
+                "pmae10",
+                "pred10",
+                "a20",
+                "b20",
+                "pmae20",
+                "pred20",
+            ]
+        ].values,
+        "y": labelling(df),
     }
+
 
 def labelling(df, threshold=0.1):
     """"""
@@ -223,6 +275,7 @@ def labelling(df, threshold=0.1):
 
     return labels
 
+
 from xgboost import XGBClassifier
 from sklearn.metrics import classification_report
 from sklearn.utils import shuffle
@@ -234,13 +287,13 @@ def train(X_train, y_train, X_test, y_test):
     model = XGBClassifier()
 
     params = {
-            "colsample_bytree": uniform(0.7, 0.3),
-            "gamma": uniform(0, 0.5),
-            "learning_rate": uniform(0.01, 1),
-            "max_depth": randint(2, 6),
-            "n_estimators": randint(80, 150),
-            "subsample": uniform(0.6, 0.4),
-        }
+        "colsample_bytree": uniform(0.7, 0.3),
+        "gamma": uniform(0, 0.5),
+        "learning_rate": uniform(0.01, 1),
+        "max_depth": randint(2, 6),
+        "n_estimators": randint(80, 150),
+        "subsample": uniform(0.6, 0.4),
+    }
 
     search = RandomizedSearchCV(
         model,
@@ -254,9 +307,9 @@ def train(X_train, y_train, X_test, y_test):
     )
 
     fit_params = {
-            "eval_set": [(X_test, y_test)],
-            "early_stopping_rounds": 5,
-        }
+        "eval_set": [(X_test, y_test)],
+        "early_stopping_rounds": 5,
+    }
 
     try:
         search.fit(X_train, y_train, **fit_params)
@@ -269,12 +322,14 @@ def train(X_train, y_train, X_test, y_test):
     print(report)
     return best_model
 
+
 if __name__ == "__main__":
-    #df = search()
-    #df.to_pickle("/tmp/month.df")
+    # df = search()
+    # df.to_pickle("/tmp/month.df")
 
     import os
-    os.environ['KMP_DUPLICATE_LIB_OK']='True'
+
+    os.environ["KMP_DUPLICATE_LIB_OK"] = "True"
 
     # df = pd.read_pickle("/tmp/month.df")
 
@@ -287,11 +342,11 @@ if __name__ == "__main__":
 
     X, y = shuffle(data["X"], data["y"], random_state=78)
 
-    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=78)
+    X_train, X_test, y_train, y_test = train_test_split(
+        X, y, test_size=0.2, random_state=78
+    )
     model = train(X_train, y_train, X_test, y_test)
 
     save_to = os.path.expanduser("~/data/models/month_ma.pkl")
     with open(save_to, "wb") as f:
         pickle.dump(model, f)
-
-

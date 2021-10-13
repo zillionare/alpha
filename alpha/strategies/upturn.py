@@ -94,7 +94,6 @@ class UpTurn:
             except Exception as e:
                 logger.exception(e)
 
-
     async def process_features(self, features, result_key: str):
         self.X.append(features)
 

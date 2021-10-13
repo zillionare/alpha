@@ -39,7 +39,7 @@ def reverse_moving_average(ma: ArrayLike, i: int, win: int) -> float:
 
 
 def predict_by_moving_average(
-    ts: ArrayLike, win: int, n_preds: int = 1, err_threshold=1e-2, n:int=None
+    ts: ArrayLike, win: int, n_preds: int = 1, err_threshold=1e-2, n: int = None
 ) -> float:
     """predict the next ith value by fitted moving average
 
