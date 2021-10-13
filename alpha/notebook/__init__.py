@@ -27,9 +27,8 @@ from jqdatasdk import *
 import jqdatasdk as jq
 from arrow import Arrow
 
-g = {
+g = {}
 
-}
 
 async def init_notebook(use_omicron=True):
     cfg4py.init(get_config_dir())
@@ -49,42 +48,67 @@ def init_jq():
     g["valuations"] = jq.get_fundamentals(query(valuation))
     g["secs"] = jq.get_all_securities()
 
+
 def jq_get_name(code):
     secs = g["secs"]
-    return secs[secs.index==code].iloc[0]["display_name"]
+    return secs[secs.index == code].iloc[0]["display_name"]
 
-def jq_get_valuation(code):
+
+def jq_get_ipo_date(code):
+    secs = g["secs"]
+    return secs[secs.index == code].iloc[0]["start_date"].date()
+
+
+def jq_get_market_cap(code):
+    """获取`code`最新的流通市值，以亿为单位"""
     valuations = g["valuations"]
 
-    return int(valuations[valuations.code==code].iloc[0]["market_cap"])
+    return int(valuations[valuations.code == code].iloc[0]["market_cap"])
 
-def jq_choose_stocks(exclude_st=True, exclude_688=True, valuation_range=(100,2000)):
+
+def jq_get_turnover_ratio(code):
+    """获取`code`最新的换手率"""
+    valuations = g["valuations"]
+
+    return valuations[valuations.code == code].iloc[0]["turnover_ratio"]
+
+
+def jq_choose_stocks(exclude_st=True, exclude_688=True, valuation_range=(100, 2000)):
     result = g["secs"]
     if exclude_688:
-        result = result[result.index.str.startswith("688")==False]
+        result = result[result.index.str.startswith("688") == False]
     if exclude_st:
         result = result[result.display_name.str.find("ST") == -1]
 
     codes = []
     for code in result.index:
         try:
-            if valuation_range[0] <= jq_get_valuation(code) <= valuation_range[1]:
+            if valuation_range[0] <= jq_get_market_cap(code) <= valuation_range[1]:
                 codes.append(code)
         except Exception:
             pass
 
     return codes
 
-def jq_get_bars(code:str, n:int, frame_type:str='1d', end:Union[str, datetime.date, datetime.datetime, Arrow]=None):
-    fields = ['date', 'open', 'high', 'low', 'close', 'volume']
-    if frame_type in ['1d', '1w', '1M', '1Y']:
+
+def jq_get_bars(
+    code: str,
+    n: int,
+    frame_type: str = "1d",
+    end: Union[str, datetime.date, datetime.datetime, Arrow] = None,
+):
+    fields = ["date", "open", "high", "low", "close", "volume"]
+    if frame_type in ["1d", "1w", "1M", "1Y"]:
         end = arrow.get(end).date() if end else arrow.now().date()
     else:
         end = arrow.get(end).datetime if end else arrow.now().datetime
 
-    bars = jq.get_bars(code, n, frame_type, end_dt = end, fields = fields, df=False)
-    bars.dtype.names = ['frame', 'open', 'high', 'low', 'close', 'volume']
+    bars = jq.get_bars(
+        code, n, frame_type, end_dt=end, fields=fields, df=False, include_now=True
+    )
+    bars.dtype.names = ["frame", "open", "high", "low", "close", "volume"]
     return bars
+
 
 __all__ = [
     "plt",
@@ -111,7 +135,10 @@ __all__ = [
     "build_table",
     "say",
     "jq_get_name",
-    "jq_get_valuation",
+    "jq_get_market_cap",
     "jq_choose_stocks",
-    "jq_get_bars"
+    "jq_get_turnover_ratio",
+    "jq_get_bars",
+    "jq_get_ipo_date",
+    "datetime",
 ]
