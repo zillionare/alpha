@@ -52,7 +52,7 @@ def predict_by_moving_average(
         n (int): how many ma sample points used to polyfit the ma line
 
     Returns:
-        float: the predicted value
+        tuple: the predicted value and pmae
     """
     ma = moving_average(ts, win)
 
