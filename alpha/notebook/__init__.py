@@ -60,13 +60,18 @@ def jq_get_ipo_date(code):
 
 
 def jq_get_market_cap(code):
+    """获取`code`最新的总市值，以亿为单位"""
+    valuations = g["valuations"]
+
+    return valuations[valuations.code == code].iloc[0]["market_cap"]
+
+def jq_get_circulating_market_cap(code):
     """获取`code`最新的流通市值，以亿为单位"""
     valuations = g["valuations"]
 
-    return int(valuations[valuations.code == code].iloc[0]["market_cap"])
+    return valuations[valuations.code == code].iloc[0]["circulating_market_cap"]
 
-
-def jq_get_turnover_ratio(code):
+def jq_get_turnover(code):
     """获取`code`最新的换手率"""
     valuations = g["valuations"]
 
@@ -98,10 +103,7 @@ def jq_get_bars(
     end: Union[str, datetime.date, datetime.datetime, Arrow] = None,
 ):
     fields = ["date", "open", "high", "low", "close", "volume"]
-    if frame_type in ["1d", "1w", "1M", "1Y"]:
-        end = arrow.get(end).date() if end else arrow.now().date()
-    else:
-        end = arrow.get(end).datetime if end else arrow.now().datetime
+    end = arrow.get(end).datetime if end else arrow.now().datetime
 
     bars = jq.get_bars(
         code, n, frame_type, end_dt=end, fields=fields, df=False, include_now=True
@@ -109,6 +111,43 @@ def jq_get_bars(
     bars.dtype.names = ["frame", "open", "high", "low", "close", "volume"]
     return bars
 
+def jq_get_turnover_realtime(code, volume, close):
+    """获取`code`最新的换手率。 jq_get_turnover无法获取盘中最新的换手率数据。该数据只能在24：00以后才能获取。
+
+    Args:
+        code ([type]): [description]
+        volume ([type]): [description]
+        close ([type]): [description]
+
+    Returns:
+        [type]: [description]
+    """
+    return volume * close / (1e8 * jq_get_circulating_market_cap(code))
+
+def mail_notify(subject:str, model:str, params:dict, report:pd.DataFrame):
+    """key must be unique, contains a date"""
+
+    html = f"""
+    <html>
+    <head>
+        <style>
+            table, th, td {{
+                border-collapse: collapse;
+                border: 0px;
+                color: #666;
+            }}
+        </style>
+    </head>
+    <body>
+    <h2 style="color:#c21">{model}</h2>
+    {build_table(report, "grey_light")}
+
+    <p><strong>Parameters:</strong></p>
+    <p>{"".join([f"{k}:{v}" for k,v in params.items()])}
+    </body>
+    </html>
+    """
+    send_html_email(subject, html)
 
 __all__ = [
     "plt",
@@ -137,8 +176,10 @@ __all__ = [
     "jq_get_name",
     "jq_get_market_cap",
     "jq_choose_stocks",
-    "jq_get_turnover_ratio",
+    "jq_get_turnover",
+    "jq_get_turnover_realtime",
     "jq_get_bars",
     "jq_get_ipo_date",
+    "jq_get_circulating_market_cap",
     "datetime",
 ]
