@@ -1,2 +1,0 @@
-class OutOfMoneyError(Exception):
-    pass
