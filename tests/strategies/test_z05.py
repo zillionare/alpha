@@ -167,9 +167,9 @@ class TestZ01(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(1, len(z05.long_orders))
 
     async def test_backtest(self):
-        z05 = Z05(holding_days=1)
+        z05 = Z05(holding_days=3)
         stocks = ["301051.XSHE"]
-        summary = await z05.backtest("2021-10-21", "2021-10-21", stocks)
+        summary = await z05.backtest("2021-10-21", "2021-10-21")
         print(summary)
 
         self.assertAlmostEqual(0.04, summary["returns"], 2)

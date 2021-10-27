@@ -95,6 +95,9 @@ class Z05(object):
 
     def try_open_position(self, code: str, bars: np.array):
         features = self.extract_features(code, bars)
+        msr, bcr, rb, d1, d2, prsi, tvd1, tvd2, tvd3, vr_mean = features
+
+        close = fillna(bars["close"].copy())
         if self.model:
             label, p = self.model.predict_proba([features])
             if label == 1 and p > 0.5:
@@ -102,19 +105,43 @@ class Z05(object):
                     {
                         "code": code,
                         "order_date": bars["frame"][-1],
-                        "buy_price": bars["close"][-1],
-                        "params": (*features, p),
+                        "buy_price": close[-1],
+                        "params": {
+                            "msr": msr,
+                            "bcr": bcr,
+                            "rb": rb,
+                            "d1": d1,
+                            "d2": d2,
+                            "prsi": prsi,
+                            "tvd1": tvd1,
+                            "tvd2": tvd2,
+                            "tvd3": tvd3,
+                            "vr_mean": vr_mean
+                        }
                     }
                 )
         else:
-            msr, bcr, rb, d1, d2, prsi, *_ = features
-            if msr >= 0.5 and bcr >= 0.5 and d1 > 0 and prsi < 0.9:
+            if prsi is None:
+                return
+
+            if msr >= 1 and bcr >= 0.85 and d1 > 0.01 and prsi < 0.9:
                 self.long_orders.append(
                     {
                         "code": code,
                         "order_date": bars["frame"][-1],
-                        "buy_price": bars["close"][-1],
-                        "params": (*features, 1),
+                        "buy_price": close[-1],
+                        "params": {
+                            "msr": msr,
+                            "bcr": bcr,
+                            "rb": rb,
+                            "d1": d1,
+                            "d2": d2,
+                            "prsi": prsi,
+                            "tvd1": tvd1,
+                            "tvd2": tvd2,
+                            "tvd3": tvd3,
+                            "vr_mean": vr_mean
+                        }
                     }
                 )
 
@@ -131,7 +158,12 @@ class Z05(object):
         buy_price = order["buy_price"]
         params = order["params"]
 
-        close = bars["close"]
+        try:
+            close = fillna(bars["close"].copy())
+        except Exception as e:
+            logger.exception(e)
+            logger.info("failed to close order of %s", code)
+            return
 
         isell = -1
         close_type = "expired"
@@ -208,8 +240,7 @@ class Z05(object):
         return self.backtest_summary(test_start, test_end)
 
     def backtest_summary(self, start, end):
-        assert len(self.long_orders) == len(self.trades)
-
+        print(f"opened:{len(self.long_orders)}, closed: {len(self.trades)}")
         total_duration = (arrow.get(end) - arrow.get(start)).days
 
         ntrades = len(self.trades)
@@ -241,5 +272,6 @@ class Z05(object):
             "best_trade": best_trade,
             "worst_trade": worst_trade,
             "win_rate": win_trades / ntrades,
-            "exposure_time": exposure_time
+            "exposure_time": exposure_time,
+            "total_trades": ntrades,
         }
