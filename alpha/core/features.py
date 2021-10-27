@@ -568,3 +568,93 @@ def roc_features(close: np.array, flen: int = 10):
         raise ValueError("close should not contains np.nan")
 
     return (close[1:] / close[:-1] - 1)[-flen:]
+
+
+def maline_support_ratio(close, ma_win, n) -> float:
+    """均线支撑率,即股价在n个周期内，受到均线(`ma_win`)的支撑率
+
+    count(close > ma) / n
+
+    Args:
+        close (np.array): 股价
+        ma_win (int): 均线周期
+        n (int): 在多少个周期内计算支撑率
+
+    Returns:
+        [float]: [0-1]
+    """
+    ma = moving_average(close, ma_win)[-n:]
+
+    return np.count_nonzero(close[-n:] > ma) / n
+
+
+def bullish_candlestick_ratio(bars, n) -> float:
+    """n个周期里，阳线占比
+
+    Args:
+        bars (np.array): 行情数据
+        n (int): 周期数
+
+    Returns:
+        [float]: [0-1]
+    """
+    bars_ = bars[-n:]
+    return np.count_nonzero(bars_["close"] > bars_["open"]) / n
+
+
+def is_bullish(bars) -> bool:
+    """将`bars`看成一根蜡烛线，判断是否是阳线
+
+    Args:
+        bars (np.array): 行情数据
+
+    Returns:
+        [bool]: [True, False]
+    """
+    return bars[-1]["close"] > bars[0]["open"]
+
+
+def real_body(bars) -> float:
+    """将`bars`看成一根蜡烛线，计算实体长度，最终返回以`open`价来计算的比率。
+
+    即：
+        last(close)/first(open) - 1
+
+    Args:
+        bars (np.array): 行情数据
+
+    Returns:
+        [float]: 实体长度
+    """
+    return bars[-1]["close"] / bars[0]["open"] - 1
+
+
+def ma_d1(close, win) -> np.array:
+    """股价一阶导的移动均值
+
+    Args:
+        close (np.array): 股价
+        win (int): 均线周期
+
+    Returns:
+        [np.array]: 移动平均值
+    """
+    d1 = close[1:] / close[:-1] - 1
+
+    return moving_average(d1, win)
+
+
+def ma_d2(close, win) -> np.array:
+    """股价二阶导的移动均值
+
+    Args:
+        close (np.array): 股价
+        win (int): 均线周期
+
+    Returns:
+        [np.array]: 移动平均值
+    """
+    d1 = close[1:] / close[:-1] - 1
+    d2 = np.diff(d1)
+
+    return moving_average(d2, win)
