@@ -77,3 +77,20 @@ def draw_trendline(
 
     if save_to:
         fig.savefig(save_to)
+
+
+def draw_ma_lines(bars, ma_wins=None, canvas_size=60, desc: str = None):
+    ma_wins = ma_wins or [5, 10, 20, 60]
+    nbars = max(ma_wins) + canvas_size
+    if len(bars) < nbars:
+        raise ValueError(f"not enough data, {nbars} required.")
+
+    fig = plt.figure(figsize=(canvas_size // 10, canvas_size // 10), dpi=80)
+    ax = fig.add_subplot(111)
+
+    for win in ma_wins:
+        ma = moving_average(bars["close"], win)[-canvas_size:]
+        ax.plot(np.arange(canvas_size), ma, color=cm[win])
+        ax.text(len(ma), ma[-1], f"ma{win}", color=cm[win])
+
+    ax.text(0.5, 0.9, desc, transform=ax.transAxes)
