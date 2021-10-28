@@ -3,12 +3,11 @@ import logging
 import numpy as np
 from omicron.core import talib
 
-from alpha.backtesting.strategy import Strategy
 
 logger = logging.getLogger()
 
 
-class Z01Strategy(Strategy):
+class Z01Strategy:
     """A very basic policy based on volume
 
     Args:

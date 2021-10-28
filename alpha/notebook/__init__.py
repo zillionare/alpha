@@ -18,10 +18,11 @@ from alpha.config import get_config_dir
 from alpha.core.features import *
 from alpha.core.morph import MorphFeatures
 from alpha.features.volume import top_volume_direction
-from alpha.plotting import draw_trendline
+from alpha.plotting import draw_trendline, draw_ma_lines
 from alpha.plotting.candlestick import Candlestick
 from pretty_html_table import build_table
 from alpha.core.notify import send_html_email, say
+from alpha.core.rsi_stats import RsiStats
 import os
 from jqdatasdk import *
 import jqdatasdk as jq
@@ -49,6 +50,11 @@ def init_jq():
     g["secs"] = jq.get_all_securities()
 
 
+def jq_get_code(name):
+    secs = g["secs"]
+    return secs[secs.display_name == name].iloc[0].index
+
+
 def jq_get_name(code):
     secs = g["secs"]
     return secs[secs.index == code].iloc[0]["display_name"]
@@ -65,11 +71,13 @@ def jq_get_market_cap(code):
 
     return valuations[valuations.code == code].iloc[0]["market_cap"]
 
+
 def jq_get_circulating_market_cap(code):
     """获取`code`最新的流通市值，以亿为单位"""
     valuations = g["valuations"]
 
     return valuations[valuations.code == code].iloc[0]["circulating_market_cap"]
+
 
 def jq_get_turnover(code):
     """获取`code`最新的换手率"""
@@ -111,6 +119,7 @@ def jq_get_bars(
     bars.dtype.names = ["frame", "open", "high", "low", "close", "volume"]
     return bars
 
+
 def jq_get_turnover_realtime(code, volume, close):
     """获取`code`最新的换手率。 jq_get_turnover无法获取盘中最新的换手率数据。该数据只能在24：00以后才能获取。
 
@@ -124,7 +133,8 @@ def jq_get_turnover_realtime(code, volume, close):
     """
     return volume * close / (1e8 * jq_get_circulating_market_cap(code))
 
-def mail_notify(subject:str, model:str, params:dict, report:pd.DataFrame):
+
+def mail_notify(subject: str, model: str, params: dict, report: pd.DataFrame):
     """key must be unique, contains a date"""
 
     html = f"""
@@ -143,43 +153,45 @@ def mail_notify(subject:str, model:str, params:dict, report:pd.DataFrame):
     {build_table(report, "grey_light")}
 
     <p><strong>Parameters:</strong></p>
-    <p>{"".join([f"{k}:{v}" for k,v in params.items()])}
+    <p>{" ".join([f"{k}:{v}" for k,v in params.items()])}
     </body>
     </html>
     """
     send_html_email(subject, html)
 
-__all__ = [
-    "plt",
-    "np",
-    "omicron",
-    "pd",
-    "tf",
-    "FrameType",
-    "Securities",
-    "Security",
-    "Candlestick",
-    "fillna",
-    "draw_trendline",
-    "predict_by_moving_average",
-    "moving_average",
-    "polyfit",
-    "init_notebook",
-    "MorphFeatures",
-    "top_volume_direction",
-    "arrow",
-    "pickle",
-    "clear_output",
-    "send_html_email",
-    "build_table",
-    "say",
-    "jq_get_name",
-    "jq_get_market_cap",
-    "jq_choose_stocks",
-    "jq_get_turnover",
-    "jq_get_turnover_realtime",
-    "jq_get_bars",
-    "jq_get_ipo_date",
-    "jq_get_circulating_market_cap",
-    "datetime",
-]
+
+# __all__ = [
+#     "plt",
+#     "np",
+#     "omicron",
+#     "pd",
+#     "tf",
+#     "FrameType",
+#     "Securities",
+#     "Security",
+#     "Candlestick",
+#     "fillna",
+#     "draw_trendline",
+#     "predict_by_moving_average",
+#     "moving_average",
+#     "polyfit",
+#     "init_notebook",
+#     "MorphFeatures",
+#     "top_volume_direction",
+#     "arrow",
+#     "pickle",
+#     "clear_output",
+#     "send_html_email",
+#     "build_table",
+#     "say",
+#     "jq_get_name",
+#     "jq_get_market_cap",
+#     "jq_choose_stocks",
+#     "jq_get_turnover",
+#     "jq_get_turnover_realtime",
+#     "jq_get_bars",
+#     "jq_get_ipo_date",
+#     "jq_get_circulating_market_cap",
+#     "datetime",
+#     "mail_notify"
+# ]
