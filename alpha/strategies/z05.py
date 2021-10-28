@@ -74,13 +74,13 @@ class Z05(object):
     def extract_features(self, code: str, bars: np.array) -> np.ndarray:
         msr = maline_support_ratio(bars["close"], 5, self.feat_len)
         bcr = bullish_candlestick_ratio(bars, self.feat_len)
-        rb = real_body(bars[-self.feat_len:])
+        rb = real_body(bars[-self.feat_len :])
         d1 = ma_d1(bars["close"], 5)[-1]
         d2 = ma_d2(bars["close"], 5)[-1]
 
         close = fillna(bars["close"].copy())
         rsi = relative_strength_index(close, period=6)[-1]
-        prsi = rsiday.query(code, rsi)
+        prsi = rsiday.get_proba(code, rsi)
 
         # 3 top singed volume out of 8 frames
         tvd = top_volume_direction(bars)
@@ -89,7 +89,7 @@ class Z05(object):
         volume = np.array(list(filter(lambda x: np.isfinite(x), bars["volume"]))[-3:])
         vr = volume[1:] / volume[:-1] - 1
 
-        vr_mean = np.sum(vr)/2
+        vr_mean = np.sum(vr) / 2
 
         return (msr, bcr, rb, d1, d2, prsi, *tvd, vr_mean)
 
@@ -116,8 +116,8 @@ class Z05(object):
                             "tvd1": tvd1,
                             "tvd2": tvd2,
                             "tvd3": tvd3,
-                            "vr_mean": vr_mean
-                        }
+                            "vr_mean": vr_mean,
+                        },
                     }
                 )
         else:
@@ -140,8 +140,8 @@ class Z05(object):
                             "tvd1": tvd1,
                             "tvd2": tvd2,
                             "tvd3": tvd3,
-                            "vr_mean": vr_mean
-                        }
+                            "vr_mean": vr_mean,
+                        },
                     }
                 )
 
@@ -176,7 +176,7 @@ class Z05(object):
             pos = np.argmax(rsi)
             max_rsi = np.max(rsi)
 
-            prsi = rsi30.query(code, max_rsi)
+            prsi = rsi30.get_proba(code, max_rsi)
             if prsi >= 0.9:
                 isell = pos + 6
                 params["sell_rsi"] = max_rsi
@@ -207,21 +207,7 @@ class Z05(object):
 
         stocks = stocks or Securities().choose(["stock"])
         for frame in tf.get_frames(test_start, test_end, FrameType.DAY):
-            bars_end = tf.int2date(frame)
-            bars_start = tf.day_shift(bars_end, -self.xlen + 1)
-
-            for code in stocks:
-                sec = Security(code)
-                try:
-                    bars = await sec.load_bars(bars_start, bars_end, FrameType.DAY)
-                except Exception:
-                    continue
-
-                close = bars["close"]
-                if np.count_nonzero(np.isfinite(close)) < self.xlen * 0.9:
-                    continue
-
-                self.try_open_position(code, bars)
+            await self.scan(tf.int2date(frame), stocks)
 
         # to test if we can close the orders
         for order in self.long_orders:
@@ -252,7 +238,9 @@ class Z05(object):
         worst_trade = 0
 
         for trade in self.trades:
-            trade_duration = (arrow.get(trade["sell_at"]) - arrow.get(trade["order_date"])).days
+            trade_duration = (
+                arrow.get(trade["sell_at"]) - arrow.get(trade["order_date"])
+            ).days
             exposure_time += trade_duration
 
             gains = trade["gains"]
@@ -275,3 +263,29 @@ class Z05(object):
             "exposure_time": exposure_time,
             "total_trades": ntrades,
         }
+
+    async def scan(self, frame: Frame, stocks: List = None):
+        """扫描`stocks`列表中的股票，看它们在`frame`时间段内是否有操作信号
+
+        如果发现操作信号，则把股票添加到`self.long_orders`中
+
+        Args:
+            frame (Frame): 截止时间
+            stocks (List): 股票列表
+        """
+        stocks = stocks or Securities().choose(["stock"])
+
+        bars_start = tf.day_shift(frame, -self.xlen + 1)
+
+        for code in stocks:
+            sec = Security(code)
+            try:
+                bars = await sec.load_bars(bars_start, frame, FrameType.DAY)
+            except Exception:
+                continue
+
+            close = bars["close"]
+            if np.count_nonzero(np.isfinite(close)) < self.xlen * 0.9:
+                continue
+
+            self.try_open_position(code, bars)
