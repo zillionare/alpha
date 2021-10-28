@@ -18,7 +18,7 @@ class TestUtils(unittest.TestCase):
         for i in range(len(close) - 1):
             c0, c1 = close[i], close[i + 1]
             date = dates[i]
-            self.assertAlmostEqual(buy_limit_price(code, c0, date), c1, 2)
+            self.assertTrue(equal_price(buy_limit_price(code, c0, date), c1))
 
     def test_equal_price(self):
         self.assertTrue(equal_price(5.01, 5.011))
