@@ -4,6 +4,7 @@ from random import sample
 from typing import List, NewType
 from alpha.core import Frame
 import pickle
+import time
 
 import arrow
 import cfg4py
@@ -13,6 +14,8 @@ from omicron.core.types import FrameType
 from omicron.models.security import Security
 from omicron.models.securities import Securities
 from alpha.core.rsi_stats import rsi30, rsiday
+from alpha.utils import buy_limit_price, equal_price
+import asyncio
 
 from alpha.core.features import (
     bullish_candlestick_ratio,
@@ -21,6 +24,7 @@ from alpha.core.features import (
     ma_d2,
     ma_permutation,
     maline_support_ratio,
+    moving_average,
     real_body,
     relative_strength_index,
     transform_y_by_change_pct,
@@ -39,7 +43,7 @@ class Z05(object):
 
     开仓条件：
         1. 股价沿5日均线上线
-        2. 不存在前一周期rsi超标、当前周期rsi超标以及上涨3%后rsi超标情况。rsi指标处于90%高位为超标
+        2. 不存在当前周期rsi超标以及上涨3%后rsi超标情况。rsi指标处于90%高位为超标
     平仓条件：
         1. rsi 30分钟线高位,或
         2. -5%止损，或
@@ -47,18 +51,33 @@ class Z05(object):
         4. 5天内两次上攻失败
     """
 
-    def __init__(self, holding_days: int = 5):
+    def __init__(
+        self,
+        holding_days: int = 5,
+        rsi=88,
+        rsi3=90,
+        prsi=0.9,
+        msr=0.85,
+        bcr=0.85,
+        d1=0.01,
+    ):
         """
         Initializing the strategy
         """
-        self.stop_lose = 0.95
+        self.stop_loss = 0.95
+        self.rsi = rsi
+        self.rsi3 = rsi3
+        self.prsi = prsi
+        self.msr = msr
+        self.bcr = bcr
+        self.d1 = d1
+
         self.feat_len = 7
         self.xlen = self.feat_len + 5
 
         self.holding_days = holding_days
         self.ylen = holding_days * 8
-        self.long_orders = []
-        self.trades = []
+        self.orders = []
 
         model_file = os.path.expanduser("~/zillionare/aplha/z05.model.pkl")
         try:
@@ -72,15 +91,24 @@ class Z05(object):
             self.model = pickle.load(f)
 
     def extract_features(self, code: str, bars: np.array) -> np.ndarray:
-        msr = maline_support_ratio(bars["close"], 5, self.feat_len)
-        bcr = bullish_candlestick_ratio(bars, self.feat_len)
-        rb = real_body(bars[-self.feat_len :])
-        d1 = ma_d1(bars["close"], 5)[-1]
-        d2 = ma_d2(bars["close"], 5)[-1]
-
         close = fillna(bars["close"].copy())
-        rsi = relative_strength_index(close, period=6)[-1]
+
+        # 5日均线对股价的支撑率， 最后一周期股价是否在均线上？
+        msr, cur_ms = maline_support_ratio(close, 5, self.feat_len)
+        # 阳线比率
+        bcr = bullish_candlestick_ratio(bars, self.feat_len)
+        # 实体大小？
+        rb = real_body(bars[-self.feat_len :])
+        # 上涨速率？
+        d1 = ma_d1(close, 5)[-1]
+        d2 = ma_d2(close, 5)[-1]
+
+        # rsi和rsi的概率
+        future_close = np.append(close, close[-1] * 1.03)
+        rsi, rsi3 = relative_strength_index(future_close, period=6)[-2:]
+
         prsi = rsiday.get_proba(code, rsi)
+        prsi3 = rsiday.get_proba(code, rsi3)
 
         # 3 top singed volume out of 8 frames
         tvd = top_volume_direction(bars)
@@ -91,21 +119,52 @@ class Z05(object):
 
         vr_mean = np.sum(vr) / 2
 
-        return (msr, bcr, rb, d1, d2, prsi, *tvd, vr_mean)
+        return (msr, cur_ms, bcr, rb, d1, d2, rsi, prsi, rsi3, prsi3, *tvd, vr_mean)
 
-    def try_open_position(self, code: str, bars: np.array):
-        features = self.extract_features(code, bars)
-        msr, bcr, rb, d1, d2, prsi, tvd1, tvd2, tvd3, vr_mean = features
+    def predict(self, sec: Security, bars: np.array, buy_price: float = None):
+        """判断是否存在买入信号
 
+        Args:
+            code (str): [description]
+            bars (np.array): [description]
+            buy_price (float, optional): [description]. Defaults to None.
+        """
+        code, name = sec.code, sec.display_name
         close = fillna(bars["close"].copy())
+
+        # 如果当前收盘价已涨停，则无法下单
+        c0, c1 = close[-2:]
+        if c1 >= buy_limit_price(code, c0, bars["frame"][-1]):
+            return
+
+        features = self.extract_features(code, bars)
+        (
+            msr,
+            cur_ms,
+            bcr,
+            rb,
+            d1,
+            d2,
+            rsi,
+            prsi,
+            rsi3,
+            prsi3,
+            tvd1,
+            tvd2,
+            tvd3,
+            vr_mean,
+        ) = features
+
+        buy_price = buy_price or close[-1]
+
         if self.model:
             label, p = self.model.predict_proba([features])
             if label == 1 and p > 0.5:
-                self.long_orders.append(
+                self.orders.append(
                     {
                         "code": code,
                         "order_date": bars["frame"][-1],
-                        "buy_price": close[-1],
+                        "buy": buy_price,
                         "params": {
                             "msr": msr,
                             "bcr": bcr,
@@ -121,15 +180,30 @@ class Z05(object):
                     }
                 )
         else:
-            if prsi is None:
-                return
+            good_rsi = (
+                (prsi and prsi <= self.prsi) or (prsi is None and rsi < self.rsi)
+            ) and (
+                (prsi3 and prsi3 <= self.prsi) or (prsi3 is None and rsi3 <= self.rsi3)
+            )
 
-            if msr >= 1 and bcr >= 0.85 and d1 > 0.01 and prsi < 0.9:
-                self.long_orders.append(
+            if (
+                msr >= self.msr
+                and cur_ms
+                and bcr >= self.bcr
+                and d1 > self.d1
+                and good_rsi
+            ):
+                if self.get_order_status(code) == "opened":
+                    return
+
+                logger.info("order: %s，%s", name, bars["frame"][-1])
+                self.orders.append(
                     {
+                        "name": name,
                         "code": code,
-                        "order_date": bars["frame"][-1],
-                        "buy_price": close[-1],
+                        "status": "opened",
+                        "buy_at": bars["frame"][-1],
+                        "buy": buy_price,
                         "params": {
                             "msr": msr,
                             "bcr": bcr,
@@ -137,6 +211,7 @@ class Z05(object):
                             "d1": d1,
                             "d2": d2,
                             "prsi": prsi,
+                            "prsi3": prsi3,
                             "tvd1": tvd1,
                             "tvd2": tvd2,
                             "tvd3": tvd3,
@@ -144,6 +219,20 @@ class Z05(object):
                         },
                     }
                 )
+
+    def get_order_status(self, code: str) -> int:
+        """
+        获取订单状态
+
+        Args:
+            order (dict): 订单信息
+            bars (np.array): 当前K线
+        """
+        for order in self.orders[::-1]:
+            if order["code"] == code:
+                return order["status"]
+
+        return None
 
     def close_order(self, order, bars):
         """平仓
@@ -155,8 +244,8 @@ class Z05(object):
             bars ([type]): [description]
         """
         code = order["code"]
-        buy_price = order["buy_price"]
-        params = order["params"]
+
+        buy_price = order["buy"]
 
         try:
             close = fillna(bars["close"].copy())
@@ -165,43 +254,61 @@ class Z05(object):
             logger.info("failed to close order of %s", code)
             return
 
-        isell = -1
+        isell = len(bars) - 1
+        i_stop_loss = None
+        irsi = None
+
         close_type = "expired"
-        i_stop_lose = np.argwhere(close < buy_price * self.stop_lose).flatten()
-        if len(i_stop_lose) > 0:
-            isell = i_stop_lose[0]
+        stop_loss = np.argwhere(close < buy_price * self.stop_loss).flatten()
+        if len(stop_loss) > 0:
+            i_stop_loss = stop_loss[0]
             close_type = "stop_loss"
+
         try:
             rsi = relative_strength_index(bars["close"], period=6)
-            pos = np.argmax(rsi)
-            max_rsi = np.max(rsi)
+            prsi = np.array([rsi30.get_proba(code, r) for r in rsi])
+            if np.any(prsi):
+                pos_rsi = np.argwhere(prsi > self.prsi).flatten()
+                if len(pos_rsi) > 0:
+                    irsi = pos_rsi[0] + 6
+            else:
+                pos_rsi = np.argwhere(rsi > self.rsi).flatten()
+                if len(pos_rsi) > 0:
+                    irsi = pos_rsi[0] + 6
 
-            prsi = rsi30.get_proba(code, max_rsi)
-            if prsi >= 0.9:
-                isell = pos + 6
-                params["sell_rsi"] = max_rsi
-                params["sell_prsi"] = prsi
+            if np.all([irsi is not None, i_stop_loss is not None]):
+                if irsi < i_stop_loss:
+                    close_type = "rsi"
+                    isell = irsi
+                else:
+                    close_type = "stop_loss"
+                    isell = i_stop_loss
+            elif irsi is not None:
                 close_type = "rsi"
+                isell = irsi
+            elif i_stop_loss is not None:
+                close_type = "stop_loss"
+                isell = i_stop_loss
+
         except Exception as e:
             logger.exception(e)
 
         sell_price = bars["close"][isell]
         gains = sell_price / buy_price - 1
         sell_at = bars["frame"][isell]
-        self.trades.append(
+        order.update(
             {
-                "code": code,
-                "buy_price": buy_price,
-                "sell_price": sell_price,
-                "gains": gains,
-                "order_date": order["order_date"],
+                "sell": sell_price,
                 "sell_at": sell_at,
-                "close_type": close_type,
-                "params": params,
+                "gains": gains,
+                "duration": (arrow.get(sell_at) - arrow.get(order["buy_at"])).days,
+                "type": close_type,
+                "status": "closed",
             }
         )
 
     async def backtest(self, start: Frame, end: Frame, stocks: List = None):
+        t0 = time.time()
         test_start = tf.day_shift(arrow.get(start), 0)
         test_end = tf.day_shift(arrow.get(end), 0)
 
@@ -210,9 +317,12 @@ class Z05(object):
             await self.scan(tf.int2date(frame), stocks)
 
         # to test if we can close the orders
-        for order in self.long_orders:
+        for order in self.orders:
+            if order["status"] == "closed":
+                continue
+
             code = order["code"]
-            order_date = order["order_date"]
+            order_date = order["buy_at"]
 
             ystart = tf.day_shift(order_date, 1)
             ystart = tf.combine_time(ystart, 10)
@@ -223,13 +333,14 @@ class Z05(object):
             ybars = await sec.load_bars(ystart, yend, FrameType.MIN30)
             self.close_order(order, ybars)
 
+        elpased = time.time() - t0
+        logger.info("backtest cost %s seconds", elpased)
         return self.backtest_summary(test_start, test_end)
 
     def backtest_summary(self, start, end):
-        print(f"opened:{len(self.long_orders)}, closed: {len(self.trades)}")
         total_duration = (arrow.get(end) - arrow.get(start)).days
 
-        ntrades = len(self.trades)
+        ntrades = 0
         exposure_time = 0
         returns = 0
         win_trades = 0
@@ -237,13 +348,15 @@ class Z05(object):
         best_trade = 0
         worst_trade = 0
 
-        for trade in self.trades:
-            trade_duration = (
-                arrow.get(trade["sell_at"]) - arrow.get(trade["order_date"])
-            ).days
-            exposure_time += trade_duration
+        for order in self.orders:
+            if order["status"] != "closed":
+                logger.info("unclosed oder found: %s", order)
+                continue
 
-            gains = trade["gains"]
+            ntrades += 1
+            exposure_time += order["duration"]
+
+            gains = order["gains"]
             returns += gains
             if gains > 0:
                 win_trades += 1
@@ -256,10 +369,11 @@ class Z05(object):
             "end": end,
             "duration": total_duration,
             "returns": returns,
-            "avg_gains": returns / ntrades,
+            "avg_gains": returns / ntrades if ntrades > 0 else "NA",
+            "win_trades": win_trades,
             "best_trade": best_trade,
             "worst_trade": worst_trade,
-            "win_rate": win_trades / ntrades,
+            "win_rate": win_trades / ntrades if ntrades > 0 else "NA",
             "exposure_time": exposure_time,
             "total_trades": ntrades,
         }
@@ -277,15 +391,22 @@ class Z05(object):
 
         bars_start = tf.day_shift(frame, -self.xlen + 1)
 
+        tasks = []
         for code in stocks:
-            sec = Security(code)
-            try:
-                bars = await sec.load_bars(bars_start, frame, FrameType.DAY)
-            except Exception:
-                continue
+            tasks.append(self.predict_one(code, bars_start, frame))
 
+        await asyncio.gather(*tasks)
+
+    async def predict_one(self, code, bars_start, bars_end):
+        try:
+            sec = Security(code)
+            bars = await sec.load_bars(bars_start, bars_end, FrameType.DAY)
             close = bars["close"]
             if np.count_nonzero(np.isfinite(close)) < self.xlen * 0.9:
-                continue
+                return
 
-            self.try_open_position(code, bars)
+            self.predict(sec, bars)
+        except Exception:
+            pass
+
+

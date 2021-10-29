@@ -8,7 +8,7 @@ import numpy as np
 from alpha.strategies.z05 import Z05
 
 
-class TestZ01(unittest.IsolatedAsyncioTestCase):
+class TestZ05(unittest.IsolatedAsyncioTestCase):
     async def asyncSetUp(self) -> None:
         cfg4py.init(get_config_dir())
         await omicron.init()
@@ -163,14 +163,23 @@ class TestZ01(unittest.IsolatedAsyncioTestCase):
 
         code = "301051.XSHE"
         z05 = Z05(holding_days=1)
-        z05.try_open_position(code, bars)
-        self.assertEqual(1, len(z05.long_orders))
+        z05.predict(code, bars)
+        self.assertEqual(1, len(z05.orders))
 
     async def test_backtest(self):
-        z05 = Z05(holding_days=3)
-        stocks = ["301051.XSHE"]
-        summary = await z05.backtest("2021-10-21", "2021-10-21")
+        z05 = Z05(holding_days=3, msr=0.85)
+        stocks = ["000422.XSHE"]
+        summary = await z05.backtest("2021-10-20", "2021-10-20", stocks)
         print(summary)
 
-        self.assertAlmostEqual(0.04, summary["returns"], 2)
+        self.assertAlmostEqual(0.10, summary["returns"], 2)
         self.assertEqual(1.0, summary["win_rate"])
+
+        stocks = ["002895.XSHE"]
+        summary = await z05.backtest("2021-09-15", "2021-09-15", stocks)
+        print(summary)
+
+        self.assertAlmostEqual(0.048, summary["returns"], 2)
+        self.assertEqual(0.5, summary["win_rate"])
+        order = z05.orders[1]
+        self.assertAlmostEqual(-0.0512, order["gains"], 2)
