@@ -570,7 +570,7 @@ def roc_features(close: np.array, flen: int = 10):
     return (close[1:] / close[:-1] - 1)[-flen:]
 
 
-def maline_support_ratio(close, ma_win, n) -> float:
+def maline_support_ratio(close, ma_win, n) -> Tuple:
     """均线支撑率,即股价在n个周期内，受到均线(`ma_win`)的支撑率
 
     count(close > ma) / n
@@ -581,11 +581,11 @@ def maline_support_ratio(close, ma_win, n) -> float:
         n (int): 在多少个周期内计算支撑率
 
     Returns:
-        [float]: [0-1]
+        Tuple[float,bool]: [0-1], last close > last ma
     """
     ma = moving_average(close, ma_win)[-n:]
 
-    return np.count_nonzero(close[-n:] > ma) / n
+    return np.count_nonzero(close[-n:] >= ma) / n, close[-1] >= ma[-1]
 
 
 def bullish_candlestick_ratio(bars, n) -> float:

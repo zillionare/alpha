@@ -38,15 +38,18 @@ class RsiStats:
         for code, values in hist.items():
             self.cdfs[code] = rv_histogram(values)
 
-    async def calc(self, start, end):
+    async def calc(self, end=None):
         hist = {}
 
         secs = Securities()
         codes = secs.choose(["stock"])
         codes.extend(["000001.XSHG", "399001.XSHE", "399006.XSHE"])
 
-        start = tf.floor(arrow.get(start), self.frame_type)
+        if end is None:
+            end = arrow.now()
+
         end = tf.floor(arrow.get(end), self.frame_type)
+        start = tf.shift(end, -999, self.frame_type)
 
         # this allow the caller just pass `start` and `end` in date unit, for simplicity
         if self.frame_type in tf.minute_level_frames:
@@ -54,15 +57,17 @@ class RsiStats:
             end = tf.combine_time(end, hour=15)
 
         nbars = tf.count_frames(start, end, self.frame_type)
+        logger.info("calc rsi from latest %s nbars", nbars)
 
         for code in codes:
             try:
                 sec = Security(code)
                 bars = await sec.load_bars(start, end, self.frame_type)
-
-                if len(bars) < 0.75 * nbars:
-                    logger.info(
-                        f"{sec.display_name} contains no enough data from {start} to {end}, skip calculating."
+                close = bars["close"]
+                valid_bars = np.count_nonzero(np.isfinite(close))
+                if valid_bars < nbars * 0.75:
+                    logger.warning(
+                        "%s contains only %s bars, less than required", code, valid_bars
                     )
                     continue
 
@@ -83,8 +88,8 @@ class RsiStats:
             return self.cdfs.get(code).cdf(value)
         return None
 
-    def get_value(self, code, proba):
-        """given probability, find the corresponding value"""
+    def get_rsi(self, code, proba):
+        """given probability, find the corresponding RSI"""
         if code in self.cdfs:
             return self.cdfs.get(code).ppf(proba)
         return None
