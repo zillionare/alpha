@@ -14,12 +14,14 @@ from omicron.core.types import FrameType
 from omicron.models.security import Security
 from omicron.models.securities import Securities
 from alpha.core.rsi_stats import rsi30, rsiday
-from alpha.utils import buy_limit_price, equal_price
+from alpha.utils import buy_limit_price, equal_price, first_mdd_less_than_threshold
+from alpha.core.features import max_drawdown
 import asyncio
 
 from alpha.core.features import (
     bullish_candlestick_ratio,
     fillna,
+    filterna,
     ma_d1,
     ma_d2,
     ma_permutation,
@@ -60,11 +62,12 @@ class Z05(object):
         msr=0.85,
         bcr=0.85,
         d1=0.01,
+        stop_loss = -0.05
     ):
         """
         Initializing the strategy
         """
-        self.stop_loss = 0.95
+        self.stop_loss = stop_loss
         self.rsi = rsi
         self.rsi3 = rsi3
         self.prsi = prsi
@@ -248,50 +251,20 @@ class Z05(object):
         buy_price = order["buy"]
 
         try:
-            close = fillna(bars["close"].copy())
+            close = filterna(bars["close"])
+            with_buy_price = np.insert(close, 0, buy_price)
+
+            sell, _ = first_mdd_less_than_threshold(with_buy_price, self.stop_loss)
+            if sell is not None:
+                isell = np.argwhere(bars["close"] == sell)[0][0]
+                close_type = "mdd"
+            else:
+                isell = -1
+                close_type = "expired"
         except Exception as e:
             logger.exception(e)
             logger.info("failed to close order of %s", code)
             return
-
-        isell = len(bars) - 1
-        i_stop_loss = None
-        irsi = None
-
-        close_type = "expired"
-        stop_loss = np.argwhere(close < buy_price * self.stop_loss).flatten()
-        if len(stop_loss) > 0:
-            i_stop_loss = stop_loss[0]
-            close_type = "stop_loss"
-
-        try:
-            rsi = relative_strength_index(bars["close"], period=6)
-            prsi = np.array([rsi30.get_proba(code, r) for r in rsi])
-            if np.any(prsi):
-                pos_rsi = np.argwhere(prsi > self.prsi).flatten()
-                if len(pos_rsi) > 0:
-                    irsi = pos_rsi[0] + 6
-            else:
-                pos_rsi = np.argwhere(rsi > self.rsi).flatten()
-                if len(pos_rsi) > 0:
-                    irsi = pos_rsi[0] + 6
-
-            if np.all([irsi is not None, i_stop_loss is not None]):
-                if irsi < i_stop_loss:
-                    close_type = "rsi"
-                    isell = irsi
-                else:
-                    close_type = "stop_loss"
-                    isell = i_stop_loss
-            elif irsi is not None:
-                close_type = "rsi"
-                isell = irsi
-            elif i_stop_loss is not None:
-                close_type = "stop_loss"
-                isell = i_stop_loss
-
-        except Exception as e:
-            logger.exception(e)
 
         sell_price = bars["close"][isell]
         gains = sell_price / buy_price - 1
@@ -301,7 +274,7 @@ class Z05(object):
                 "sell": sell_price,
                 "sell_at": sell_at,
                 "gains": gains,
-                "duration": (arrow.get(sell_at) - arrow.get(order["buy_at"])).days,
+                "duration": tf.count_day_frames(order["buy_at"], sell_at),
                 "type": close_type,
                 "status": "closed",
             }
