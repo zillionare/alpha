@@ -45,6 +45,7 @@ pymongo = "^3.12.0"
 numpy = "1.21.2"
 scipy = "1.7.0"
 pyttsx3 = "^2.9.0"
+ta = "0.7.0"
 
 black  = { version = "20.8b1", optional = true}
 isort  = { version = "5.6.4", optional = true}
@@ -60,6 +61,7 @@ mkdocs-include-markdown-plugin  = { version = "^1.0.0", optional = true}
 mkdocs-material  = { version = "^6.1.7", optional = true}
 mkdocstrings  = { version = "^0.13.6", optional = true}
 mkdocs-material-extensions  = { version = "^1.0.1", optional = true}
+mkdocs-awesome-pages-plugin = { version = "^2.6.0", optional = true}
 twine  = { version = "^3.3.0", optional = true}
 mkdocs-autorefs = {version = "0.1.1", optional = true}
 pre-commit = {version = "^2.12.0", optional = true}
