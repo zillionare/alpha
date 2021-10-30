@@ -49,7 +49,7 @@ class RsiStats:
             end = arrow.now()
 
         end = tf.floor(arrow.get(end), self.frame_type)
-        start = tf.shift(end, -999, self.frame_type)
+        start = tf.shift(end, -1000 - 18 + 1, self.frame_type)
 
         # this allow the caller just pass `start` and `end` in date unit, for simplicity
         if self.frame_type in tf.minute_level_frames:
@@ -72,7 +72,8 @@ class RsiStats:
                     continue
 
                 close = fillna(bars["close"].copy())
-                rsi = relative_strength_index(close, period=6)
+                # 前18位均为nan
+                rsi = relative_strength_index(close, period=6)[18:]
                 hist[code] = np.histogram(rsi, bins=100, range=(0, 100))
 
             except Exception:
