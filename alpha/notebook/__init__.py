@@ -1,6 +1,6 @@
 from typing import Union
 import datetime
-import pickle
+import time
 
 import arrow
 import cfg4py
@@ -27,19 +27,19 @@ import os
 from jqdatasdk import *
 import jqdatasdk as jq
 from arrow import Arrow
+from alpha.utils import *
 
 g = {}
 
 
-async def init_notebook(use_omicron=True):
+async def init_notebook(adaptor='both'):
     cfg4py.init(get_config_dir())
-    if use_omicron:
+    if adaptor in ['omicron', 'both']:
         await omicron.init()
-    else:
+    if adaptor in ['jq', 'both']:
         init_jq()
 
     clear_output()
-
 
 def init_jq():
     account = os.getenv("JQ_ACCOUNT")
@@ -159,39 +159,30 @@ def mail_notify(subject: str, model: str, params: dict, report: pd.DataFrame):
     """
     send_html_email(subject, html)
 
+async def scan(trigger, n, frame_type=FrameType.DAY, tm=None, test=False):
+    results = []
 
-# __all__ = [
-#     "plt",
-#     "np",
-#     "omicron",
-#     "pd",
-#     "tf",
-#     "FrameType",
-#     "Securities",
-#     "Security",
-#     "Candlestick",
-#     "fillna",
-#     "draw_trendline",
-#     "predict_by_moving_average",
-#     "moving_average",
-#     "polyfit",
-#     "init_notebook",
-#     "MorphFeatures",
-#     "top_volume_direction",
-#     "arrow",
-#     "pickle",
-#     "clear_output",
-#     "send_html_email",
-#     "build_table",
-#     "say",
-#     "jq_get_name",
-#     "jq_get_market_cap",
-#     "jq_choose_stocks",
-#     "jq_get_turnover",
-#     "jq_get_turnover_realtime",
-#     "jq_get_bars",
-#     "jq_get_ipo_date",
-#     "jq_get_circulating_market_cap",
-#     "datetime",
-#     "mail_notify"
-# ]
+    end = arrow.get(tm) if tm else arrow.now()
+    start = tf.shift(tf.floor(end, frame_type), -n+1, frame_type)
+    codes =Securities().choose(["stock"])
+
+    t0 = time.time()
+    for i, code in enumerate(codes):
+        if test and i >= 10:
+            break
+        if (i+1) % 500 == 0:
+            elapsed = int(time.time() - t0)
+            eta = int((len(codes) - i) * elapsed / (i+1))
+            print(f"progress: {i + 1}/{len(codes)}, elapsed: {elapsed}, ETA: {eta}")
+        sec = Security(code)
+        name = sec.display_name
+        try:
+            bars = await sec.load_bars(start, end, frame_type)
+            bars = bars[np.isfinite(bars["close"])]
+
+            trigger(code, name, bars, results, frame_type)
+        except Exception:
+            continue
+
+    say("扫描结束")
+    return results

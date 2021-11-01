@@ -2,6 +2,7 @@ from . import data
 import datetime
 from alpha.core.features import max_drawdown
 from typing import Tuple
+import numpy as np
 
 
 def buy_limit_price(code, c0, date: datetime.date):
@@ -42,7 +43,8 @@ def math_round(x: float, decimal: int):
     """由于浮点数的表示问题，很多语言的round函数与数学上的round函数不一致。下面的函数结果与数学上的一致。"""
     return int(x * (10 ** decimal) + 0.5) / (10 ** decimal)
 
-def first_mdd_less_than_threshold(ts, threshold)->Tuple:
+
+def first_mdd_less_than_threshold(ts, threshold) -> Tuple:
     """在序列`ts`中找到第一个最大回撤大于`threshold`的值，返回值和索引
 
     ”最大回撤大于`threshold`是指两者绝对值比较，即mdd < threshold。
@@ -51,7 +53,7 @@ def first_mdd_less_than_threshold(ts, threshold)->Tuple:
     Args:
         ts (list): 序列
     """
-    for k in range(1,len(ts)):
+    for k in range(1, len(ts)):
         mdd, i, j = max_drawdown(ts)
         if mdd < threshold:
             return ts[i], i

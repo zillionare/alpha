@@ -86,7 +86,7 @@ class RsiStats:
     def get_proba(self, code, value):
         """given `value`, find relative continuouse density probability"""
         if code in self.cdfs:
-            return self.cdfs.get(code).cdf(value)
+            return round(self.cdfs.get(code).cdf(value), 2)
         return None
 
     def get_rsi(self, code, proba):

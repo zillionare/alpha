@@ -62,7 +62,7 @@ class Z05(object):
         msr=0.85,
         bcr=0.85,
         d1=0.01,
-        stop_loss = -0.05
+        stop_loss=-0.05,
     ):
         """
         Initializing the strategy
@@ -381,5 +381,3 @@ class Z05(object):
             self.predict(sec, bars)
         except Exception:
             pass
-
-

@@ -3,6 +3,8 @@ import math
 from typing import Any, List, Tuple, Union
 import pandas as pd
 import ta
+from numpy.lib.stride_tricks import sliding_window_view
+
 
 import numpy as np
 from numpy.typing import ArrayLike
@@ -108,6 +110,7 @@ def weighted_moving_average(ts: np.array, win: int) -> np.array:
 
     return np.convolve(ts, w, "valid")
 
+
 def filterna(ts: np.array) -> np.array:
     """从`ts`中去除NaN
 
@@ -118,6 +121,7 @@ def filterna(ts: np.array) -> np.array:
         np.array: [description]
     """
     return ts[~np.isnan(ts)]
+
 
 def fillna(ts: np.array):
     """将ts中的NaN替换为其前值
@@ -261,14 +265,20 @@ def relative_strength_index(prices, period=6):
     """使用ta来计算rsi
 
     需要注意的是，rsi的计算中，递归使用了前一个rsi的值来进行平滑，所以rsi值越到后面越准。因此，为保证长度为m的rsi值的准确性，最好使用 m + period * 3 的长度。本函数已将前period * 3个数值设置为nan，以保证rsi的计算精度。
-    
+
+    Args:
+        prices (ArrayLike):
+        period (int): default 6
+    Returns:
+        np.array: rsi with same length as prices, the first period * 3 values are nan
     """
     df = pd.DataFrame({"close": prices})
     assert len(prices) >= period * 3
     rsi = np.round(ta.momentum.rsi(df.close, period).to_numpy(), 2)
-    rsi[:period * 3] = np.NaN
+    rsi[: period * 3] = np.NaN
 
     return rsi
+
 
 def bolling_band(prices, period, num_std_dev=2.0):
     """
@@ -583,7 +593,8 @@ def ma_d2(close, win) -> np.array:
 
     return moving_average(d2, win)
 
-def max_drawdown(equitity)->Tuple:
+
+def max_drawdown(equitity) -> Tuple:
     """计算最大资产回撤
 
     Args:
@@ -595,4 +606,12 @@ def max_drawdown(equitity)->Tuple:
     i = np.argmax(np.maximum.accumulate(equitity) - equitity)
     j = np.argmax(equitity[:i])
 
-    return (equitity[i] - equitity[j])/equitity[j], i, j
+    return (equitity[i] - equitity[j]) / equitity[j], i, j
+
+
+def rolling(x, win, func):
+    results = []
+    for subarray in sliding_window_view(x, window_shape=win):
+        results.append(func(subarray))
+
+    return np.array(results)
