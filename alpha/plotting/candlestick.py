@@ -163,7 +163,7 @@ class Candlestick:
 
             self.plot_(bars, ma_wins, candlestick_ax, volume_ax)
 
-        title = title or f"{code} {self.format_frames([end])[0]}"
+        title = title or f"{code} {self.format_frame(end)}"
         if title:
             self.fig.suptitle(title)
 
@@ -208,7 +208,7 @@ class Candlestick:
             title: the title of the fig
         return:
         """
-        n = self.plot_window_size
+        n = min(self.plot_window_size, len(bars))
         bars = bars.copy()
         factor = np.nanmax(bars["high"])
         for key in ["open", "close", "high", "low"]:
@@ -242,9 +242,8 @@ class Candlestick:
         frames = self.format_frames(bars["frame"][-n:])
         ax_volume.bar(range(n), volume, color=np.where(ups, "r", "g"), width=self.bw)
 
-        label_pos = list(np.arange(n // 8 + 1) * 8)
-        if label_pos[-1] >= len(frames):
-            label_pos.pop(-1)
+        labels = self.format_labels(bars["frame"][-n:])
+        label_pos = list(np.arange(n))
 
         labels = [frames[i] for i in label_pos]
         ax_volume.set_xticks(label_pos)
@@ -253,13 +252,24 @@ class Candlestick:
         if title:
             self.fig.suptitle(title)
 
-    def format_frames(self, frames):
-        if hasattr(frames[0], "hour") and frames[0].hour != 0:
+    def format_labels(self, frames):
+        formatted = []
+        gap = 4 if hasattr(frames[0], "hour") else 2
+        for i, frame in enumerate(frames):
+            if i % gap == 0:
+                formatted.append(self.format_frame(frame))
+            else:
+                formatted.append("")
+
+        return formatted
+
+    def format_frame(self, frame):
+        if hasattr(frame, "hour") and frame.hour != 0:
             fmt = "MM-DD HH:mm"
         else:
             fmt = "YY-MM-DD"
 
-        return [arrow.get(frame).format(fmt) for frame in frames]
+        return arrow.get(frame).format(fmt)
 
     def calc_edgecolor(self, bars: np.array) -> np.array:
         """
