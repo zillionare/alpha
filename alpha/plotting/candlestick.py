@@ -239,13 +239,11 @@ class Candlestick:
         ups = bars["close"][-n:] > bars["open"][-n:]
 
         volume = bars["volume"][-n:]
-        frames = self.format_frames(bars["frame"][-n:])
         ax_volume.bar(range(n), volume, color=np.where(ups, "r", "g"), width=self.bw)
 
         labels = self.format_labels(bars["frame"][-n:])
         label_pos = list(np.arange(n))
 
-        labels = [frames[i] for i in label_pos]
         ax_volume.set_xticks(label_pos)
         ax_volume.set_xticklabels(labels, rotation=45)
 
