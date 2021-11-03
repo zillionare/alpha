@@ -4,9 +4,14 @@ from email.message import EmailMessage
 import cfg4py
 from alpha.config import get_config_dir
 import pyttsx3
+import tempfile
+from IPython.display import Audio
+from IPython.display import display
+import asyncio
+import logging
 
 cfg = cfg4py.init(get_config_dir())
-
+logger = logging.getLogger(__name__)
 
 def send_html_email(
     subject: str,
@@ -46,8 +51,15 @@ def send_mail(subject: str, content: str, from_addrs: str = None, to_addrs: str 
 def init_tts():
     _tts = pyttsx3.init()
 
-    voices = _tts.setProperty("voice", "com.apple.speech.synthesis.voice.mei-jia")
+    #voices = _tts.setProperty("voice", "com.apple.speech.synthesis.voice.mei-jia")
+    _tts.setProperty("voice", 'zh')
+    # voices = _tts.getProperty('voices')
 
+    # for voice in voices:
+    #     if voice.name == "Mandarin":
+    #         _tts.setProperty("voice", 'zh')
+    # else:
+    #     logger.warning("No Mandarin voice found")
     return _tts
 
 
@@ -56,6 +68,28 @@ def say(text):
     _tts.say(text)
     _tts.runAndWait()
 
+async def nb_say(text):
+    global _tts
+
+    file = tempfile.mktemp(dir="/tmp/alpha/audio/", suffix=".mp3")
+    _tts.save_to_file(text, file)
+    _tts.runAndWait()
+
+    await asyncio.sleep(0.5)
+    display(_InvisibleAudio(filename=file, autoplay=True))
+
+class _InvisibleAudio(Audio):
+    """
+    An invisible (`display: none`) `Audio` element which removes itself when finished playing.
+    Taken from https://stackoverflow.com/a/50648266.
+    """
+
+    def _repr_html_(self) -> str:
+        audio = super()._repr_html_()
+        audio = audio.replace(
+            "<audio", '<audio onended="this.parentNode.removeChild(this)"'
+        )
+        return f'<div style="display:none">{audio}</div>'
 
 _tts = init_tts()
 
