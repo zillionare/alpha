@@ -119,6 +119,42 @@ def jq_get_bars(
     bars.dtype.names = ["frame", "open", "high", "low", "close", "volume"]
     return bars
 
+async def get_bars(code:str, n:int, frame_type:str='1d', end: Frame=None):
+    """获取`code`的`n`个`frame_type`的K线数据。
+
+    在notebook中使用的辅助函数，简化为一些常用操作。
+
+    Args:
+        code ([type]): [description]
+        n ([type]): [description]
+        frame_type ([type], optional): [description]. Defaults to '1d'.
+        end ([type], optional): [description]. Defaults to None.
+
+    Returns:
+        [type]: [description]
+    """
+    if not "." in code:
+        if code.startswith("6"):
+            code += ".XSHG"
+        else:
+            code += ".XSHE"
+
+    ft = FrameType(frame_type)
+
+    end = arrow.get(end) or arrow.now()
+
+    if ft in tf.minute_level_frames:
+        start = tf.shift(tf.floor(end, ft), -n + 1, ft)
+    else:
+        start = tf.shift(end, -n + 1, ft)
+
+    sec = Security(code)
+    try:
+        bars = await sec.load_bars(start, end, ft)
+    except Exception as e:
+        return None
+        
+    return bars[np.isfinite(bars["close"])]
 
 def jq_get_turnover_realtime(code, volume, close):
     """获取`code`最新的换手率。 jq_get_turnover无法获取盘中最新的换手率数据。该数据只能在24：00以后才能获取。
