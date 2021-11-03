@@ -195,16 +195,16 @@ def mail_notify(subject: str, model: str, params: dict, report: pd.DataFrame):
     """
     send_html_email(subject, html)
 
-async def scan(trigger, n, frame_type=FrameType.DAY, tm=None, test=False):
+async def scan(trigger, nbars, frame_type=FrameType.DAY, tm=None, nstocks=100):
     results = []
 
     end = arrow.get(tm) if tm else arrow.now()
-    start = tf.shift(tf.floor(end, frame_type), -n+1, frame_type)
+    start = tf.shift(tf.floor(end, frame_type), -nbars+1, frame_type)
     codes =Securities().choose(["stock"])
 
     t0 = time.time()
     for i, code in enumerate(codes):
-        if test and i >= 10:
+        if i >= nstocks - 1:
             break
         if (i+1) % 500 == 0:
             elapsed = int(time.time() - t0)
@@ -213,12 +213,24 @@ async def scan(trigger, n, frame_type=FrameType.DAY, tm=None, test=False):
         sec = Security(code)
         name = sec.display_name
         try:
-            bars = await sec.load_bars(start, end, frame_type)
-            bars = bars[np.isfinite(bars["close"])]
-
+            bars = await get_bars(code, nbars, frame_type, end)
             trigger(code, name, bars, results, frame_type)
         except Exception:
             continue
 
     say("扫描结束")
     return results
+
+def name_to_code(name):
+    """将股票名转换为代码。
+
+    TODO： 此函数应该放到Securities中
+
+    Args:
+        name ([type]): [description]
+
+    Returns:
+        [type]: [description]
+    """
+    secs = Securities()
+    return secs._secs[secs._secs['display_name']==name]["code"][0]
