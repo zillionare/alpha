@@ -40,7 +40,7 @@ class Candlestick:
         bw=20,
         lw=20,
         font_size=12,
-        hw_ratio=0.75,
+        hw_ratio=0.6,
     ):
         """[summary]
 
@@ -59,7 +59,7 @@ class Candlestick:
         }
 
         plt.rc(
-            "font", family=["Microsoft YaHei", "Heiti TC", "Songti SC"], size=font_size
+            "font", size=font_size
         )
         plt.rcParams["axes.unicode_minus"] = False
 
