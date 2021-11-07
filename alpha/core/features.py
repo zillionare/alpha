@@ -4,6 +4,8 @@ from typing import Any, List, Tuple, Union
 import pandas as pd
 import ta
 from numpy.lib.stride_tricks import sliding_window_view
+from omicron.core.numpy_extensions import find_runs
+from omicron.core.types import FrameType
 
 
 import numpy as np
@@ -22,7 +24,7 @@ def polyfit(ts: np.array, degree: int = 2) -> tuple:
 
 
 def reverse_moving_average(ma: ArrayLike, i: int, win: int) -> float:
-    """given moving_average, reverse the origin value at index i
+    """given moving_average, decode the origin value at index i
 
     if i < win, then return Nan, these values are not in the window thus cannot be recovered
 
@@ -81,6 +83,29 @@ def predict_by_moving_average(
 
     return preds, pmae
 
+def parabolic_flip(ts, rng=7, ma_win=5, calc_ma=True):
+    """抛物线转向信号
+
+    与SAR指标不同。本因子利用均线来平滑股价波动，然后将均线拟合成二次曲线，提示顶点（最低点）和趋势。
+
+    如果calc_ma为True，则函数要对`ts`计算moving_average。如果为False,则`ts`为已经计算好的移动均值。使用已经计算好的移动均值可以加快计算速度
+    """
+    if calc_ma:
+        ts = moving_average(ts, ma_win)
+
+    ts_ = ts[-rng:]
+    (a, b, c), pmae = polyfit(ts_)
+
+    y_ = np.polyval((a,b,c), np.arange(rng))
+
+    # uncomment this to draw the lines
+    # plt.plot(np.arange(len(ts)-rng, len(ts)), y_)
+    # plt.plot(ts)
+
+    vx = round(-b/(2*a),1)
+
+    flag = 1 if y_[-1] > y_[-2] else -1
+    return flag, rng - vx, round(pmae, 5)
 
 def moving_average(ts: np.array, win: int):
     """计算时间序列ts在win窗口内的移动平均
@@ -521,6 +546,22 @@ def maline_support_ratio(close, ma_win, n) -> Tuple:
 
     return np.count_nonzero(close[-n:] >= ma) / n, close[-1] >= ma[-1]
 
+def run_length_flip(ts:List[bool])->float:
+    """计算逻辑值序列`ts`由正到负（或者反之）的翻转，并返回最后翻转的序列长度比。
+
+    如果返回值为正，表明`ts`要么全为正，要么最后的连续序列为正。反之亦然。如果返回值在[-1,1]之间，表明在一个较长的连续序列之后，刚刚发生一个较短的反转序列。返回值的绝对值越大，说明反转之后趋势延续越久。
+    """
+    flags, pos, length = find_runs(ts)
+    if len(flags) == 1:
+        sign = -1 if flags[0] else 1
+        rlf = sign * length[0]
+    else:
+        lf, rf = flags[-2:]
+        ll, rl = length[-2:]
+        sign = 1 if rf else -1
+        rlf = sign * rl/ll
+
+    return round(rlf, 2)
 
 def bullish_candlestick_ratio(bars, n) -> float:
     """n个周期里，阳线占比
@@ -593,6 +634,14 @@ def ma_d2(close, win) -> np.array:
 
     return moving_average(d2, win)
 
+def ddv(ts, win) -> Tuple[np.array, np.array]:
+    """数组ts移动平均值的一阶和二阶导"""
+    ma = moving_average(ts, win)
+    d1 = ts[1:] / ts[:-1] - 1
+    d2 = np.diff(d1)
+
+    return d1, d2
+
 
 def max_drawdown(equitity) -> Tuple:
     """计算最大资产回撤
@@ -615,3 +664,54 @@ def rolling(x, win, func):
         results.append(func(subarray))
 
     return np.array(results)
+
+def reversing(close):
+    """股价向上/向下反转
+
+    取最近7个周期数据，如果前6周期股价主要在均线以下，最后一周期转到均线之上，称为向上反转；反之则称为向下反转
+    Args:
+        close ([type]): [description]
+    Returns:
+        [type]: 0表示无法判断。1表明看涨，-1表明看跌
+    """
+    ma = moving_average(close, 5)[-7:]
+    under_ma = np.count_nonzero(close[-7:-1] <= ma[:-1]) / 6
+    above_ma = np.count_nonzero(close[-7:-1] >= ma[:-1]) / 6
+    if under_ma > 0.5 and close[-1] > ma[-1]:
+        return 1
+    elif above_ma and close[-1] < ma[-1]:
+        return -1
+    return 0
+
+def flip_features(code, close, frame_type, ma=None):
+    """
+    1. rsi
+    2. 抛物线转向？
+    3. msr？
+    """
+    from alpha.core.rsi_stats import rsi30, rsiday
+
+    if ma is None:
+        ma = moving_average(close, 5)
+
+    rsi = relative_strength_index(close, period=6)[-1]
+
+    stats = rsi30 if frame_type == FrameType.MIN30 else rsiday
+    prsi = stats.get_proba(code, rsi)
+
+    ma_direction, dist_to_vx, pmae = parabolic_flip(ma, calc_ma=False)
+
+    rlf = run_length_flip(close[-10:] > ma[-10:])
+
+    # 大阴线或者连续阴线导致不规则的反转;反之亦然
+    if close[-1] < close[-6] and np.any(close[-5:-1]>close[-6]):
+        long_bearish_line = True
+    else:
+        long_bearish_line = None
+
+    if close[-1] > close[-6] and np.any(close[-5:-1]<close[-6]):
+        long_bullish_line = True
+    else:
+        long_bullish_line = None
+
+    return [prsi, rsi, ma_direction, dist_to_vx, pmae, rlf, long_bearish_line, long_bullish_line]
