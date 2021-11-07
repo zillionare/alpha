@@ -1,9 +1,3 @@
-redis:
-  dsn: redis://prod:6379
+
 postgres:
   enabled: false
-omega:
-  urls:
-    quotes_server: http://prod:3181
-alpha:
-    data_home: ~/alpha/data

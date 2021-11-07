@@ -3410,7 +3410,7 @@ test = ["pytest", "black", "isort", "flake8", "flake8-docstrings", "pytest-cov"]
 [metadata]
 lock-version = "1.1"
 python-versions = ">3.8,<3.10"
-content-hash = "9eddd42d49c45dbe24c43e7b4832645db100cc306c52ecac08d01bbd00865b15"
+content-hash = "c95341bcf41df413bb7e97885815eba5537dffa4c02e95d5f6ddac594415d8ec"
 
 [metadata.files]
 aiohttp = [
@@ -5552,7 +5552,7 @@ yarl = [
     {file = "yarl-1.7.2.tar.gz", hash = "sha256:45399b46d60c253327a460e99856752009fcee5f5d3c80b2f7c0cae1c38d56dd"},
 ]
 zillionare-omicron = [
-    {file = "zillionare_omicron-1.1.0-py3-none-any.whl", hash = "sha256:1ac1e27e37bf23ce510adf8ca2b7026cdaec374e9e680d6109b8db61e428efee"},
+    {file = "zillionare_omicron-1.1.0-py3-none-any.whl", hash = "sha256:ee7110e79fb5da43e55b72d704976e051d8da9dbb4b43b932b60ee3e251196ef"},
 ]
 zipp = [
     {file = "zipp-3.6.0-py3-none-any.whl", hash = "sha256:9fe5ea21568a0a70e50f273397638d39b03353731e6cbbb3fd8502a33fec40bc"},

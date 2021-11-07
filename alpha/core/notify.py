@@ -1,6 +1,7 @@
 import os
 import smtplib
 from email.message import EmailMessage
+import aiohttp
 import cfg4py
 from alpha.config import get_config_dir
 import pyttsx3
@@ -12,6 +13,7 @@ import logging
 
 cfg = cfg4py.init(get_config_dir())
 logger = logging.getLogger(__name__)
+
 
 def send_html_email(
     subject: str,
@@ -51,8 +53,8 @@ def send_mail(subject: str, content: str, from_addrs: str = None, to_addrs: str 
 def init_tts():
     _tts = pyttsx3.init()
 
-    #voices = _tts.setProperty("voice", "com.apple.speech.synthesis.voice.mei-jia")
-    _tts.setProperty("voice", 'zh')
+    # voices = _tts.setProperty("voice", "com.apple.speech.synthesis.voice.mei-jia")
+    _tts.setProperty("voice", "zh")
     # voices = _tts.getProperty('voices')
 
     # for voice in voices:
@@ -68,15 +70,24 @@ def say(text):
     _tts.say(text)
     _tts.runAndWait()
 
+async def text_to_speech(text):
+    file = tempfile.mktemp(dir="/tmp/alpha/audio/", suffix=".wav")
+    async with aiohttp.ClientSession() as session:
+        async with session.get(
+            f"{cfg.alpha.tts_server}text={text}"
+        ) as resp:
+            if resp.status == 200:
+                with open(file, "wb") as f:
+                    f.write(await resp.read())
+                    return file
+
+    return None
+
 async def nb_say(text):
-    global _tts
+    file = await text_to_speech(text)
 
-    file = tempfile.mktemp(dir="/tmp/alpha/audio/", suffix=".mp3")
-    _tts.save_to_file(text, file)
-    _tts.runAndWait()
-
-    await asyncio.sleep(0.5)
     display(_InvisibleAudio(filename=file, autoplay=True))
+
 
 class _InvisibleAudio(Audio):
     """
@@ -90,6 +101,7 @@ class _InvisibleAudio(Audio):
             "<audio", '<audio onended="this.parentNode.removeChild(this)"'
         )
         return f'<div style="display:none">{audio}</div>'
+
 
 _tts = init_tts()
 

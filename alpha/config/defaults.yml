@@ -28,7 +28,8 @@ omega:
     quotes_server: http://172.17.0.1:3181
     #quotes_server: http://127.0.0.1:3181
 alpha:
-    data_home: ~/alpha/data
+    data_home: ~/zillionare/alpha/data
+    tts_server: http://127.0.0.1:5002/api/tts?
 milvus:
   host: "milvus-standalone"
   #host: "172.17.22.1"

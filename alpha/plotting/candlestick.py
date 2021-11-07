@@ -6,6 +6,7 @@ from io import BytesIO
 from typing import NewType, Optional, Union
 
 import arrow
+from black import E
 
 # Cannot load backend 'TkAgg' which requires the 'tk' interactive framework, as 'headless' is currently running
 # matplotlib.use("TkAgg")
@@ -31,6 +32,7 @@ Frame = NewType("Frame", (datetime.date, datetime.datetime, arrow.Arrow, str))
 logger = logging.getLogger(__name__)
 
 
+plt.rc("font", family=["Microsoft YaHei", "Heiti TC", "Songti SC", "STHeitiSC-Light"])
 class Candlestick:
     def __init__(
         self,

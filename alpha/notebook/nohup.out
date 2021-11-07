@@ -1,0 +1,1236 @@
+[W 11:02:16.085 NotebookApp] Collisions detected in /root/.jupyter/jupyter_notebook_config.py and /root/.jupyter/jupyter_notebook_config.json config files. /root/.jupyter/jupyter_notebook_config.json has higher priority: {
+      "NotebookApp": {
+        "password": "'' ignored, using 'argon2:$argon2id$v=19$m=10240,t=10,p=8$cXOmRIiog6ASPl/Q00333A$JzGws4fxKmJW44klRrfKXQ'"
+      }
+    }
+[I 11:02:17.049 NotebookApp] [nb_conda_kernels] enabled, 5 kernels found
+[I 11:02:18.111 NotebookApp] Autoreload enabled: the webapp will restart when any Python src file changes.
+[W 11:02:18.125 NotebookApp] WARNING: The notebook server is listening on all IP addresses and not using encryption. This is not recommended.
+[I 11:02:18.230 NotebookApp] [jupyter_nbextensions_configurator] enabled 0.4.1
+[I 11:02:18.775 NotebookApp] [nb_conda] enabled
+[I 11:02:18.776 NotebookApp] Serving notebooks from local directory: /apps/alpha/alpha/notebook
+[I 11:02:18.776 NotebookApp] Jupyter Notebook 6.3.0 is running at:
+[I 11:02:18.776 NotebookApp] http://6de00d098d2c:3184/
+[I 11:02:18.776 NotebookApp] Use Control-C to stop this server and shut down all kernels (twice to skip confirmation).
+[W 11:26:37.092 NotebookApp] Config option `template_path` not recognized by `LenvsHTMLExporter`.  Did you mean one of: `extra_template_paths, template_name, template_paths`?
+[W 11:26:37.107 NotebookApp] Config option `template_path` not recognized by `LenvsHTMLExporter`.  Did you mean one of: `extra_template_paths, template_name, template_paths`?
+[W 11:26:37.128 NotebookApp] Config option `template_path` not recognized by `LenvsTocHTMLExporter`.  Did you mean one of: `extra_template_paths, template_name, template_paths`?
+[W 11:26:37.141 NotebookApp] Config option `template_path` not recognized by `LenvsTocHTMLExporter`.  Did you mean one of: `extra_template_paths, template_name, template_paths`?
+[W 11:26:37.193 NotebookApp] Config option `template_path` not recognized by `LenvsLatexExporter`.  Did you mean one of: `extra_template_paths, template_name, template_paths`?
+[W 11:26:37.201 NotebookApp] Config option `template_path` not recognized by `LenvsLatexExporter`.  Did you mean one of: `extra_template_paths, template_name, template_paths`?
+[W 11:26:37.395 NotebookApp] Config option `template_path` not recognized by `LenvsSlidesExporter`.  Did you mean one of: `extra_template_paths, template_name, template_paths`?
+[W 11:26:37.404 NotebookApp] Config option `template_path` not recognized by `LenvsSlidesExporter`.  Did you mean one of: `extra_template_paths, template_name, template_paths`?
+[W 11:26:37.509 NotebookApp] Config option `template_path` not recognized by `LenvsHTMLExporter`.  Did you mean one of: `extra_template_paths, template_name, template_paths`?
+[W 11:26:37.522 NotebookApp] Config option `template_path` not recognized by `LenvsHTMLExporter`.  Did you mean one of: `extra_template_paths, template_name, template_paths`?
+[W 11:26:37.543 NotebookApp] Config option `template_path` not recognized by `LenvsTocHTMLExporter`.  Did you mean one of: `extra_template_paths, template_name, template_paths`?
+[W 11:26:37.557 NotebookApp] Config option `template_path` not recognized by `LenvsTocHTMLExporter`.  Did you mean one of: `extra_template_paths, template_name, template_paths`?
+[W 11:26:37.644 NotebookApp] Config option `template_path` not recognized by `LenvsLatexExporter`.  Did you mean one of: `extra_template_paths, template_name, template_paths`?
+[W 11:26:37.652 NotebookApp] Config option `template_path` not recognized by `LenvsLatexExporter`.  Did you mean one of: `extra_template_paths, template_name, template_paths`?
+[W 11:26:37.816 NotebookApp] Config option `template_path` not recognized by `LenvsSlidesExporter`.  Did you mean one of: `extra_template_paths, template_name, template_paths`?
+[W 11:26:37.825 NotebookApp] Config option `template_path` not recognized by `LenvsSlidesExporter`.  Did you mean one of: `extra_template_paths, template_name, template_paths`?
+[W 11:26:38.679 NotebookApp] Notebook wildguess.ipynb is not trusted
+[I 11:26:39.134 NotebookApp] Kernel started: baf23607-a87a-455a-8cfc-518d5dd8d4f8, name: alpha
+[I 11:28:14.057 NotebookApp] Kernel interrupted: baf23607-a87a-455a-8cfc-518d5dd8d4f8
+[I 11:28:42.145 NotebookApp] Saving file at /wildguess.ipynb
+[W 11:28:42.148 NotebookApp] Notebook wildguess.ipynb is not trusted
+[I 11:30:39.086 NotebookApp] Saving file at /wildguess.ipynb
+[W 11:30:39.087 NotebookApp] Notebook wildguess.ipynb is not trusted
+[I 11:32:39.084 NotebookApp] Saving file at /wildguess.ipynb
+[W 11:32:39.085 NotebookApp] Notebook wildguess.ipynb is not trusted
+[I 11:38:39.138 NotebookApp] Saving file at /wildguess.ipynb
+[W 11:38:39.138 NotebookApp] Notebook wildguess.ipynb is not trusted
+[I 11:40:39.138 NotebookApp] Saving file at /wildguess.ipynb
+[W 11:40:39.138 NotebookApp] Notebook wildguess.ipynb is not trusted
+[I 11:42:39.121 NotebookApp] Saving file at /wildguess.ipynb
+[I 11:46:39.179 NotebookApp] Saving file at /wildguess.ipynb
+[I 11:56:39.208 NotebookApp] Saving file at /wildguess.ipynb
+[I 11:58:39.220 NotebookApp] Saving file at /wildguess.ipynb
+[I 12:14:39.313 NotebookApp] Saving file at /wildguess.ipynb
+[I 12:16:42.122 NotebookApp] Saving file at /wildguess.ipynb
+[I 12:18:39.373 NotebookApp] Saving file at /wildguess.ipynb
+[I 12:20:39.322 NotebookApp] Saving file at /wildguess.ipynb
+[I 12:22:39.380 NotebookApp] Saving file at /wildguess.ipynb
+[I 12:24:39.398 NotebookApp] Saving file at /wildguess.ipynb
+[I 13:38:39.732 NotebookApp] Saving file at /wildguess.ipynb
+[I 13:46:39.775 NotebookApp] Saving file at /wildguess.ipynb
+[I 14:12:39.866 NotebookApp] Saving file at /wildguess.ipynb
+[I 14:14:39.883 NotebookApp] Saving file at /wildguess.ipynb
+[I 14:16:39.873 NotebookApp] Saving file at /wildguess.ipynb
+[I 14:20:39.920 NotebookApp] Saving file at /wildguess.ipynb
+[I 14:22:39.904 NotebookApp] Saving file at /wildguess.ipynb
+[I 14:26:39.916 NotebookApp] Saving file at /wildguess.ipynb
+[I 14:27:51.048 NotebookApp] Kernel interrupted: baf23607-a87a-455a-8cfc-518d5dd8d4f8
+[I 14:27:55.504 NotebookApp] Starting buffering for baf23607-a87a-455a-8cfc-518d5dd8d4f8:204952efe5df4a408528033512987047
+[I 14:27:56.523 NotebookApp] Kernel restarted: baf23607-a87a-455a-8cfc-518d5dd8d4f8
+[I 14:27:56.553 NotebookApp] Restoring connection for baf23607-a87a-455a-8cfc-518d5dd8d4f8:204952efe5df4a408528033512987047
+[I 14:27:57.564 NotebookApp] Replaying 4 buffered messages
+[I 14:28:39.971 NotebookApp] Saving file at /wildguess.ipynb
+[I 14:30:39.949 NotebookApp] Saving file at /wildguess.ipynb
+[I 14:32:39.956 NotebookApp] Saving file at /wildguess.ipynb
+[I 14:34:39.949 NotebookApp] Saving file at /wildguess.ipynb
+[I 14:44:40.031 NotebookApp] Saving file at /wildguess.ipynb
+[W 18:52:56.555 NotebookApp] WebSocket ping timeout after 119570 ms.
+[I 18:53:01.559 NotebookApp] Starting buffering for baf23607-a87a-455a-8cfc-518d5dd8d4f8:204952efe5df4a408528033512987047
+[I 19:01:01.414 NotebookApp] Restoring connection for baf23607-a87a-455a-8cfc-518d5dd8d4f8:204952efe5df4a408528033512987047
+[I 22:03:45.286 NotebookApp] Saving file at /wildguess.ipynb
+[I 23:14:38.699 NotebookApp] Creating new notebook in 
+[W 23:14:38.866 NotebookApp] Config option `template_path` not recognized by `LenvsHTMLExporter`.  Did you mean one of: `extra_template_paths, template_name, template_paths`?
+[W 23:14:38.879 NotebookApp] Config option `template_path` not recognized by `LenvsHTMLExporter`.  Did you mean one of: `extra_template_paths, template_name, template_paths`?
+[W 23:14:38.900 NotebookApp] Config option `template_path` not recognized by `LenvsTocHTMLExporter`.  Did you mean one of: `extra_template_paths, template_name, template_paths`?
+[W 23:14:38.913 NotebookApp] Config option `template_path` not recognized by `LenvsTocHTMLExporter`.  Did you mean one of: `extra_template_paths, template_name, template_paths`?
+[W 23:14:38.957 NotebookApp] Config option `template_path` not recognized by `LenvsLatexExporter`.  Did you mean one of: `extra_template_paths, template_name, template_paths`?
+[W 23:14:38.965 NotebookApp] Config option `template_path` not recognized by `LenvsLatexExporter`.  Did you mean one of: `extra_template_paths, template_name, template_paths`?
+[W 23:14:39.355 NotebookApp] Config option `template_path` not recognized by `LenvsSlidesExporter`.  Did you mean one of: `extra_template_paths, template_name, template_paths`?
+[W 23:14:39.378 NotebookApp] Config option `template_path` not recognized by `LenvsSlidesExporter`.  Did you mean one of: `extra_template_paths, template_name, template_paths`?
+[W 23:14:39.563 NotebookApp] Config option `template_path` not recognized by `LenvsHTMLExporter`.  Did you mean one of: `extra_template_paths, template_name, template_paths`?
+[W 23:14:39.576 NotebookApp] Config option `template_path` not recognized by `LenvsHTMLExporter`.  Did you mean one of: `extra_template_paths, template_name, template_paths`?
+[W 23:14:39.597 NotebookApp] Config option `template_path` not recognized by `LenvsTocHTMLExporter`.  Did you mean one of: `extra_template_paths, template_name, template_paths`?
+[W 23:14:39.611 NotebookApp] Config option `template_path` not recognized by `LenvsTocHTMLExporter`.  Did you mean one of: `extra_template_paths, template_name, template_paths`?
+[W 23:14:39.654 NotebookApp] Config option `template_path` not recognized by `LenvsLatexExporter`.  Did you mean one of: `extra_template_paths, template_name, template_paths`?
+[W 23:14:39.662 NotebookApp] Config option `template_path` not recognized by `LenvsLatexExporter`.  Did you mean one of: `extra_template_paths, template_name, template_paths`?
+[W 23:14:39.826 NotebookApp] Config option `template_path` not recognized by `LenvsSlidesExporter`.  Did you mean one of: `extra_template_paths, template_name, template_paths`?
+[W 23:14:39.834 NotebookApp] Config option `template_path` not recognized by `LenvsSlidesExporter`.  Did you mean one of: `extra_template_paths, template_name, template_paths`?
+[I 23:14:41.590 NotebookApp] Kernel started: f9b29d76-e9d9-466b-b85d-4bacd21daaf8, name: alpha
+[I 23:16:41.641 NotebookApp] Saving file at /upturn.ipynb
+[I 23:18:41.660 NotebookApp] Saving file at /upturn.ipynb
+[I 23:20:41.655 NotebookApp] Saving file at /upturn.ipynb
+[I 23:21:14.374 NotebookApp] Starting buffering for f9b29d76-e9d9-466b-b85d-4bacd21daaf8:5196cf1e947e4d3bb8dc4b76a6c7565b
+[I 23:21:15.190 NotebookApp] Kernel restarted: f9b29d76-e9d9-466b-b85d-4bacd21daaf8
+[I 23:21:15.244 NotebookApp] Restoring connection for f9b29d76-e9d9-466b-b85d-4bacd21daaf8:5196cf1e947e4d3bb8dc4b76a6c7565b
+[I 23:21:15.998 NotebookApp] Replaying 6 buffered messages
+[I 23:21:58.252 NotebookApp] Kernel interrupted: f9b29d76-e9d9-466b-b85d-4bacd21daaf8
+[I 23:22:41.873 NotebookApp] Saving file at /upturn.ipynb
+[I 23:23:40.756 NotebookApp] Kernel interrupted: f9b29d76-e9d9-466b-b85d-4bacd21daaf8
+[I 23:24:41.911 NotebookApp] Saving file at /upturn.ipynb
+[I 23:25:05.550 NotebookApp] Starting buffering for f9b29d76-e9d9-466b-b85d-4bacd21daaf8:5196cf1e947e4d3bb8dc4b76a6c7565b
+[I 23:25:06.173 NotebookApp] Kernel restarted: f9b29d76-e9d9-466b-b85d-4bacd21daaf8
+[I 23:25:06.222 NotebookApp] Restoring connection for f9b29d76-e9d9-466b-b85d-4bacd21daaf8:5196cf1e947e4d3bb8dc4b76a6c7565b
+[I 23:25:06.855 NotebookApp] Replaying 3 buffered messages
+[I 23:25:16.846 NotebookApp] Kernel interrupted: f9b29d76-e9d9-466b-b85d-4bacd21daaf8
+[I 23:25:49.505 NotebookApp] Starting buffering for f9b29d76-e9d9-466b-b85d-4bacd21daaf8:5196cf1e947e4d3bb8dc4b76a6c7565b
+[I 23:25:50.128 NotebookApp] Kernel restarted: f9b29d76-e9d9-466b-b85d-4bacd21daaf8
+[I 23:25:50.229 NotebookApp] Restoring connection for f9b29d76-e9d9-466b-b85d-4bacd21daaf8:5196cf1e947e4d3bb8dc4b76a6c7565b
+[I 23:25:50.736 NotebookApp] Replaying 3 buffered messages
+[I 23:26:10.123 NotebookApp] Kernel interrupted: f9b29d76-e9d9-466b-b85d-4bacd21daaf8
+[I 23:26:41.925 NotebookApp] Saving file at /upturn.ipynb
+[I 23:26:46.352 NotebookApp] Starting buffering for f9b29d76-e9d9-466b-b85d-4bacd21daaf8:5196cf1e947e4d3bb8dc4b76a6c7565b
+[I 23:26:46.965 NotebookApp] Kernel restarted: f9b29d76-e9d9-466b-b85d-4bacd21daaf8
+[I 23:26:47.025 NotebookApp] Restoring connection for f9b29d76-e9d9-466b-b85d-4bacd21daaf8:5196cf1e947e4d3bb8dc4b76a6c7565b
+[I 23:26:48.036 NotebookApp] Replaying 3 buffered messages
+[I 23:27:03.588 NotebookApp] Kernel interrupted: f9b29d76-e9d9-466b-b85d-4bacd21daaf8
+[I 23:28:41.774 NotebookApp] Saving file at /upturn.ipynb
+[I 23:40:09.650 NotebookApp] Starting buffering for f9b29d76-e9d9-466b-b85d-4bacd21daaf8:5196cf1e947e4d3bb8dc4b76a6c7565b
+[I 23:40:10.379 NotebookApp] Kernel restarted: f9b29d76-e9d9-466b-b85d-4bacd21daaf8
+[I 23:40:10.455 NotebookApp] Restoring connection for f9b29d76-e9d9-466b-b85d-4bacd21daaf8:5196cf1e947e4d3bb8dc4b76a6c7565b
+[I 23:40:11.251 NotebookApp] Replaying 3 buffered messages
+[I 23:40:41.771 NotebookApp] Saving file at /upturn.ipynb
+[I 23:42:42.004 NotebookApp] Saving file at /upturn.ipynb
+[I 23:44:41.783 NotebookApp] Saving file at /upturn.ipynb
+[I 23:47:02.141 NotebookApp] Starting buffering for f9b29d76-e9d9-466b-b85d-4bacd21daaf8:5196cf1e947e4d3bb8dc4b76a6c7565b
+[I 23:47:02.994 NotebookApp] Kernel restarted: f9b29d76-e9d9-466b-b85d-4bacd21daaf8
+[I 23:47:03.105 NotebookApp] Restoring connection for f9b29d76-e9d9-466b-b85d-4bacd21daaf8:5196cf1e947e4d3bb8dc4b76a6c7565b
+[I 23:47:03.704 NotebookApp] Replaying 3 buffered messages
+[I 23:48:41.858 NotebookApp] Saving file at /upturn.ipynb
+[I 23:50:41.857 NotebookApp] Saving file at /upturn.ipynb
+[I 23:52:56.741 NotebookApp] Starting buffering for f9b29d76-e9d9-466b-b85d-4bacd21daaf8:5196cf1e947e4d3bb8dc4b76a6c7565b
+[I 23:52:57.987 NotebookApp] Kernel restarted: f9b29d76-e9d9-466b-b85d-4bacd21daaf8
+[I 23:52:58.087 NotebookApp] Restoring connection for f9b29d76-e9d9-466b-b85d-4bacd21daaf8:5196cf1e947e4d3bb8dc4b76a6c7565b
+[I 23:52:58.904 NotebookApp] Replaying 3 buffered messages
+[I 23:54:41.879 NotebookApp] Saving file at /upturn.ipynb
+[I 23:56:42.058 NotebookApp] Saving file at /upturn.ipynb
+[I 23:58:41.904 NotebookApp] Saving file at /upturn.ipynb
+[I 00:00:41.912 NotebookApp] Saving file at /upturn.ipynb
+[I 00:02:41.987 NotebookApp] Saving file at /upturn.ipynb
+[I 00:04:41.948 NotebookApp] Saving file at /upturn.ipynb
+[I 00:06:42.052 NotebookApp] Saving file at /upturn.ipynb
+[W 02:36:01.415 NotebookApp] WebSocket ping timeout after 119984 ms.
+[I 02:36:06.418 NotebookApp] Starting buffering for baf23607-a87a-455a-8cfc-518d5dd8d4f8:204952efe5df4a408528033512987047
+[W 02:36:28.088 NotebookApp] WebSocket ping timeout after 119987 ms.
+[I 02:36:33.090 NotebookApp] Starting buffering for f9b29d76-e9d9-466b-b85d-4bacd21daaf8:5196cf1e947e4d3bb8dc4b76a6c7565b
+[I 02:46:17.522 NotebookApp] Restoring connection for baf23607-a87a-455a-8cfc-518d5dd8d4f8:204952efe5df4a408528033512987047
+[I 02:46:44.225 NotebookApp] Restoring connection for f9b29d76-e9d9-466b-b85d-4bacd21daaf8:5196cf1e947e4d3bb8dc4b76a6c7565b
+[I 07:59:58.485 NotebookApp] Starting buffering for f9b29d76-e9d9-466b-b85d-4bacd21daaf8:5196cf1e947e4d3bb8dc4b76a6c7565b
+[I 07:59:58.486 NotebookApp] Starting buffering for baf23607-a87a-455a-8cfc-518d5dd8d4f8:204952efe5df4a408528033512987047
+[I 07:59:59.548 NotebookApp] Restoring connection for f9b29d76-e9d9-466b-b85d-4bacd21daaf8:5196cf1e947e4d3bb8dc4b76a6c7565b
+[I 07:59:59.568 NotebookApp] Restoring connection for baf23607-a87a-455a-8cfc-518d5dd8d4f8:204952efe5df4a408528033512987047
+[I 09:02:44.775 NotebookApp] Saving file at /upturn.ipynb
+[I 09:06:44.658 NotebookApp] Saving file at /upturn.ipynb
+[I 09:08:44.671 NotebookApp] Saving file at /upturn.ipynb
+[I 09:50:44.952 NotebookApp] Saving file at /upturn.ipynb
+[I 09:58:45.024 NotebookApp] Saving file at /upturn.ipynb
+[I 10:02:44.923 NotebookApp] Saving file at /upturn.ipynb
+[I 10:06:44.955 NotebookApp] Saving file at /upturn.ipynb
+[I 10:08:27.523 NotebookApp] Starting buffering for f9b29d76-e9d9-466b-b85d-4bacd21daaf8:5196cf1e947e4d3bb8dc4b76a6c7565b
+[I 10:08:28.338 NotebookApp] Kernel restarted: f9b29d76-e9d9-466b-b85d-4bacd21daaf8
+[I 10:08:28.375 NotebookApp] Restoring connection for f9b29d76-e9d9-466b-b85d-4bacd21daaf8:5196cf1e947e4d3bb8dc4b76a6c7565b
+[I 10:08:29.139 NotebookApp] Replaying 3 buffered messages
+[I 10:08:44.955 NotebookApp] Saving file at /upturn.ipynb
+[I 10:10:44.997 NotebookApp] Saving file at /upturn.ipynb
+[I 10:12:44.983 NotebookApp] Saving file at /upturn.ipynb
+[I 10:14:45.006 NotebookApp] Saving file at /upturn.ipynb
+[I 10:20:45.024 NotebookApp] Saving file at /upturn.ipynb
+[I 10:21:18.116 NotebookApp] Starting buffering for f9b29d76-e9d9-466b-b85d-4bacd21daaf8:5196cf1e947e4d3bb8dc4b76a6c7565b
+[I 10:21:18.834 NotebookApp] Kernel restarted: f9b29d76-e9d9-466b-b85d-4bacd21daaf8
+[I 10:21:18.927 NotebookApp] Restoring connection for f9b29d76-e9d9-466b-b85d-4bacd21daaf8:5196cf1e947e4d3bb8dc4b76a6c7565b
+[I 10:21:19.578 NotebookApp] Replaying 3 buffered messages
+[I 10:22:45.007 NotebookApp] Saving file at /upturn.ipynb
+[I 10:24:45.028 NotebookApp] Saving file at /upturn.ipynb
+[I 10:38:45.086 NotebookApp] Saving file at /upturn.ipynb
+[I 10:40:45.090 NotebookApp] Saving file at /upturn.ipynb
+[I 10:42:45.092 NotebookApp] Saving file at /upturn.ipynb
+[I 10:44:45.203 NotebookApp] Saving file at /upturn.ipynb
+[I 10:46:45.105 NotebookApp] Saving file at /upturn.ipynb
+[I 10:52:45.149 NotebookApp] Saving file at /upturn.ipynb
+[I 10:54:45.140 NotebookApp] Saving file at /upturn.ipynb
+[I 10:55:06.818 NotebookApp] Starting buffering for f9b29d76-e9d9-466b-b85d-4bacd21daaf8:5196cf1e947e4d3bb8dc4b76a6c7565b
+[I 10:55:07.644 NotebookApp] Kernel restarted: f9b29d76-e9d9-466b-b85d-4bacd21daaf8
+[I 10:55:07.767 NotebookApp] Restoring connection for f9b29d76-e9d9-466b-b85d-4bacd21daaf8:5196cf1e947e4d3bb8dc4b76a6c7565b
+[I 10:55:08.195 NotebookApp] Replaying 3 buffered messages
+[I 10:56:15.419 NotebookApp] Starting buffering for f9b29d76-e9d9-466b-b85d-4bacd21daaf8:5196cf1e947e4d3bb8dc4b76a6c7565b
+[I 10:56:16.144 NotebookApp] Kernel restarted: f9b29d76-e9d9-466b-b85d-4bacd21daaf8
+[I 10:56:16.201 NotebookApp] Restoring connection for f9b29d76-e9d9-466b-b85d-4bacd21daaf8:5196cf1e947e4d3bb8dc4b76a6c7565b
+[I 10:56:16.930 NotebookApp] Replaying 3 buffered messages
+[I 10:56:45.136 NotebookApp] Saving file at /upturn.ipynb
+[I 10:58:45.143 NotebookApp] Saving file at /upturn.ipynb
+[I 11:00:45.221 NotebookApp] Saving file at /upturn.ipynb
+[I 11:02:45.237 NotebookApp] Saving file at /upturn.ipynb
+[I 11:06:45.253 NotebookApp] Saving file at /upturn.ipynb
+[I 11:08:45.249 NotebookApp] Saving file at /upturn.ipynb
+[I 11:37:43.610 NotebookApp] Starting buffering for f9b29d76-e9d9-466b-b85d-4bacd21daaf8:5196cf1e947e4d3bb8dc4b76a6c7565b
+Error in atexit._run_exitfuncs:
+Traceback (most recent call last):
+  File "/conda/envs/alpha/lib/python3.8/logging/__init__.py", line 2122, in shutdown
+    h.flush()
+  File "/conda/envs/alpha/lib/python3.8/logging/__init__.py", line 1065, in flush
+    self.stream.flush()
+  File "/conda/envs/alpha/lib/python3.8/site-packages/ipykernel/iostream.py", line 355, in flush
+    self._flush()
+  File "/conda/envs/alpha/lib/python3.8/site-packages/ipykernel/iostream.py", line 381, in _flush
+    self.session.send(self.pub_thread, 'stream', content=content,
+  File "/conda/envs/alpha/lib/python3.8/site-packages/jupyter_client/session.py", line 841, in send
+    stream.send_multipart(to_send, copy=copy)
+  File "/conda/envs/alpha/lib/python3.8/site-packages/ipykernel/iostream.py", line 212, in send_multipart
+    self.schedule(lambda : self._really_send(*args, **kwargs))
+  File "/conda/envs/alpha/lib/python3.8/site-packages/ipykernel/iostream.py", line 205, in schedule
+    f()
+  File "/conda/envs/alpha/lib/python3.8/site-packages/ipykernel/iostream.py", line 212, in <lambda>
+    self.schedule(lambda : self._really_send(*args, **kwargs))
+  File "/conda/envs/alpha/lib/python3.8/site-packages/ipykernel/iostream.py", line 220, in _really_send
+    self.socket.send_multipart(msg, *args, **kwargs)
+AttributeError: 'NoneType' object has no attribute 'send_multipart'
+[I 11:37:44.252 NotebookApp] Kernel restarted: f9b29d76-e9d9-466b-b85d-4bacd21daaf8
+[I 11:37:44.282 NotebookApp] Restoring connection for f9b29d76-e9d9-466b-b85d-4bacd21daaf8:5196cf1e947e4d3bb8dc4b76a6c7565b
+[I 11:37:44.876 NotebookApp] Replaying 3 buffered messages
+[I 11:38:45.363 NotebookApp] Saving file at /upturn.ipynb
+[I 11:38:47.734 NotebookApp] Starting buffering for f9b29d76-e9d9-466b-b85d-4bacd21daaf8:5196cf1e947e4d3bb8dc4b76a6c7565b
+[I 11:38:48.256 NotebookApp] Kernel restarted: f9b29d76-e9d9-466b-b85d-4bacd21daaf8
+[I 11:38:48.351 NotebookApp] Restoring connection for f9b29d76-e9d9-466b-b85d-4bacd21daaf8:5196cf1e947e4d3bb8dc4b76a6c7565b
+[I 11:38:48.854 NotebookApp] Replaying 3 buffered messages
+[I 11:40:45.390 NotebookApp] Saving file at /upturn.ipynb
+[I 11:54:45.434 NotebookApp] Saving file at /upturn.ipynb
+[I 11:56:45.439 NotebookApp] Saving file at /upturn.ipynb
+[I 13:32:46.010 NotebookApp] Saving file at /upturn.ipynb
+[I 13:34:45.917 NotebookApp] Saving file at /upturn.ipynb
+[I 13:36:45.894 NotebookApp] Saving file at /upturn.ipynb
+[I 13:40:45.987 NotebookApp] Saving file at /upturn.ipynb
+[I 13:42:45.990 NotebookApp] Saving file at /upturn.ipynb
+[I 13:44:45.981 NotebookApp] Saving file at /upturn.ipynb
+[I 14:35:55.018 NotebookApp] Starting buffering for f9b29d76-e9d9-466b-b85d-4bacd21daaf8:5196cf1e947e4d3bb8dc4b76a6c7565b
+[I 14:35:55.753 NotebookApp] Kernel restarted: f9b29d76-e9d9-466b-b85d-4bacd21daaf8
+[I 14:35:55.817 NotebookApp] Restoring connection for f9b29d76-e9d9-466b-b85d-4bacd21daaf8:5196cf1e947e4d3bb8dc4b76a6c7565b
+[I 14:35:56.292 NotebookApp] Replaying 3 buffered messages
+[I 14:36:46.203 NotebookApp] Saving file at /upturn.ipynb
+[I 14:38:46.210 NotebookApp] Saving file at /upturn.ipynb
+[I 14:40:46.204 NotebookApp] Saving file at /upturn.ipynb
+[I 14:42:46.207 NotebookApp] Saving file at /upturn.ipynb
+[I 14:43:02.882 NotebookApp] Starting buffering for f9b29d76-e9d9-466b-b85d-4bacd21daaf8:5196cf1e947e4d3bb8dc4b76a6c7565b
+[I 14:43:03.397 NotebookApp] Kernel restarted: f9b29d76-e9d9-466b-b85d-4bacd21daaf8
+[I 14:43:03.500 NotebookApp] Restoring connection for f9b29d76-e9d9-466b-b85d-4bacd21daaf8:5196cf1e947e4d3bb8dc4b76a6c7565b
+[I 14:43:03.971 NotebookApp] Replaying 3 buffered messages
+[I 14:44:46.594 NotebookApp] Saving file at /upturn.ipynb
+[I 14:48:46.392 NotebookApp] Saving file at /upturn.ipynb
+[I 14:52:46.449 NotebookApp] Saving file at /upturn.ipynb
+[I 14:54:46.475 NotebookApp] Saving file at /upturn.ipynb
+[I 14:56:46.501 NotebookApp] Saving file at /upturn.ipynb
+[I 15:02:47.078 NotebookApp] Saving file at /upturn.ipynb
+[I 15:04:46.755 NotebookApp] Saving file at /upturn.ipynb
+[I 19:48:47.892 NotebookApp] Saving file at /upturn.ipynb
+[I 19:50:47.858 NotebookApp] Saving file at /upturn.ipynb
+[I 20:00:48.642 NotebookApp] Saving file at /upturn.ipynb
+[I 20:02:48.084 NotebookApp] Saving file at /upturn.ipynb
+[I 20:04:48.098 NotebookApp] Saving file at /upturn.ipynb
+[I 20:28:24.549 NotebookApp] Starting buffering for baf23607-a87a-455a-8cfc-518d5dd8d4f8:204952efe5df4a408528033512987047
+[I 20:38:48.182 NotebookApp] Saving file at /upturn.ipynb
+[I 20:40:48.141 NotebookApp] Saving file at /upturn.ipynb
+[I 20:42:48.271 NotebookApp] Saving file at /upturn.ipynb
+[I 20:44:48.389 NotebookApp] Saving file at /upturn.ipynb
+[I 20:46:48.445 NotebookApp] Saving file at /upturn.ipynb
+[I 21:08:48.503 NotebookApp] Saving file at /upturn.ipynb
+[I 21:10:51.716 NotebookApp] Saving file at /upturn.ipynb
+[I 21:12:48.407 NotebookApp] Saving file at /upturn.ipynb
+[I 21:14:48.469 NotebookApp] Saving file at /upturn.ipynb
+[I 21:16:48.589 NotebookApp] Saving file at /upturn.ipynb
+[I 21:18:48.659 NotebookApp] Saving file at /upturn.ipynb
+[I 21:32:48.561 NotebookApp] Saving file at /upturn.ipynb
+[I 21:40:48.492 NotebookApp] Saving file at /upturn.ipynb
+[I 21:44:48.463 NotebookApp] Saving file at /upturn.ipynb
+[I 21:48:48.766 NotebookApp] Saving file at /upturn.ipynb
+[I 22:34:49.017 NotebookApp] Saving file at /upturn.ipynb
+[I 22:36:48.861 NotebookApp] Saving file at /upturn.ipynb
+[I 22:38:48.992 NotebookApp] Saving file at /upturn.ipynb
+[I 22:40:48.887 NotebookApp] Saving file at /upturn.ipynb
+[I 22:56:49.182 NotebookApp] Saving file at /upturn.ipynb
+[W 01:49:33.503 NotebookApp] WebSocket ping timeout after 119994 ms.
+[I 01:49:38.505 NotebookApp] Starting buffering for f9b29d76-e9d9-466b-b85d-4bacd21daaf8:5196cf1e947e4d3bb8dc4b76a6c7565b
+[I 03:48:12.346 NotebookApp] Restoring connection for f9b29d76-e9d9-466b-b85d-4bacd21daaf8:5196cf1e947e4d3bb8dc4b76a6c7565b
+[W 03:49:42.348 NotebookApp] WebSocket ping timeout after 90001 ms.
+[I 03:49:47.350 NotebookApp] Starting buffering for f9b29d76-e9d9-466b-b85d-4bacd21daaf8:5196cf1e947e4d3bb8dc4b76a6c7565b
+[I 05:47:51.389 NotebookApp] Restoring connection for f9b29d76-e9d9-466b-b85d-4bacd21daaf8:5196cf1e947e4d3bb8dc4b76a6c7565b
+[W 08:35:51.390 NotebookApp] WebSocket ping timeout after 119993 ms.
+[I 08:35:56.394 NotebookApp] Starting buffering for f9b29d76-e9d9-466b-b85d-4bacd21daaf8:5196cf1e947e4d3bb8dc4b76a6c7565b
+[I 08:57:55.385 NotebookApp] Restoring connection for f9b29d76-e9d9-466b-b85d-4bacd21daaf8:5196cf1e947e4d3bb8dc4b76a6c7565b
+[I 08:58:35.849 NotebookApp] Starting buffering for f9b29d76-e9d9-466b-b85d-4bacd21daaf8:5196cf1e947e4d3bb8dc4b76a6c7565b
+[W 10:06:08.685 NotebookApp] Config option `template_path` not recognized by `LenvsHTMLExporter`.  Did you mean one of: `extra_template_paths, template_name, template_paths`?
+[W 10:06:08.699 NotebookApp] Config option `template_path` not recognized by `LenvsHTMLExporter`.  Did you mean one of: `extra_template_paths, template_name, template_paths`?
+[W 10:06:08.719 NotebookApp] Config option `template_path` not recognized by `LenvsTocHTMLExporter`.  Did you mean one of: `extra_template_paths, template_name, template_paths`?
+[W 10:06:08.733 NotebookApp] Config option `template_path` not recognized by `LenvsTocHTMLExporter`.  Did you mean one of: `extra_template_paths, template_name, template_paths`?
+[W 10:06:08.776 NotebookApp] Config option `template_path` not recognized by `LenvsLatexExporter`.  Did you mean one of: `extra_template_paths, template_name, template_paths`?
+[W 10:06:08.783 NotebookApp] Config option `template_path` not recognized by `LenvsLatexExporter`.  Did you mean one of: `extra_template_paths, template_name, template_paths`?
+[W 10:06:08.954 NotebookApp] Config option `template_path` not recognized by `LenvsSlidesExporter`.  Did you mean one of: `extra_template_paths, template_name, template_paths`?
+[W 10:06:08.963 NotebookApp] Config option `template_path` not recognized by `LenvsSlidesExporter`.  Did you mean one of: `extra_template_paths, template_name, template_paths`?
+[W 10:06:09.072 NotebookApp] Config option `template_path` not recognized by `LenvsHTMLExporter`.  Did you mean one of: `extra_template_paths, template_name, template_paths`?
+[W 10:06:09.086 NotebookApp] Config option `template_path` not recognized by `LenvsHTMLExporter`.  Did you mean one of: `extra_template_paths, template_name, template_paths`?
+[W 10:06:09.108 NotebookApp] Config option `template_path` not recognized by `LenvsTocHTMLExporter`.  Did you mean one of: `extra_template_paths, template_name, template_paths`?
+[W 10:06:09.122 NotebookApp] Config option `template_path` not recognized by `LenvsTocHTMLExporter`.  Did you mean one of: `extra_template_paths, template_name, template_paths`?
+[W 10:06:09.168 NotebookApp] Config option `template_path` not recognized by `LenvsLatexExporter`.  Did you mean one of: `extra_template_paths, template_name, template_paths`?
+[W 10:06:09.176 NotebookApp] Config option `template_path` not recognized by `LenvsLatexExporter`.  Did you mean one of: `extra_template_paths, template_name, template_paths`?
+[W 10:06:09.346 NotebookApp] Config option `template_path` not recognized by `LenvsSlidesExporter`.  Did you mean one of: `extra_template_paths, template_name, template_paths`?
+[W 10:06:09.354 NotebookApp] Config option `template_path` not recognized by `LenvsSlidesExporter`.  Did you mean one of: `extra_template_paths, template_name, template_paths`?
+[W 10:06:10.044 NotebookApp] Notebook upturn.ipynb is not trusted
+[I 10:24:11.113 NotebookApp] Saving file at /upturn.ipynb
+[W 10:24:11.114 NotebookApp] Notebook upturn.ipynb is not trusted
+[I 14:50:22.006 NotebookApp] Starting buffering for f9b29d76-e9d9-466b-b85d-4bacd21daaf8:211fab0df0884b409813e3748766a79f
+[I 14:50:22.856 NotebookApp] Kernel restarted: f9b29d76-e9d9-466b-b85d-4bacd21daaf8
+[I 14:50:22.979 NotebookApp] Restoring connection for f9b29d76-e9d9-466b-b85d-4bacd21daaf8:211fab0df0884b409813e3748766a79f
+[I 14:50:23.488 NotebookApp] Replaying 3 buffered messages
+[I 14:52:13.585 NotebookApp] Saving file at /upturn.ipynb
+[I 14:54:13.599 NotebookApp] Saving file at /upturn.ipynb
+[I 15:26:05.789 NotebookApp] Starting buffering for f9b29d76-e9d9-466b-b85d-4bacd21daaf8:211fab0df0884b409813e3748766a79f
+[I 15:26:06.584 NotebookApp] Kernel restarted: f9b29d76-e9d9-466b-b85d-4bacd21daaf8
+[I 15:26:06.621 NotebookApp] Restoring connection for f9b29d76-e9d9-466b-b85d-4bacd21daaf8:211fab0df0884b409813e3748766a79f
+[I 15:26:07.436 NotebookApp] Replaying 3 buffered messages
+[I 15:26:13.876 NotebookApp] Saving file at /upturn.ipynb
+[I 15:42:13.910 NotebookApp] Saving file at /upturn.ipynb
+[I 15:50:13.975 NotebookApp] Saving file at /upturn.ipynb
+[I 15:51:45.573 NotebookApp] Kernel interrupted: f9b29d76-e9d9-466b-b85d-4bacd21daaf8
+[I 15:52:19.835 NotebookApp] Saving file at /upturn.ipynb
+[I 15:53:32.044 NotebookApp] Starting buffering for f9b29d76-e9d9-466b-b85d-4bacd21daaf8:211fab0df0884b409813e3748766a79f
+[I 15:53:32.958 NotebookApp] Kernel restarted: f9b29d76-e9d9-466b-b85d-4bacd21daaf8
+[I 15:53:33.021 NotebookApp] Restoring connection for f9b29d76-e9d9-466b-b85d-4bacd21daaf8:211fab0df0884b409813e3748766a79f
+[I 15:53:33.504 NotebookApp] Replaying 3 buffered messages
+[I 15:54:13.900 NotebookApp] Saving file at /upturn.ipynb
+[I 16:03:11.874 NotebookApp] Starting buffering for f9b29d76-e9d9-466b-b85d-4bacd21daaf8:211fab0df0884b409813e3748766a79f
+[I 16:03:12.232 NotebookApp] Kernel restarted: f9b29d76-e9d9-466b-b85d-4bacd21daaf8
+[I 16:03:12.275 NotebookApp] Restoring connection for f9b29d76-e9d9-466b-b85d-4bacd21daaf8:211fab0df0884b409813e3748766a79f
+[I 16:03:13.031 NotebookApp] Replaying 3 buffered messages
+[I 16:04:24.396 NotebookApp] Saving file at /upturn.ipynb
+[I 16:08:17.045 NotebookApp] Saving file at /upturn.ipynb
+[I 16:09:08.027 NotebookApp] Starting buffering for f9b29d76-e9d9-466b-b85d-4bacd21daaf8:211fab0df0884b409813e3748766a79f
+[I 16:09:08.646 NotebookApp] Kernel restarted: f9b29d76-e9d9-466b-b85d-4bacd21daaf8
+[I 16:09:08.870 NotebookApp] Restoring connection for f9b29d76-e9d9-466b-b85d-4bacd21daaf8:211fab0df0884b409813e3748766a79f
+[I 16:09:09.466 NotebookApp] Replaying 3 buffered messages
+[I 16:10:16.627 NotebookApp] Saving file at /upturn.ipynb
+[I 16:11:59.310 NotebookApp] Starting buffering for f9b29d76-e9d9-466b-b85d-4bacd21daaf8:211fab0df0884b409813e3748766a79f
+[I 16:11:59.930 NotebookApp] Kernel restarted: f9b29d76-e9d9-466b-b85d-4bacd21daaf8
+[I 16:12:00.571 NotebookApp] Restoring connection for f9b29d76-e9d9-466b-b85d-4bacd21daaf8:211fab0df0884b409813e3748766a79f
+[I 16:12:00.576 NotebookApp] Replaying 5 buffered messages
+[I 16:12:13.987 NotebookApp] Saving file at /upturn.ipynb
+[I 16:14:14.047 NotebookApp] Saving file at /upturn.ipynb
+[I 16:22:14.067 NotebookApp] Saving file at /upturn.ipynb
+[I 16:24:14.084 NotebookApp] Saving file at /upturn.ipynb
+[I 16:26:09.965 NotebookApp] Starting buffering for f9b29d76-e9d9-466b-b85d-4bacd21daaf8:211fab0df0884b409813e3748766a79f
+Error in atexit._run_exitfuncs:
+Traceback (most recent call last):
+  File "/conda/envs/alpha/lib/python3.8/logging/__init__.py", line 2122, in shutdown
+    h.flush()
+  File "/conda/envs/alpha/lib/python3.8/logging/__init__.py", line 1065, in flush
+    self.stream.flush()
+  File "/conda/envs/alpha/lib/python3.8/site-packages/ipykernel/iostream.py", line 355, in flush
+    self._flush()
+  File "/conda/envs/alpha/lib/python3.8/site-packages/ipykernel/iostream.py", line 381, in _flush
+    self.session.send(self.pub_thread, 'stream', content=content,
+  File "/conda/envs/alpha/lib/python3.8/site-packages/jupyter_client/session.py", line 841, in send
+    stream.send_multipart(to_send, copy=copy)
+  File "/conda/envs/alpha/lib/python3.8/site-packages/ipykernel/iostream.py", line 212, in send_multipart
+    self.schedule(lambda : self._really_send(*args, **kwargs))
+  File "/conda/envs/alpha/lib/python3.8/site-packages/ipykernel/iostream.py", line 205, in schedule
+    f()
+  File "/conda/envs/alpha/lib/python3.8/site-packages/ipykernel/iostream.py", line 212, in <lambda>
+    self.schedule(lambda : self._really_send(*args, **kwargs))
+  File "/conda/envs/alpha/lib/python3.8/site-packages/ipykernel/iostream.py", line 220, in _really_send
+    self.socket.send_multipart(msg, *args, **kwargs)
+AttributeError: 'NoneType' object has no attribute 'send_multipart'
+[I 16:26:11.007 NotebookApp] Kernel restarted: f9b29d76-e9d9-466b-b85d-4bacd21daaf8
+[I 16:26:11.036 NotebookApp] Restoring connection for f9b29d76-e9d9-466b-b85d-4bacd21daaf8:211fab0df0884b409813e3748766a79f
+[I 16:26:11.518 NotebookApp] Replaying 3 buffered messages
+[I 16:26:14.034 NotebookApp] Saving file at /upturn.ipynb
+[I 16:28:14.101 NotebookApp] Saving file at /upturn.ipynb
+[I 16:30:14.191 NotebookApp] Saving file at /upturn.ipynb
+[I 16:31:16.904 NotebookApp] Starting buffering for f9b29d76-e9d9-466b-b85d-4bacd21daaf8:211fab0df0884b409813e3748766a79f
+[I 16:31:18.328 NotebookApp] Kernel restarted: f9b29d76-e9d9-466b-b85d-4bacd21daaf8
+[I 16:31:18.388 NotebookApp] Restoring connection for f9b29d76-e9d9-466b-b85d-4bacd21daaf8:211fab0df0884b409813e3748766a79f
+[I 16:31:19.135 NotebookApp] Replaying 3 buffered messages
+[I 16:32:14.092 NotebookApp] Saving file at /upturn.ipynb
+[I 16:34:14.066 NotebookApp] Saving file at /upturn.ipynb
+[I 16:36:14.070 NotebookApp] Saving file at /upturn.ipynb
+[I 16:38:23.789 NotebookApp] Starting buffering for f9b29d76-e9d9-466b-b85d-4bacd21daaf8:211fab0df0884b409813e3748766a79f
+[I 16:38:25.518 NotebookApp] Kernel restarted: f9b29d76-e9d9-466b-b85d-4bacd21daaf8
+[I 16:38:25.595 NotebookApp] Restoring connection for f9b29d76-e9d9-466b-b85d-4bacd21daaf8:211fab0df0884b409813e3748766a79f
+[I 16:38:26.107 NotebookApp] Replaying 3 buffered messages
+[I 16:39:02.422 NotebookApp] Starting buffering for f9b29d76-e9d9-466b-b85d-4bacd21daaf8:211fab0df0884b409813e3748766a79f
+[I 16:39:02.938 NotebookApp] Kernel restarted: f9b29d76-e9d9-466b-b85d-4bacd21daaf8
+[I 16:39:02.998 NotebookApp] Restoring connection for f9b29d76-e9d9-466b-b85d-4bacd21daaf8:211fab0df0884b409813e3748766a79f
+[I 16:39:03.602 NotebookApp] Replaying 3 buffered messages
+[I 16:40:14.120 NotebookApp] Saving file at /upturn.ipynb
+[I 16:40:43.836 NotebookApp] Starting buffering for f9b29d76-e9d9-466b-b85d-4bacd21daaf8:211fab0df0884b409813e3748766a79f
+[I 16:40:44.371 NotebookApp] Kernel restarted: f9b29d76-e9d9-466b-b85d-4bacd21daaf8
+[I 16:40:44.512 NotebookApp] Restoring connection for f9b29d76-e9d9-466b-b85d-4bacd21daaf8:211fab0df0884b409813e3748766a79f
+[I 16:40:45.260 NotebookApp] Replaying 3 buffered messages
+[I 16:42:14.416 NotebookApp] Saving file at /upturn.ipynb
+[I 16:44:15.294 NotebookApp] Saving file at /upturn.ipynb
+[I 16:58:41.602 NotebookApp] Starting buffering for f9b29d76-e9d9-466b-b85d-4bacd21daaf8:211fab0df0884b409813e3748766a79f
+[I 16:58:42.456 NotebookApp] Kernel restarted: f9b29d76-e9d9-466b-b85d-4bacd21daaf8
+[I 16:58:42.554 NotebookApp] Restoring connection for f9b29d76-e9d9-466b-b85d-4bacd21daaf8:211fab0df0884b409813e3748766a79f
+[I 16:58:43.051 NotebookApp] Replaying 3 buffered messages
+[I 17:00:14.470 NotebookApp] Saving file at /upturn.ipynb
+[I 17:02:14.592 NotebookApp] Saving file at /upturn.ipynb
+[I 17:08:14.050 NotebookApp] Starting buffering for f9b29d76-e9d9-466b-b85d-4bacd21daaf8:211fab0df0884b409813e3748766a79f
+[I 17:08:15.103 NotebookApp] Kernel restarted: f9b29d76-e9d9-466b-b85d-4bacd21daaf8
+[I 17:08:15.198 NotebookApp] Restoring connection for f9b29d76-e9d9-466b-b85d-4bacd21daaf8:211fab0df0884b409813e3748766a79f
+[I 17:08:15.706 NotebookApp] Replaying 3 buffered messages
+[I 17:08:16.303 NotebookApp] Saving file at /upturn.ipynb
+[I 17:09:17.348 NotebookApp] Creating new notebook in 
+[W 17:09:17.607 NotebookApp] Config option `template_path` not recognized by `LenvsHTMLExporter`.  Did you mean one of: `extra_template_paths, template_name, template_paths`?
+[W 17:09:17.624 NotebookApp] Config option `template_path` not recognized by `LenvsHTMLExporter`.  Did you mean one of: `extra_template_paths, template_name, template_paths`?
+[W 17:09:17.648 NotebookApp] Config option `template_path` not recognized by `LenvsTocHTMLExporter`.  Did you mean one of: `extra_template_paths, template_name, template_paths`?
+[W 17:09:17.666 NotebookApp] Config option `template_path` not recognized by `LenvsTocHTMLExporter`.  Did you mean one of: `extra_template_paths, template_name, template_paths`?
+[W 17:09:17.783 NotebookApp] Config option `template_path` not recognized by `LenvsLatexExporter`.  Did you mean one of: `extra_template_paths, template_name, template_paths`?
+[W 17:09:17.804 NotebookApp] Config option `template_path` not recognized by `LenvsLatexExporter`.  Did you mean one of: `extra_template_paths, template_name, template_paths`?
+[W 17:09:18.063 NotebookApp] Config option `template_path` not recognized by `LenvsSlidesExporter`.  Did you mean one of: `extra_template_paths, template_name, template_paths`?
+[W 17:09:18.072 NotebookApp] Config option `template_path` not recognized by `LenvsSlidesExporter`.  Did you mean one of: `extra_template_paths, template_name, template_paths`?
+[W 17:09:18.189 NotebookApp] Config option `template_path` not recognized by `LenvsHTMLExporter`.  Did you mean one of: `extra_template_paths, template_name, template_paths`?
+[W 17:09:18.203 NotebookApp] Config option `template_path` not recognized by `LenvsHTMLExporter`.  Did you mean one of: `extra_template_paths, template_name, template_paths`?
+[W 17:09:18.226 NotebookApp] Config option `template_path` not recognized by `LenvsTocHTMLExporter`.  Did you mean one of: `extra_template_paths, template_name, template_paths`?
+[W 17:09:18.240 NotebookApp] Config option `template_path` not recognized by `LenvsTocHTMLExporter`.  Did you mean one of: `extra_template_paths, template_name, template_paths`?
+[W 17:09:18.288 NotebookApp] Config option `template_path` not recognized by `LenvsLatexExporter`.  Did you mean one of: `extra_template_paths, template_name, template_paths`?
+[W 17:09:18.295 NotebookApp] Config option `template_path` not recognized by `LenvsLatexExporter`.  Did you mean one of: `extra_template_paths, template_name, template_paths`?
+[W 17:09:18.494 NotebookApp] Config option `template_path` not recognized by `LenvsSlidesExporter`.  Did you mean one of: `extra_template_paths, template_name, template_paths`?
+[W 17:09:18.502 NotebookApp] Config option `template_path` not recognized by `LenvsSlidesExporter`.  Did you mean one of: `extra_template_paths, template_name, template_paths`?
+[I 17:09:20.086 NotebookApp] Kernel started: e85d97ee-47f2-47a4-918f-457fee736d92, name: alpha
+[I 17:10:14.231 NotebookApp] Saving file at /upturn.ipynb
+[I 17:11:20.183 NotebookApp] Saving file at /byVolume.ipynb
+[I 17:13:20.108 NotebookApp] Saving file at /byVolume.ipynb
+[I 17:15:20.321 NotebookApp] Saving file at /byVolume.ipynb
+[I 17:17:20.163 NotebookApp] Saving file at /byVolume.ipynb
+[I 17:22:14.304 NotebookApp] Saving file at /upturn.ipynb
+[I 17:22:54.537 NotebookApp] Starting buffering for f9b29d76-e9d9-466b-b85d-4bacd21daaf8:211fab0df0884b409813e3748766a79f
+[I 17:22:55.161 NotebookApp] Kernel restarted: f9b29d76-e9d9-466b-b85d-4bacd21daaf8
+[I 17:22:55.233 NotebookApp] Restoring connection for f9b29d76-e9d9-466b-b85d-4bacd21daaf8:211fab0df0884b409813e3748766a79f
+[I 17:22:55.741 NotebookApp] Replaying 3 buffered messages
+[I 17:24:14.585 NotebookApp] Saving file at /upturn.ipynb
+[I 17:26:14.538 NotebookApp] Saving file at /upturn.ipynb
+[I 17:27:20.216 NotebookApp] Saving file at /byVolume.ipynb
+[I 17:28:14.580 NotebookApp] Saving file at /upturn.ipynb
+[I 17:29:20.208 NotebookApp] Saving file at /byVolume.ipynb
+[I 17:31:20.208 NotebookApp] Saving file at /byVolume.ipynb
+[I 17:33:20.221 NotebookApp] Saving file at /byVolume.ipynb
+[I 17:35:20.231 NotebookApp] Saving file at /byVolume.ipynb
+[I 17:39:20.313 NotebookApp] Saving file at /byVolume.ipynb
+[I 17:45:20.445 NotebookApp] Saving file at /byVolume.ipynb
+[I 17:49:20.292 NotebookApp] Saving file at /byVolume.ipynb
+[W 10:16:06.608 NotebookApp] Collisions detected in /root/.jupyter/jupyter_notebook_config.py and /root/.jupyter/jupyter_notebook_config.json config files. /root/.jupyter/jupyter_notebook_config.json has higher priority: {
+      "NotebookApp": {
+        "password": "'' ignored, using 'argon2:$argon2id$v=19$m=10240,t=10,p=8$cXOmRIiog6ASPl/Q00333A$JzGws4fxKmJW44klRrfKXQ'"
+      }
+    }
+[I 10:16:07.624 NotebookApp] [nb_conda_kernels] enabled, 5 kernels found
+[I 10:16:08.692 NotebookApp] Autoreload enabled: the webapp will restart when any Python src file changes.
+[W 10:16:08.704 NotebookApp] WARNING: The notebook server is listening on all IP addresses and not using encryption. This is not recommended.
+[I 10:16:08.795 NotebookApp] [jupyter_nbextensions_configurator] enabled 0.4.1
+[I 10:16:09.283 NotebookApp] [nb_conda] enabled
+[I 10:16:09.283 NotebookApp] Serving notebooks from local directory: /apps/alpha/alpha/notebook
+[I 10:16:09.284 NotebookApp] Jupyter Notebook 6.3.0 is running at:
+[I 10:16:09.284 NotebookApp] http://6de00d098d2c:3184/
+[I 10:16:09.284 NotebookApp] Use Control-C to stop this server and shut down all kernels (twice to skip confirmation).
+[W 10:16:21.310 NotebookApp] Config option `template_path` not recognized by `LenvsHTMLExporter`.  Did you mean one of: `extra_template_paths, template_name, template_paths`?
+[W 10:16:21.324 NotebookApp] Config option `template_path` not recognized by `LenvsHTMLExporter`.  Did you mean one of: `extra_template_paths, template_name, template_paths`?
+[W 10:16:21.344 NotebookApp] Config option `template_path` not recognized by `LenvsTocHTMLExporter`.  Did you mean one of: `extra_template_paths, template_name, template_paths`?
+[W 10:16:21.358 NotebookApp] Config option `template_path` not recognized by `LenvsTocHTMLExporter`.  Did you mean one of: `extra_template_paths, template_name, template_paths`?
+[W 10:16:21.408 NotebookApp] Config option `template_path` not recognized by `LenvsLatexExporter`.  Did you mean one of: `extra_template_paths, template_name, template_paths`?
+[W 10:16:21.416 NotebookApp] Config option `template_path` not recognized by `LenvsLatexExporter`.  Did you mean one of: `extra_template_paths, template_name, template_paths`?
+[W 10:16:21.600 NotebookApp] Config option `template_path` not recognized by `LenvsSlidesExporter`.  Did you mean one of: `extra_template_paths, template_name, template_paths`?
+[W 10:16:21.609 NotebookApp] Config option `template_path` not recognized by `LenvsSlidesExporter`.  Did you mean one of: `extra_template_paths, template_name, template_paths`?
+[W 10:16:21.714 NotebookApp] Config option `template_path` not recognized by `LenvsHTMLExporter`.  Did you mean one of: `extra_template_paths, template_name, template_paths`?
+[W 10:16:21.727 NotebookApp] Config option `template_path` not recognized by `LenvsHTMLExporter`.  Did you mean one of: `extra_template_paths, template_name, template_paths`?
+[W 10:16:21.748 NotebookApp] Config option `template_path` not recognized by `LenvsTocHTMLExporter`.  Did you mean one of: `extra_template_paths, template_name, template_paths`?
+[W 10:16:21.762 NotebookApp] Config option `template_path` not recognized by `LenvsTocHTMLExporter`.  Did you mean one of: `extra_template_paths, template_name, template_paths`?
+[W 10:16:21.805 NotebookApp] Config option `template_path` not recognized by `LenvsLatexExporter`.  Did you mean one of: `extra_template_paths, template_name, template_paths`?
+[W 10:16:21.813 NotebookApp] Config option `template_path` not recognized by `LenvsLatexExporter`.  Did you mean one of: `extra_template_paths, template_name, template_paths`?
+[W 10:16:21.978 NotebookApp] Config option `template_path` not recognized by `LenvsSlidesExporter`.  Did you mean one of: `extra_template_paths, template_name, template_paths`?
+[W 10:16:21.987 NotebookApp] Config option `template_path` not recognized by `LenvsSlidesExporter`.  Did you mean one of: `extra_template_paths, template_name, template_paths`?
+[W 10:16:22.934 NotebookApp] Notebook upturn.ipynb is not trusted
+[I 10:16:23.502 NotebookApp] Kernel started: d50da750-26f4-43ad-9524-88477afafd6e, name: alpha
+[I 10:18:23.576 NotebookApp] Saving file at /upturn.ipynb
+[W 10:18:23.577 NotebookApp] Notebook upturn.ipynb is not trusted
+[I 10:19:24.966 NotebookApp] Saving file at /byVolume.ipynb
+[W 10:19:46.284 NotebookApp] Config option `template_path` not recognized by `LenvsHTMLExporter`.  Did you mean one of: `extra_template_paths, template_name, template_paths`?
+[W 10:19:46.297 NotebookApp] Config option `template_path` not recognized by `LenvsHTMLExporter`.  Did you mean one of: `extra_template_paths, template_name, template_paths`?
+[W 10:19:46.317 NotebookApp] Config option `template_path` not recognized by `LenvsTocHTMLExporter`.  Did you mean one of: `extra_template_paths, template_name, template_paths`?
+[W 10:19:46.330 NotebookApp] Config option `template_path` not recognized by `LenvsTocHTMLExporter`.  Did you mean one of: `extra_template_paths, template_name, template_paths`?
+[W 10:19:46.372 NotebookApp] Config option `template_path` not recognized by `LenvsLatexExporter`.  Did you mean one of: `extra_template_paths, template_name, template_paths`?
+[W 10:19:46.380 NotebookApp] Config option `template_path` not recognized by `LenvsLatexExporter`.  Did you mean one of: `extra_template_paths, template_name, template_paths`?
+[W 10:19:46.540 NotebookApp] Config option `template_path` not recognized by `LenvsSlidesExporter`.  Did you mean one of: `extra_template_paths, template_name, template_paths`?
+[W 10:19:46.549 NotebookApp] Config option `template_path` not recognized by `LenvsSlidesExporter`.  Did you mean one of: `extra_template_paths, template_name, template_paths`?
+[W 10:19:46.649 NotebookApp] Config option `template_path` not recognized by `LenvsHTMLExporter`.  Did you mean one of: `extra_template_paths, template_name, template_paths`?
+[W 10:19:46.662 NotebookApp] Config option `template_path` not recognized by `LenvsHTMLExporter`.  Did you mean one of: `extra_template_paths, template_name, template_paths`?
+[W 10:19:46.682 NotebookApp] Config option `template_path` not recognized by `LenvsTocHTMLExporter`.  Did you mean one of: `extra_template_paths, template_name, template_paths`?
+[W 10:19:46.695 NotebookApp] Config option `template_path` not recognized by `LenvsTocHTMLExporter`.  Did you mean one of: `extra_template_paths, template_name, template_paths`?
+[W 10:19:46.737 NotebookApp] Config option `template_path` not recognized by `LenvsLatexExporter`.  Did you mean one of: `extra_template_paths, template_name, template_paths`?
+[W 10:19:46.744 NotebookApp] Config option `template_path` not recognized by `LenvsLatexExporter`.  Did you mean one of: `extra_template_paths, template_name, template_paths`?
+[W 10:19:46.903 NotebookApp] Config option `template_path` not recognized by `LenvsSlidesExporter`.  Did you mean one of: `extra_template_paths, template_name, template_paths`?
+[W 10:19:46.912 NotebookApp] Config option `template_path` not recognized by `LenvsSlidesExporter`.  Did you mean one of: `extra_template_paths, template_name, template_paths`?
+[W 10:19:48.370 NotebookApp] Notebook byVolume.ipynb is not trusted
+[I 10:19:51.137 NotebookApp] Kernel started: e95b1186-c138-43de-90dc-960ede615eb0, name: alpha
+[I 10:21:51.290 NotebookApp] Saving file at /byVolume.ipynb
+[W 10:21:51.291 NotebookApp] Notebook byVolume.ipynb is not trusted
+[I 10:23:51.176 NotebookApp] Saving file at /byVolume.ipynb
+[W 10:23:51.177 NotebookApp] Notebook byVolume.ipynb is not trusted
+[I 10:29:51.292 NotebookApp] Saving file at /byVolume.ipynb
+[I 10:31:51.259 NotebookApp] Saving file at /byVolume.ipynb
+[I 10:33:51.240 NotebookApp] Saving file at /byVolume.ipynb
+[I 10:35:51.279 NotebookApp] Saving file at /byVolume.ipynb
+[I 10:37:51.275 NotebookApp] Saving file at /byVolume.ipynb
+[I 10:39:56.896 NotebookApp] Saving file at /byVolume.ipynb
+[I 10:41:51.260 NotebookApp] Saving file at /byVolume.ipynb
+[I 10:43:51.276 NotebookApp] Saving file at /byVolume.ipynb
+[I 10:45:51.275 NotebookApp] Saving file at /byVolume.ipynb
+[I 10:47:51.394 NotebookApp] Saving file at /byVolume.ipynb
+[I 10:49:51.322 NotebookApp] Saving file at /byVolume.ipynb
+[I 10:51:53.573 NotebookApp] Saving file at /byVolume.ipynb
+[I 10:55:54.232 NotebookApp] Saving file at /byVolume.ipynb
+[I 10:57:51.347 NotebookApp] Saving file at /byVolume.ipynb
+[I 10:59:02.092 NotebookApp] Kernel interrupted: e95b1186-c138-43de-90dc-960ede615eb0
+[I 10:59:43.495 NotebookApp] Kernel interrupted: e95b1186-c138-43de-90dc-960ede615eb0
+[I 10:59:51.335 NotebookApp] Saving file at /byVolume.ipynb
+[I 11:03:51.353 NotebookApp] Saving file at /byVolume.ipynb
+[I 11:07:51.379 NotebookApp] Saving file at /byVolume.ipynb
+[I 11:09:51.392 NotebookApp] Saving file at /byVolume.ipynb
+[I 11:11:51.406 NotebookApp] Saving file at /byVolume.ipynb
+[I 12:13:51.755 NotebookApp] Saving file at /byVolume.ipynb
+[I 12:15:51.740 NotebookApp] Saving file at /byVolume.ipynb
+[I 12:19:51.756 NotebookApp] Saving file at /byVolume.ipynb
+[I 12:35:51.877 NotebookApp] Saving file at /byVolume.ipynb
+[I 12:37:51.899 NotebookApp] Saving file at /byVolume.ipynb
+[I 16:15:52.947 NotebookApp] Saving file at /byVolume.ipynb
+[I 16:19:52.913 NotebookApp] Saving file at /byVolume.ipynb
+[I 16:57:53.117 NotebookApp] Saving file at /byVolume.ipynb
+[I 16:59:53.176 NotebookApp] Saving file at /byVolume.ipynb
+[I 17:01:53.499 NotebookApp] Saving file at /byVolume.ipynb
+[I 17:03:53.109 NotebookApp] Kernel interrupted: e95b1186-c138-43de-90dc-960ede615eb0
+[I 17:03:57.175 NotebookApp] Saving file at /byVolume.ipynb
+[I 17:04:06.615 NotebookApp] Kernel interrupted: e95b1186-c138-43de-90dc-960ede615eb0
+[I 17:05:53.802 NotebookApp] Saving file at /byVolume.ipynb
+[I 17:07:54.442 NotebookApp] Saving file at /byVolume.ipynb
+[I 17:15:54.830 NotebookApp] Saving file at /byVolume.ipynb
+[I 17:17:57.837 NotebookApp] Saving file at /byVolume.ipynb
+[I 17:18:43.425 NotebookApp] Kernel interrupted: e95b1186-c138-43de-90dc-960ede615eb0
+[I 17:19:57.887 NotebookApp] Saving file at /byVolume.ipynb
+[I 17:21:56.595 NotebookApp] Saving file at /byVolume.ipynb
+[I 17:25:55.013 NotebookApp] Saving file at /byVolume.ipynb
+[I 17:28:01.160 NotebookApp] Saving file at /byVolume.ipynb
+[I 17:29:53.872 NotebookApp] Saving file at /byVolume.ipynb
+[I 17:33:55.032 NotebookApp] Saving file at /byVolume.ipynb
+[I 17:35:35.567 NotebookApp] Kernel interrupted: e95b1186-c138-43de-90dc-960ede615eb0
+[I 17:35:43.700 NotebookApp] Starting buffering for e95b1186-c138-43de-90dc-960ede615eb0:c23060c3648744fb875d49bbd9b8ff87
+[I 17:35:45.623 NotebookApp] Kernel restarted: e95b1186-c138-43de-90dc-960ede615eb0
+[I 17:35:45.727 NotebookApp] Restoring connection for e95b1186-c138-43de-90dc-960ede615eb0:c23060c3648744fb875d49bbd9b8ff87
+[I 17:35:46.160 NotebookApp] Replaying 3 buffered messages
+[I 17:35:53.269 NotebookApp] Saving file at /byVolume.ipynb
+[I 17:37:53.218 NotebookApp] Saving file at /byVolume.ipynb
+[I 17:43:53.240 NotebookApp] Saving file at /byVolume.ipynb
+[I 18:03:53.354 NotebookApp] Saving file at /byVolume.ipynb
+[W 18:57:56.045 NotebookApp] WebSocket ping timeout after 118453 ms.
+[I 18:58:01.049 NotebookApp] Starting buffering for d50da750-26f4-43ad-9524-88477afafd6e:9938e6b55d0040568415c1c3c57183f1
+[W 18:58:15.729 NotebookApp] WebSocket ping timeout after 118912 ms.
+[I 18:58:20.730 NotebookApp] Starting buffering for e95b1186-c138-43de-90dc-960ede615eb0:c23060c3648744fb875d49bbd9b8ff87
+[I 19:06:11.688 NotebookApp] Restoring connection for d50da750-26f4-43ad-9524-88477afafd6e:9938e6b55d0040568415c1c3c57183f1
+[I 19:06:29.528 NotebookApp] Restoring connection for e95b1186-c138-43de-90dc-960ede615eb0:c23060c3648744fb875d49bbd9b8ff87
+[I 19:10:09.556 NotebookApp] Starting buffering for e95b1186-c138-43de-90dc-960ede615eb0:c23060c3648744fb875d49bbd9b8ff87
+[I 19:10:11.226 NotebookApp] Restoring connection for e95b1186-c138-43de-90dc-960ede615eb0:c23060c3648744fb875d49bbd9b8ff87
+[I 19:11:04.750 NotebookApp] Starting buffering for e95b1186-c138-43de-90dc-960ede615eb0:c23060c3648744fb875d49bbd9b8ff87
+[I 19:11:09.082 NotebookApp] Restoring connection for e95b1186-c138-43de-90dc-960ede615eb0:c23060c3648744fb875d49bbd9b8ff87
+[I 19:13:49.818 NotebookApp] Starting buffering for e95b1186-c138-43de-90dc-960ede615eb0:c23060c3648744fb875d49bbd9b8ff87
+[I 19:13:52.106 NotebookApp] Restoring connection for e95b1186-c138-43de-90dc-960ede615eb0:c23060c3648744fb875d49bbd9b8ff87
+[I 19:27:26.266 NotebookApp] Starting buffering for d50da750-26f4-43ad-9524-88477afafd6e:9938e6b55d0040568415c1c3c57183f1
+[I 19:27:33.155 NotebookApp] Restoring connection for d50da750-26f4-43ad-9524-88477afafd6e:9938e6b55d0040568415c1c3c57183f1
+[W 20:23:33.157 NotebookApp] WebSocket ping timeout after 119805 ms.
+[I 20:23:38.160 NotebookApp] Starting buffering for d50da750-26f4-43ad-9524-88477afafd6e:9938e6b55d0040568415c1c3c57183f1
+[I 20:23:43.148 NotebookApp] Restoring connection for d50da750-26f4-43ad-9524-88477afafd6e:9938e6b55d0040568415c1c3c57183f1
+[W 20:23:52.107 NotebookApp] WebSocket ping timeout after 119729 ms.
+[I 20:23:57.109 NotebookApp] Starting buffering for e95b1186-c138-43de-90dc-960ede615eb0:c23060c3648744fb875d49bbd9b8ff87
+[I 20:27:46.390 NotebookApp] Starting buffering for d50da750-26f4-43ad-9524-88477afafd6e:9938e6b55d0040568415c1c3c57183f1
+[W 14:18:46.576 NotebookApp] Config option `template_path` not recognized by `LenvsHTMLExporter`.  Did you mean one of: `extra_template_paths, template_name, template_paths`?
+[W 14:18:46.590 NotebookApp] Config option `template_path` not recognized by `LenvsHTMLExporter`.  Did you mean one of: `extra_template_paths, template_name, template_paths`?
+[W 14:18:46.611 NotebookApp] Config option `template_path` not recognized by `LenvsTocHTMLExporter`.  Did you mean one of: `extra_template_paths, template_name, template_paths`?
+[W 14:18:46.624 NotebookApp] Config option `template_path` not recognized by `LenvsTocHTMLExporter`.  Did you mean one of: `extra_template_paths, template_name, template_paths`?
+[W 14:18:46.668 NotebookApp] Config option `template_path` not recognized by `LenvsLatexExporter`.  Did you mean one of: `extra_template_paths, template_name, template_paths`?
+[W 14:18:46.675 NotebookApp] Config option `template_path` not recognized by `LenvsLatexExporter`.  Did you mean one of: `extra_template_paths, template_name, template_paths`?
+[W 14:18:46.846 NotebookApp] Config option `template_path` not recognized by `LenvsSlidesExporter`.  Did you mean one of: `extra_template_paths, template_name, template_paths`?
+[W 14:18:46.855 NotebookApp] Config option `template_path` not recognized by `LenvsSlidesExporter`.  Did you mean one of: `extra_template_paths, template_name, template_paths`?
+[W 14:18:47.003 NotebookApp] Config option `template_path` not recognized by `LenvsHTMLExporter`.  Did you mean one of: `extra_template_paths, template_name, template_paths`?
+[W 14:18:47.017 NotebookApp] Config option `template_path` not recognized by `LenvsHTMLExporter`.  Did you mean one of: `extra_template_paths, template_name, template_paths`?
+[W 14:18:47.038 NotebookApp] Config option `template_path` not recognized by `LenvsTocHTMLExporter`.  Did you mean one of: `extra_template_paths, template_name, template_paths`?
+[W 14:18:47.052 NotebookApp] Config option `template_path` not recognized by `LenvsTocHTMLExporter`.  Did you mean one of: `extra_template_paths, template_name, template_paths`?
+[W 14:18:47.098 NotebookApp] Config option `template_path` not recognized by `LenvsLatexExporter`.  Did you mean one of: `extra_template_paths, template_name, template_paths`?
+[W 14:18:47.106 NotebookApp] Config option `template_path` not recognized by `LenvsLatexExporter`.  Did you mean one of: `extra_template_paths, template_name, template_paths`?
+[W 14:18:47.295 NotebookApp] Config option `template_path` not recognized by `LenvsSlidesExporter`.  Did you mean one of: `extra_template_paths, template_name, template_paths`?
+[W 14:18:47.305 NotebookApp] Config option `template_path` not recognized by `LenvsSlidesExporter`.  Did you mean one of: `extra_template_paths, template_name, template_paths`?
+[W 14:18:48.115 NotebookApp] Notebook byVolume.ipynb is not trusted
+[I 14:20:48.491 NotebookApp] Saving file at /byVolume.ipynb
+[W 14:20:48.492 NotebookApp] Notebook byVolume.ipynb is not trusted
+[I 14:24:47.019 NotebookApp] Kernel interrupted: e95b1186-c138-43de-90dc-960ede615eb0
+[I 14:24:48.498 NotebookApp] Saving file at /byVolume.ipynb
+[W 14:24:48.499 NotebookApp] Notebook byVolume.ipynb is not trusted
+[I 14:26:48.505 NotebookApp] Saving file at /byVolume.ipynb
+[W 14:26:48.506 NotebookApp] Notebook byVolume.ipynb is not trusted
+[I 14:32:48.537 NotebookApp] Saving file at /byVolume.ipynb
+[W 14:32:48.539 NotebookApp] Notebook byVolume.ipynb is not trusted
+[I 14:34:44.097 NotebookApp] 302 GET / (192.168.3.80) 2.090000ms
+[I 14:34:44.115 NotebookApp] 302 GET /tree? (192.168.3.80) 1.310000ms
+[I 14:34:47.519 NotebookApp] 302 POST /login?next=%2Ftree%3F (192.168.3.80) 88.760000ms
+[I 14:34:48.575 NotebookApp] Saving file at /byVolume.ipynb
+[I 14:34:56.905 NotebookApp] 302 GET /tree? (192.168.3.80) 1.570000ms
+[I 14:34:59.112 NotebookApp] 302 POST /login?next=%2Ftree%3F (192.168.3.80) 63.360000ms
+[I 14:35:16.949 NotebookApp] 302 GET /tree? (192.168.3.80) 1.660000ms
+[W 14:35:18.748 NotebookApp] Config option `template_path` not recognized by `LenvsHTMLExporter`.  Did you mean one of: `extra_template_paths, template_name, template_paths`?
+[W 14:35:18.761 NotebookApp] Config option `template_path` not recognized by `LenvsHTMLExporter`.  Did you mean one of: `extra_template_paths, template_name, template_paths`?
+[W 14:35:18.781 NotebookApp] Config option `template_path` not recognized by `LenvsTocHTMLExporter`.  Did you mean one of: `extra_template_paths, template_name, template_paths`?
+[W 14:35:18.794 NotebookApp] Config option `template_path` not recognized by `LenvsTocHTMLExporter`.  Did you mean one of: `extra_template_paths, template_name, template_paths`?
+[W 14:35:18.837 NotebookApp] Config option `template_path` not recognized by `LenvsLatexExporter`.  Did you mean one of: `extra_template_paths, template_name, template_paths`?
+[W 14:35:18.845 NotebookApp] Config option `template_path` not recognized by `LenvsLatexExporter`.  Did you mean one of: `extra_template_paths, template_name, template_paths`?
+[W 14:35:19.267 NotebookApp] Config option `template_path` not recognized by `LenvsSlidesExporter`.  Did you mean one of: `extra_template_paths, template_name, template_paths`?
+[W 14:35:19.290 NotebookApp] Config option `template_path` not recognized by `LenvsSlidesExporter`.  Did you mean one of: `extra_template_paths, template_name, template_paths`?
+[W 14:35:19.432 NotebookApp] Config option `template_path` not recognized by `LenvsHTMLExporter`.  Did you mean one of: `extra_template_paths, template_name, template_paths`?
+[W 14:35:19.445 NotebookApp] Config option `template_path` not recognized by `LenvsHTMLExporter`.  Did you mean one of: `extra_template_paths, template_name, template_paths`?
+[W 14:35:19.465 NotebookApp] Config option `template_path` not recognized by `LenvsTocHTMLExporter`.  Did you mean one of: `extra_template_paths, template_name, template_paths`?
+[W 14:35:19.478 NotebookApp] Config option `template_path` not recognized by `LenvsTocHTMLExporter`.  Did you mean one of: `extra_template_paths, template_name, template_paths`?
+[W 14:35:19.520 NotebookApp] Config option `template_path` not recognized by `LenvsLatexExporter`.  Did you mean one of: `extra_template_paths, template_name, template_paths`?
+[W 14:35:19.528 NotebookApp] Config option `template_path` not recognized by `LenvsLatexExporter`.  Did you mean one of: `extra_template_paths, template_name, template_paths`?
+[W 14:35:19.687 NotebookApp] Config option `template_path` not recognized by `LenvsSlidesExporter`.  Did you mean one of: `extra_template_paths, template_name, template_paths`?
+[W 14:35:19.696 NotebookApp] Config option `template_path` not recognized by `LenvsSlidesExporter`.  Did you mean one of: `extra_template_paths, template_name, template_paths`?
+[I 14:35:19.736 NotebookApp] 302 GET /tree? (192.168.3.80) 0.560000ms
+[I 14:38:48.543 NotebookApp] Saving file at /byVolume.ipynb
+[W 14:39:18.439 NotebookApp] Config option `template_path` not recognized by `LenvsHTMLExporter`.  Did you mean one of: `extra_template_paths, template_name, template_paths`?
+[W 14:39:18.452 NotebookApp] Config option `template_path` not recognized by `LenvsHTMLExporter`.  Did you mean one of: `extra_template_paths, template_name, template_paths`?
+[W 14:39:18.499 NotebookApp] Config option `template_path` not recognized by `LenvsTocHTMLExporter`.  Did you mean one of: `extra_template_paths, template_name, template_paths`?
+[W 14:39:18.525 NotebookApp] Config option `template_path` not recognized by `LenvsTocHTMLExporter`.  Did you mean one of: `extra_template_paths, template_name, template_paths`?
+[W 14:39:18.571 NotebookApp] Config option `template_path` not recognized by `LenvsLatexExporter`.  Did you mean one of: `extra_template_paths, template_name, template_paths`?
+[W 14:39:18.579 NotebookApp] Config option `template_path` not recognized by `LenvsLatexExporter`.  Did you mean one of: `extra_template_paths, template_name, template_paths`?
+[W 14:39:18.824 NotebookApp] Config option `template_path` not recognized by `LenvsSlidesExporter`.  Did you mean one of: `extra_template_paths, template_name, template_paths`?
+[W 14:39:18.833 NotebookApp] Config option `template_path` not recognized by `LenvsSlidesExporter`.  Did you mean one of: `extra_template_paths, template_name, template_paths`?
+[W 14:39:18.941 NotebookApp] Config option `template_path` not recognized by `LenvsHTMLExporter`.  Did you mean one of: `extra_template_paths, template_name, template_paths`?
+[W 14:39:18.954 NotebookApp] Config option `template_path` not recognized by `LenvsHTMLExporter`.  Did you mean one of: `extra_template_paths, template_name, template_paths`?
+[W 14:39:18.974 NotebookApp] Config option `template_path` not recognized by `LenvsTocHTMLExporter`.  Did you mean one of: `extra_template_paths, template_name, template_paths`?
+[W 14:39:18.988 NotebookApp] Config option `template_path` not recognized by `LenvsTocHTMLExporter`.  Did you mean one of: `extra_template_paths, template_name, template_paths`?
+[W 14:39:19.031 NotebookApp] Config option `template_path` not recognized by `LenvsLatexExporter`.  Did you mean one of: `extra_template_paths, template_name, template_paths`?
+[W 14:39:19.038 NotebookApp] Config option `template_path` not recognized by `LenvsLatexExporter`.  Did you mean one of: `extra_template_paths, template_name, template_paths`?
+[W 14:39:19.205 NotebookApp] Config option `template_path` not recognized by `LenvsSlidesExporter`.  Did you mean one of: `extra_template_paths, template_name, template_paths`?
+[W 14:39:19.213 NotebookApp] Config option `template_path` not recognized by `LenvsSlidesExporter`.  Did you mean one of: `extra_template_paths, template_name, template_paths`?
+[I 14:43:20.120 NotebookApp] Saving file at /byVolume.ipynb
+[I 14:45:20.129 NotebookApp] Saving file at /byVolume.ipynb
+[I 14:47:20.125 NotebookApp] Saving file at /byVolume.ipynb
+[I 14:49:20.122 NotebookApp] Saving file at /byVolume.ipynb
+[I 14:53:20.146 NotebookApp] Saving file at /byVolume.ipynb
+[I 14:55:20.136 NotebookApp] Saving file at /byVolume.ipynb
+[I 14:57:20.136 NotebookApp] Saving file at /byVolume.ipynb
+[W 15:04:20.116 NotebookApp] WebSocket ping timeout after 119994 ms.
+[I 15:04:25.119 NotebookApp] Starting buffering for e95b1186-c138-43de-90dc-960ede615eb0:a973f6a91bb84e65b49f398750f10467
+[I 16:54:57.627 NotebookApp] Restoring connection for e95b1186-c138-43de-90dc-960ede615eb0:a973f6a91bb84e65b49f398750f10467
+[I 16:56:13.671 NotebookApp] Starting buffering for e95b1186-c138-43de-90dc-960ede615eb0:a973f6a91bb84e65b49f398750f10467
+[I 16:56:14.704 NotebookApp] Restoring connection for e95b1186-c138-43de-90dc-960ede615eb0:a973f6a91bb84e65b49f398750f10467
+[I 16:57:25.310 NotebookApp] Starting buffering for e95b1186-c138-43de-90dc-960ede615eb0:a973f6a91bb84e65b49f398750f10467
+[I 16:57:26.333 NotebookApp] Restoring connection for e95b1186-c138-43de-90dc-960ede615eb0:a973f6a91bb84e65b49f398750f10467
+[W 17:33:26.334 NotebookApp] WebSocket ping timeout after 119985 ms.
+[I 17:33:31.336 NotebookApp] Starting buffering for e95b1186-c138-43de-90dc-960ede615eb0:a973f6a91bb84e65b49f398750f10467
+[W 15:14:50.661 NotebookApp] Collisions detected in /root/.jupyter/jupyter_notebook_config.py and /root/.jupyter/jupyter_notebook_config.json config files. /root/.jupyter/jupyter_notebook_config.json has higher priority: {
+      "NotebookApp": {
+        "password": "'' ignored, using 'argon2:$argon2id$v=19$m=10240,t=10,p=8$cXOmRIiog6ASPl/Q00333A$JzGws4fxKmJW44klRrfKXQ'"
+      }
+    }
+[I 15:14:52.236 NotebookApp] [nb_conda_kernels] enabled, 5 kernels found
+[I 15:14:54.558 NotebookApp] Autoreload enabled: the webapp will restart when any Python src file changes.
+[W 15:14:54.575 NotebookApp] WARNING: The notebook server is listening on all IP addresses and not using encryption. This is not recommended.
+[I 15:14:54.732 NotebookApp] [jupyter_nbextensions_configurator] enabled 0.4.1
+[I 15:14:55.953 NotebookApp] [nb_conda] enabled
+[I 15:14:55.953 NotebookApp] Serving notebooks from local directory: /apps/alpha/alpha/notebook
+[I 15:14:55.953 NotebookApp] Jupyter Notebook 6.3.0 is running at:
+[I 15:14:55.953 NotebookApp] http://6de00d098d2c:3184/
+[I 15:14:55.953 NotebookApp] Use Control-C to stop this server and shut down all kernels (twice to skip confirmation).
+[W 15:15:04.239 NotebookApp] Config option `template_path` not recognized by `LenvsHTMLExporter`.  Did you mean one of: `extra_template_paths, template_name, template_paths`?
+[W 15:15:04.257 NotebookApp] Config option `template_path` not recognized by `LenvsHTMLExporter`.  Did you mean one of: `extra_template_paths, template_name, template_paths`?
+[W 15:15:04.278 NotebookApp] Config option `template_path` not recognized by `LenvsTocHTMLExporter`.  Did you mean one of: `extra_template_paths, template_name, template_paths`?
+[W 15:15:04.291 NotebookApp] Config option `template_path` not recognized by `LenvsTocHTMLExporter`.  Did you mean one of: `extra_template_paths, template_name, template_paths`?
+[W 15:15:04.340 NotebookApp] Config option `template_path` not recognized by `LenvsLatexExporter`.  Did you mean one of: `extra_template_paths, template_name, template_paths`?
+[W 15:15:04.349 NotebookApp] Config option `template_path` not recognized by `LenvsLatexExporter`.  Did you mean one of: `extra_template_paths, template_name, template_paths`?
+[W 15:15:04.534 NotebookApp] Config option `template_path` not recognized by `LenvsSlidesExporter`.  Did you mean one of: `extra_template_paths, template_name, template_paths`?
+[W 15:15:04.542 NotebookApp] Config option `template_path` not recognized by `LenvsSlidesExporter`.  Did you mean one of: `extra_template_paths, template_name, template_paths`?
+[W 15:15:04.646 NotebookApp] Config option `template_path` not recognized by `LenvsHTMLExporter`.  Did you mean one of: `extra_template_paths, template_name, template_paths`?
+[W 15:15:04.659 NotebookApp] Config option `template_path` not recognized by `LenvsHTMLExporter`.  Did you mean one of: `extra_template_paths, template_name, template_paths`?
+[W 15:15:04.679 NotebookApp] Config option `template_path` not recognized by `LenvsTocHTMLExporter`.  Did you mean one of: `extra_template_paths, template_name, template_paths`?
+[W 15:15:04.693 NotebookApp] Config option `template_path` not recognized by `LenvsTocHTMLExporter`.  Did you mean one of: `extra_template_paths, template_name, template_paths`?
+[W 15:15:04.737 NotebookApp] Config option `template_path` not recognized by `LenvsLatexExporter`.  Did you mean one of: `extra_template_paths, template_name, template_paths`?
+[W 15:15:04.744 NotebookApp] Config option `template_path` not recognized by `LenvsLatexExporter`.  Did you mean one of: `extra_template_paths, template_name, template_paths`?
+[W 15:15:04.929 NotebookApp] Config option `template_path` not recognized by `LenvsSlidesExporter`.  Did you mean one of: `extra_template_paths, template_name, template_paths`?
+[W 15:15:04.938 NotebookApp] Config option `template_path` not recognized by `LenvsSlidesExporter`.  Did you mean one of: `extra_template_paths, template_name, template_paths`?
+[I 15:15:06.440 NotebookApp] Kernel started: e87ba907-5cad-43f2-97c1-5eaa421339f8, name: alpha
+[I 15:17:06.220 NotebookApp] Saving file at /byVolume.ipynb
+[I 15:19:06.239 NotebookApp] Saving file at /byVolume.ipynb
+[I 15:21:06.207 NotebookApp] Saving file at /byVolume.ipynb
+[I 15:25:06.210 NotebookApp] Saving file at /byVolume.ipynb
+[I 15:40:33.511 NotebookApp] Creating new notebook in 
+[W 15:40:33.690 NotebookApp] Config option `template_path` not recognized by `LenvsHTMLExporter`.  Did you mean one of: `extra_template_paths, template_name, template_paths`?
+[W 15:40:33.726 NotebookApp] Config option `template_path` not recognized by `LenvsHTMLExporter`.  Did you mean one of: `extra_template_paths, template_name, template_paths`?
+[W 15:40:33.782 NotebookApp] Config option `template_path` not recognized by `LenvsTocHTMLExporter`.  Did you mean one of: `extra_template_paths, template_name, template_paths`?
+[W 15:40:33.818 NotebookApp] Config option `template_path` not recognized by `LenvsTocHTMLExporter`.  Did you mean one of: `extra_template_paths, template_name, template_paths`?
+[W 15:40:33.935 NotebookApp] Config option `template_path` not recognized by `LenvsLatexExporter`.  Did you mean one of: `extra_template_paths, template_name, template_paths`?
+[W 15:40:33.955 NotebookApp] Config option `template_path` not recognized by `LenvsLatexExporter`.  Did you mean one of: `extra_template_paths, template_name, template_paths`?
+[W 15:40:34.231 NotebookApp] Config option `template_path` not recognized by `LenvsSlidesExporter`.  Did you mean one of: `extra_template_paths, template_name, template_paths`?
+[W 15:40:34.239 NotebookApp] Config option `template_path` not recognized by `LenvsSlidesExporter`.  Did you mean one of: `extra_template_paths, template_name, template_paths`?
+[W 15:40:34.341 NotebookApp] Config option `template_path` not recognized by `LenvsHTMLExporter`.  Did you mean one of: `extra_template_paths, template_name, template_paths`?
+[W 15:40:34.354 NotebookApp] Config option `template_path` not recognized by `LenvsHTMLExporter`.  Did you mean one of: `extra_template_paths, template_name, template_paths`?
+[W 15:40:34.374 NotebookApp] Config option `template_path` not recognized by `LenvsTocHTMLExporter`.  Did you mean one of: `extra_template_paths, template_name, template_paths`?
+[W 15:40:34.387 NotebookApp] Config option `template_path` not recognized by `LenvsTocHTMLExporter`.  Did you mean one of: `extra_template_paths, template_name, template_paths`?
+[W 15:40:34.429 NotebookApp] Config option `template_path` not recognized by `LenvsLatexExporter`.  Did you mean one of: `extra_template_paths, template_name, template_paths`?
+[W 15:40:34.436 NotebookApp] Config option `template_path` not recognized by `LenvsLatexExporter`.  Did you mean one of: `extra_template_paths, template_name, template_paths`?
+[W 15:40:34.601 NotebookApp] Config option `template_path` not recognized by `LenvsSlidesExporter`.  Did you mean one of: `extra_template_paths, template_name, template_paths`?
+[W 15:40:34.610 NotebookApp] Config option `template_path` not recognized by `LenvsSlidesExporter`.  Did you mean one of: `extra_template_paths, template_name, template_paths`?
+[I 15:40:35.515 NotebookApp] Kernel started: 173dfae0-e1e0-4456-b2b0-38be791d4657, name: conda-env-alpha-py
+CONDA_PREFIX=/conda/envs/alpha
+[I 15:41:06.227 NotebookApp] Saving file at /byVolume.ipynb
+[I 15:42:35.505 NotebookApp] Saving file at /trendline.ipynb
+[I 15:44:35.591 NotebookApp] Saving file at /trendline.ipynb
+[I 15:46:35.500 NotebookApp] Saving file at /trendline.ipynb
+[I 15:48:35.543 NotebookApp] Saving file at /trendline.ipynb
+[W 16:00:36.570 NotebookApp] WebSocket ping timeout after 119968 ms.
+[W 16:00:39.694 NotebookApp] WebSocket ping timeout after 119964 ms.
+[I 16:00:41.573 NotebookApp] Starting buffering for 173dfae0-e1e0-4456-b2b0-38be791d4657:154763672fb2443f825129e143c5b1a6
+[I 16:00:44.697 NotebookApp] Starting buffering for e87ba907-5cad-43f2-97c1-5eaa421339f8:0b1e33692f6941088c4824722822ca44
+[I 16:22:53.122 NotebookApp] Restoring connection for 173dfae0-e1e0-4456-b2b0-38be791d4657:154763672fb2443f825129e143c5b1a6
+[I 16:22:53.154 NotebookApp] Restoring connection for e87ba907-5cad-43f2-97c1-5eaa421339f8:0b1e33692f6941088c4824722822ca44
+[W 16:42:23.124 NotebookApp] WebSocket ping timeout after 119876 ms.
+[W 16:42:23.155 NotebookApp] WebSocket ping timeout after 119907 ms.
+[I 16:42:28.127 NotebookApp] Starting buffering for 173dfae0-e1e0-4456-b2b0-38be791d4657:154763672fb2443f825129e143c5b1a6
+[I 16:42:28.156 NotebookApp] Starting buffering for e87ba907-5cad-43f2-97c1-5eaa421339f8:0b1e33692f6941088c4824722822ca44
+[I 17:01:44.919 NotebookApp] Restoring connection for e87ba907-5cad-43f2-97c1-5eaa421339f8:0b1e33692f6941088c4824722822ca44
+[I 17:01:44.937 NotebookApp] Restoring connection for 173dfae0-e1e0-4456-b2b0-38be791d4657:154763672fb2443f825129e143c5b1a6
+[W 17:05:14.920 NotebookApp] WebSocket ping timeout after 119949 ms.
+[W 17:05:14.938 NotebookApp] WebSocket ping timeout after 119967 ms.
+[I 17:05:19.922 NotebookApp] Starting buffering for e87ba907-5cad-43f2-97c1-5eaa421339f8:0b1e33692f6941088c4824722822ca44
+[I 17:05:19.939 NotebookApp] Starting buffering for 173dfae0-e1e0-4456-b2b0-38be791d4657:154763672fb2443f825129e143c5b1a6
+[I 17:06:18.158 NotebookApp] Restoring connection for e87ba907-5cad-43f2-97c1-5eaa421339f8:0b1e33692f6941088c4824722822ca44
+[I 17:06:18.184 NotebookApp] Restoring connection for 173dfae0-e1e0-4456-b2b0-38be791d4657:154763672fb2443f825129e143c5b1a6
+[I 17:09:26.825 NotebookApp] Saving file at /trendline.ipynb
+[I 17:11:26.789 NotebookApp] Saving file at /trendline.ipynb
+[I 17:13:26.796 NotebookApp] Saving file at /trendline.ipynb
+[I 17:15:26.794 NotebookApp] Saving file at /trendline.ipynb
+[I 17:17:26.798 NotebookApp] Saving file at /trendline.ipynb
+[I 17:19:26.813 NotebookApp] Saving file at /trendline.ipynb
+[I 17:21:26.814 NotebookApp] Saving file at /trendline.ipynb
+[I 17:23:26.828 NotebookApp] Saving file at /trendline.ipynb
+[I 17:25:26.855 NotebookApp] Saving file at /trendline.ipynb
+[I 17:27:26.822 NotebookApp] Saving file at /trendline.ipynb
+[I 17:29:26.925 NotebookApp] Saving file at /trendline.ipynb
+[I 17:31:26.933 NotebookApp] Saving file at /trendline.ipynb
+[I 17:33:27.220 NotebookApp] Saving file at /trendline.ipynb
+[I 17:37:27.296 NotebookApp] Saving file at /trendline.ipynb
+[I 17:39:27.003 NotebookApp] Saving file at /trendline.ipynb
+[I 17:41:26.997 NotebookApp] Saving file at /trendline.ipynb
+[I 17:43:26.994 NotebookApp] Saving file at /trendline.ipynb
+[I 17:45:26.989 NotebookApp] Saving file at /trendline.ipynb
+[I 17:47:27.128 NotebookApp] Saving file at /trendline.ipynb
+[I 17:49:27.076 NotebookApp] Saving file at /trendline.ipynb
+[I 17:51:27.033 NotebookApp] Saving file at /trendline.ipynb
+[I 17:53:27.096 NotebookApp] Saving file at /trendline.ipynb
+[I 17:55:26.973 NotebookApp] Saving file at /trendline.ipynb
+[I 17:57:27.207 NotebookApp] Saving file at /trendline.ipynb
+[I 17:59:27.146 NotebookApp] Saving file at /trendline.ipynb
+[I 18:01:27.054 NotebookApp] Saving file at /trendline.ipynb
+[I 18:03:28.015 NotebookApp] Saving file at /trendline.ipynb
+[I 18:05:27.227 NotebookApp] Saving file at /trendline.ipynb
+[I 18:06:16.520 NotebookApp] Kernel interrupted: 173dfae0-e1e0-4456-b2b0-38be791d4657
+[I 18:07:21.084 NotebookApp] Kernel interrupted: 173dfae0-e1e0-4456-b2b0-38be791d4657
+[I 18:07:21.918 NotebookApp] Kernel interrupted: 173dfae0-e1e0-4456-b2b0-38be791d4657
+[I 18:07:27.560 NotebookApp] Saving file at /trendline.ipynb
+[I 18:11:27.143 NotebookApp] Saving file at /trendline.ipynb
+[I 18:15:27.138 NotebookApp] Saving file at /trendline.ipynb
+[I 18:17:27.229 NotebookApp] Saving file at /trendline.ipynb
+[I 18:19:27.975 NotebookApp] Saving file at /trendline.ipynb
+[I 18:21:27.451 NotebookApp] Saving file at /trendline.ipynb
+[I 18:23:27.223 NotebookApp] Saving file at /trendline.ipynb
+[I 18:25:27.094 NotebookApp] Saving file at /trendline.ipynb
+[I 18:31:27.183 NotebookApp] Saving file at /trendline.ipynb
+[I 18:33:27.147 NotebookApp] Saving file at /trendline.ipynb
+[I 18:35:26.992 NotebookApp] Saving file at /trendline.ipynb
+[W 18:46:18.159 NotebookApp] WebSocket ping timeout after 119923 ms.
+[W 18:46:18.184 NotebookApp] WebSocket ping timeout after 119949 ms.
+[I 18:46:23.160 NotebookApp] Starting buffering for e87ba907-5cad-43f2-97c1-5eaa421339f8:0b1e33692f6941088c4824722822ca44
+[I 18:46:23.186 NotebookApp] Starting buffering for 173dfae0-e1e0-4456-b2b0-38be791d4657:154763672fb2443f825129e143c5b1a6
+[I 20:00:16.266 NotebookApp] Restoring connection for e87ba907-5cad-43f2-97c1-5eaa421339f8:0b1e33692f6941088c4824722822ca44
+[I 20:00:16.295 NotebookApp] Restoring connection for 173dfae0-e1e0-4456-b2b0-38be791d4657:154763672fb2443f825129e143c5b1a6
+[W 20:22:16.267 NotebookApp] WebSocket ping timeout after 119918 ms.
+[W 20:22:16.296 NotebookApp] WebSocket ping timeout after 119947 ms.
+[I 20:22:21.269 NotebookApp] Starting buffering for e87ba907-5cad-43f2-97c1-5eaa421339f8:0b1e33692f6941088c4824722822ca44
+[I 20:22:21.298 NotebookApp] Starting buffering for 173dfae0-e1e0-4456-b2b0-38be791d4657:154763672fb2443f825129e143c5b1a6
+[I 20:31:07.036 NotebookApp] Restoring connection for 173dfae0-e1e0-4456-b2b0-38be791d4657:154763672fb2443f825129e143c5b1a6
+[I 20:31:07.091 NotebookApp] Restoring connection for e87ba907-5cad-43f2-97c1-5eaa421339f8:0b1e33692f6941088c4824722822ca44
+[I 20:33:40.907 NotebookApp] Saving file at /trendline.ipynb
+[I 20:35:41.135 NotebookApp] Saving file at /trendline.ipynb
+[I 20:37:40.842 NotebookApp] Saving file at /trendline.ipynb
+[I 20:39:41.169 NotebookApp] Saving file at /trendline.ipynb
+[I 20:41:40.866 NotebookApp] Saving file at /trendline.ipynb
+[I 20:42:18.714 NotebookApp] Kernel interrupted: 173dfae0-e1e0-4456-b2b0-38be791d4657
+[I 20:43:40.811 NotebookApp] Saving file at /trendline.ipynb
+[I 20:45:47.674 NotebookApp] Saving file at /trendline.ipynb
+[I 20:49:40.872 NotebookApp] Saving file at /trendline.ipynb
+[I 20:53:51.439 NotebookApp] Saving file at /trendline.ipynb
+[I 20:59:40.898 NotebookApp] Saving file at /trendline.ipynb
+[I 21:03:58.094 NotebookApp] Saving file at /trendline.ipynb
+[I 21:07:48.646 NotebookApp] Saving file at /trendline.ipynb
+[I 21:16:37.756 NotebookApp] Saving file at /trendline.ipynb
+[W 22:19:07.037 NotebookApp] WebSocket ping timeout after 119994 ms.
+[W 22:19:07.091 NotebookApp] WebSocket ping timeout after 119994 ms.
+[I 22:19:12.040 NotebookApp] Starting buffering for 173dfae0-e1e0-4456-b2b0-38be791d4657:154763672fb2443f825129e143c5b1a6
+[I 22:19:12.092 NotebookApp] Starting buffering for e87ba907-5cad-43f2-97c1-5eaa421339f8:0b1e33692f6941088c4824722822ca44
+[I 22:43:17.170 NotebookApp] Restoring connection for e87ba907-5cad-43f2-97c1-5eaa421339f8:0b1e33692f6941088c4824722822ca44
+[I 22:43:17.215 NotebookApp] Restoring connection for 173dfae0-e1e0-4456-b2b0-38be791d4657:154763672fb2443f825129e143c5b1a6
+[I 22:51:18.026 NotebookApp] Saving file at /trendline.ipynb
+[I 22:59:59.904 NotebookApp] Saving file at /trendline.ipynb
+[I 23:02:07.305 NotebookApp] Kernel interrupted: 173dfae0-e1e0-4456-b2b0-38be791d4657
+[I 23:06:04.086 NotebookApp] Kernel interrupted: 173dfae0-e1e0-4456-b2b0-38be791d4657
+[I 23:08:35.751 NotebookApp] Saving file at /trendline.ipynb
+[I 23:17:18.680 NotebookApp] Saving file at /trendline.ipynb
+[I 23:25:55.874 NotebookApp] Saving file at /trendline.ipynb
+[I 23:34:38.769 NotebookApp] Saving file at /trendline.ipynb
+[W 23:49:17.171 NotebookApp] WebSocket ping timeout after 119962 ms.
+[W 23:49:17.216 NotebookApp] WebSocket ping timeout after 119989 ms.
+[I 23:49:22.173 NotebookApp] Starting buffering for e87ba907-5cad-43f2-97c1-5eaa421339f8:0b1e33692f6941088c4824722822ca44
+[I 23:49:22.217 NotebookApp] Starting buffering for 173dfae0-e1e0-4456-b2b0-38be791d4657:154763672fb2443f825129e143c5b1a6
+[I 01:00:50.553 NotebookApp] Restoring connection for e87ba907-5cad-43f2-97c1-5eaa421339f8:0b1e33692f6941088c4824722822ca44
+[I 01:00:50.592 NotebookApp] Restoring connection for 173dfae0-e1e0-4456-b2b0-38be791d4657:154763672fb2443f825129e143c5b1a6
+[I 08:44:41.254 NotebookApp] Saving file at /trendline.ipynb
+[W 09:10:50.593 NotebookApp] WebSocket ping timeout after 119455 ms.
+[I 09:10:55.595 NotebookApp] Starting buffering for 173dfae0-e1e0-4456-b2b0-38be791d4657:154763672fb2443f825129e143c5b1a6
+[I 09:10:57.875 NotebookApp] Restoring connection for 173dfae0-e1e0-4456-b2b0-38be791d4657:154763672fb2443f825129e143c5b1a6
+[W 09:12:50.554 NotebookApp] WebSocket ping timeout after 115404 ms.
+[I 09:12:55.557 NotebookApp] Starting buffering for e87ba907-5cad-43f2-97c1-5eaa421339f8:0b1e33692f6941088c4824722822ca44
+[W 09:14:27.877 NotebookApp] WebSocket ping timeout after 104534 ms.
+[I 09:14:32.882 NotebookApp] Starting buffering for 173dfae0-e1e0-4456-b2b0-38be791d4657:154763672fb2443f825129e143c5b1a6
+[I 09:14:34.368 NotebookApp] Restoring connection for 173dfae0-e1e0-4456-b2b0-38be791d4657:154763672fb2443f825129e143c5b1a6
+[I 09:15:59.622 NotebookApp] Starting buffering for 173dfae0-e1e0-4456-b2b0-38be791d4657:154763672fb2443f825129e143c5b1a6
+[I 09:16:00.697 NotebookApp] Restoring connection for 173dfae0-e1e0-4456-b2b0-38be791d4657:154763672fb2443f825129e143c5b1a6
+[I 09:16:00.734 NotebookApp] Restoring connection for e87ba907-5cad-43f2-97c1-5eaa421339f8:0b1e33692f6941088c4824722822ca44
+[W 09:38:00.697 NotebookApp] WebSocket ping timeout after 119995 ms.
+[W 09:38:00.735 NotebookApp] WebSocket ping timeout after 119996 ms.
+[I 09:38:05.699 NotebookApp] Starting buffering for 173dfae0-e1e0-4456-b2b0-38be791d4657:154763672fb2443f825129e143c5b1a6
+[I 09:38:05.737 NotebookApp] Starting buffering for e87ba907-5cad-43f2-97c1-5eaa421339f8:0b1e33692f6941088c4824722822ca44
+[I 11:26:34.961 NotebookApp] Restoring connection for 173dfae0-e1e0-4456-b2b0-38be791d4657:154763672fb2443f825129e143c5b1a6
+[I 11:26:35.005 NotebookApp] Restoring connection for e87ba907-5cad-43f2-97c1-5eaa421339f8:0b1e33692f6941088c4824722822ca44
+[W 11:31:34.963 NotebookApp] WebSocket ping timeout after 119993 ms.
+[W 11:31:35.006 NotebookApp] WebSocket ping timeout after 119991 ms.
+[I 11:31:39.965 NotebookApp] Starting buffering for 173dfae0-e1e0-4456-b2b0-38be791d4657:154763672fb2443f825129e143c5b1a6
+[I 11:31:40.008 NotebookApp] Starting buffering for e87ba907-5cad-43f2-97c1-5eaa421339f8:0b1e33692f6941088c4824722822ca44
+[I 11:35:24.189 NotebookApp] Restoring connection for e87ba907-5cad-43f2-97c1-5eaa421339f8:0b1e33692f6941088c4824722822ca44
+[I 11:35:44.214 NotebookApp] Restoring connection for 173dfae0-e1e0-4456-b2b0-38be791d4657:154763672fb2443f825129e143c5b1a6
+[I 11:35:44.247 NotebookApp] Starting buffering for 173dfae0-e1e0-4456-b2b0-38be791d4657:154763672fb2443f825129e143c5b1a6
+[I 11:37:09.712 NotebookApp] Restoring connection for 173dfae0-e1e0-4456-b2b0-38be791d4657:154763672fb2443f825129e143c5b1a6
+[W 11:50:39.714 NotebookApp] WebSocket ping timeout after 119995 ms.
+[I 11:50:44.716 NotebookApp] Starting buffering for 173dfae0-e1e0-4456-b2b0-38be791d4657:154763672fb2443f825129e143c5b1a6
+[W 11:50:54.190 NotebookApp] WebSocket ping timeout after 119996 ms.
+[I 11:50:59.192 NotebookApp] Starting buffering for e87ba907-5cad-43f2-97c1-5eaa421339f8:0b1e33692f6941088c4824722822ca44
+[I 12:03:09.708 NotebookApp] Restoring connection for e87ba907-5cad-43f2-97c1-5eaa421339f8:0b1e33692f6941088c4824722822ca44
+[I 12:03:09.750 NotebookApp] Restoring connection for 173dfae0-e1e0-4456-b2b0-38be791d4657:154763672fb2443f825129e143c5b1a6
+[W 12:04:19.078 NotebookApp] Replacing stale connection: e87ba907-5cad-43f2-97c1-5eaa421339f8:0b1e33692f6941088c4824722822ca44
+[I 12:04:24.090 NotebookApp] Starting buffering for e87ba907-5cad-43f2-97c1-5eaa421339f8:0b1e33692f6941088c4824722822ca44
+[I 12:04:24.091 NotebookApp] Restoring connection for e87ba907-5cad-43f2-97c1-5eaa421339f8:0b1e33692f6941088c4824722822ca44
+[W 12:04:24.719 NotebookApp] Replacing stale connection: 173dfae0-e1e0-4456-b2b0-38be791d4657:154763672fb2443f825129e143c5b1a6
+[I 12:04:29.721 NotebookApp] Starting buffering for 173dfae0-e1e0-4456-b2b0-38be791d4657:154763672fb2443f825129e143c5b1a6
+[I 12:04:29.724 NotebookApp] Restoring connection for 173dfae0-e1e0-4456-b2b0-38be791d4657:154763672fb2443f825129e143c5b1a6
+[W 12:05:54.092 NotebookApp] WebSocket ping timeout after 90000 ms.
+[I 12:05:59.094 NotebookApp] Starting buffering for e87ba907-5cad-43f2-97c1-5eaa421339f8:0b1e33692f6941088c4824722822ca44
+[W 12:05:59.725 NotebookApp] WebSocket ping timeout after 90001 ms.
+[I 12:06:04.727 NotebookApp] Starting buffering for 173dfae0-e1e0-4456-b2b0-38be791d4657:154763672fb2443f825129e143c5b1a6
+[I 12:07:08.513 NotebookApp] Restoring connection for 173dfae0-e1e0-4456-b2b0-38be791d4657:154763672fb2443f825129e143c5b1a6
+[I 12:07:10.298 NotebookApp] Restoring connection for e87ba907-5cad-43f2-97c1-5eaa421339f8:0b1e33692f6941088c4824722822ca44
+[W 12:10:08.515 NotebookApp] WebSocket ping timeout after 119994 ms.
+[W 12:10:10.298 NotebookApp] WebSocket ping timeout after 119994 ms.
+[I 12:10:13.518 NotebookApp] Starting buffering for 173dfae0-e1e0-4456-b2b0-38be791d4657:154763672fb2443f825129e143c5b1a6
+[I 12:10:15.300 NotebookApp] Starting buffering for e87ba907-5cad-43f2-97c1-5eaa421339f8:0b1e33692f6941088c4824722822ca44
+[W 15:41:06.901 NotebookApp] Config option `template_path` not recognized by `LenvsHTMLExporter`.  Did you mean one of: `extra_template_paths, template_name, template_paths`?
+[W 15:41:06.914 NotebookApp] Config option `template_path` not recognized by `LenvsHTMLExporter`.  Did you mean one of: `extra_template_paths, template_name, template_paths`?
+[W 15:41:06.934 NotebookApp] Config option `template_path` not recognized by `LenvsTocHTMLExporter`.  Did you mean one of: `extra_template_paths, template_name, template_paths`?
+[W 15:41:06.947 NotebookApp] Config option `template_path` not recognized by `LenvsTocHTMLExporter`.  Did you mean one of: `extra_template_paths, template_name, template_paths`?
+[W 15:41:06.989 NotebookApp] Config option `template_path` not recognized by `LenvsLatexExporter`.  Did you mean one of: `extra_template_paths, template_name, template_paths`?
+[W 15:41:06.997 NotebookApp] Config option `template_path` not recognized by `LenvsLatexExporter`.  Did you mean one of: `extra_template_paths, template_name, template_paths`?
+[W 15:41:07.298 NotebookApp] Config option `template_path` not recognized by `LenvsSlidesExporter`.  Did you mean one of: `extra_template_paths, template_name, template_paths`?
+[W 15:41:07.322 NotebookApp] Config option `template_path` not recognized by `LenvsSlidesExporter`.  Did you mean one of: `extra_template_paths, template_name, template_paths`?
+[W 15:41:07.610 NotebookApp] Config option `template_path` not recognized by `LenvsHTMLExporter`.  Did you mean one of: `extra_template_paths, template_name, template_paths`?
+[W 15:41:07.623 NotebookApp] Config option `template_path` not recognized by `LenvsHTMLExporter`.  Did you mean one of: `extra_template_paths, template_name, template_paths`?
+[W 15:41:07.643 NotebookApp] Config option `template_path` not recognized by `LenvsTocHTMLExporter`.  Did you mean one of: `extra_template_paths, template_name, template_paths`?
+[W 15:41:07.656 NotebookApp] Config option `template_path` not recognized by `LenvsTocHTMLExporter`.  Did you mean one of: `extra_template_paths, template_name, template_paths`?
+[W 15:41:07.698 NotebookApp] Config option `template_path` not recognized by `LenvsLatexExporter`.  Did you mean one of: `extra_template_paths, template_name, template_paths`?
+[W 15:41:07.706 NotebookApp] Config option `template_path` not recognized by `LenvsLatexExporter`.  Did you mean one of: `extra_template_paths, template_name, template_paths`?
+[W 15:41:07.869 NotebookApp] Config option `template_path` not recognized by `LenvsSlidesExporter`.  Did you mean one of: `extra_template_paths, template_name, template_paths`?
+[W 15:41:07.878 NotebookApp] Config option `template_path` not recognized by `LenvsSlidesExporter`.  Did you mean one of: `extra_template_paths, template_name, template_paths`?
+[I 15:43:08.698 NotebookApp] Saving file at /byVolume.ipynb
+[I 15:45:08.816 NotebookApp] Saving file at /byVolume.ipynb
+[I 15:49:08.794 NotebookApp] Saving file at /byVolume.ipynb
+[I 15:57:08.871 NotebookApp] Saving file at /byVolume.ipynb
+[I 16:03:08.877 NotebookApp] Saving file at /byVolume.ipynb
+[I 16:05:08.821 NotebookApp] Saving file at /byVolume.ipynb
+[I 16:07:08.884 NotebookApp] Saving file at /byVolume.ipynb
+[I 16:09:08.730 NotebookApp] Saving file at /byVolume.ipynb
+[I 16:11:08.740 NotebookApp] Saving file at /byVolume.ipynb
+[I 16:15:08.751 NotebookApp] Saving file at /byVolume.ipynb
+[I 16:17:08.751 NotebookApp] Saving file at /byVolume.ipynb
+[I 16:19:08.757 NotebookApp] Saving file at /byVolume.ipynb
+[I 16:21:08.761 NotebookApp] Saving file at /byVolume.ipynb
+[I 16:27:08.815 NotebookApp] Saving file at /byVolume.ipynb
+[I 16:28:55.410 NotebookApp] Kernel interrupted: e87ba907-5cad-43f2-97c1-5eaa421339f8
+[I 16:28:56.391 NotebookApp] Kernel interrupted: e87ba907-5cad-43f2-97c1-5eaa421339f8
+[I 16:29:08.791 NotebookApp] Saving file at /byVolume.ipynb
+[I 16:31:08.832 NotebookApp] Saving file at /byVolume.ipynb
+[I 16:45:09.783 NotebookApp] Saving file at /byVolume.ipynb
+[I 16:53:09.823 NotebookApp] Saving file at /byVolume.ipynb
+[I 16:55:09.800 NotebookApp] Saving file at /byVolume.ipynb
+[W 17:03:38.723 NotebookApp] WebSocket ping timeout after 119993 ms.
+[I 17:03:43.724 NotebookApp] Starting buffering for e87ba907-5cad-43f2-97c1-5eaa421339f8:3a7acdd829364ae9bf374b40bb413e4e
+[I 17:09:47.783 NotebookApp] Restoring connection for e87ba907-5cad-43f2-97c1-5eaa421339f8:3a7acdd829364ae9bf374b40bb413e4e
+[W 17:33:45.457 NotebookApp] Config option `template_path` not recognized by `LenvsHTMLExporter`.  Did you mean one of: `extra_template_paths, template_name, template_paths`?
+[W 17:33:45.471 NotebookApp] Config option `template_path` not recognized by `LenvsHTMLExporter`.  Did you mean one of: `extra_template_paths, template_name, template_paths`?
+[W 17:33:45.491 NotebookApp] Config option `template_path` not recognized by `LenvsTocHTMLExporter`.  Did you mean one of: `extra_template_paths, template_name, template_paths`?
+[W 17:33:45.504 NotebookApp] Config option `template_path` not recognized by `LenvsTocHTMLExporter`.  Did you mean one of: `extra_template_paths, template_name, template_paths`?
+[W 17:33:45.547 NotebookApp] Config option `template_path` not recognized by `LenvsLatexExporter`.  Did you mean one of: `extra_template_paths, template_name, template_paths`?
+[W 17:33:45.554 NotebookApp] Config option `template_path` not recognized by `LenvsLatexExporter`.  Did you mean one of: `extra_template_paths, template_name, template_paths`?
+[W 17:33:45.716 NotebookApp] Config option `template_path` not recognized by `LenvsSlidesExporter`.  Did you mean one of: `extra_template_paths, template_name, template_paths`?
+[W 17:33:45.724 NotebookApp] Config option `template_path` not recognized by `LenvsSlidesExporter`.  Did you mean one of: `extra_template_paths, template_name, template_paths`?
+[W 17:33:45.843 NotebookApp] Config option `template_path` not recognized by `LenvsHTMLExporter`.  Did you mean one of: `extra_template_paths, template_name, template_paths`?
+[W 17:33:45.857 NotebookApp] Config option `template_path` not recognized by `LenvsHTMLExporter`.  Did you mean one of: `extra_template_paths, template_name, template_paths`?
+[W 17:33:45.880 NotebookApp] Config option `template_path` not recognized by `LenvsTocHTMLExporter`.  Did you mean one of: `extra_template_paths, template_name, template_paths`?
+[W 17:33:45.895 NotebookApp] Config option `template_path` not recognized by `LenvsTocHTMLExporter`.  Did you mean one of: `extra_template_paths, template_name, template_paths`?
+[W 17:33:45.943 NotebookApp] Config option `template_path` not recognized by `LenvsLatexExporter`.  Did you mean one of: `extra_template_paths, template_name, template_paths`?
+[W 17:33:45.952 NotebookApp] Config option `template_path` not recognized by `LenvsLatexExporter`.  Did you mean one of: `extra_template_paths, template_name, template_paths`?
+[W 17:33:46.135 NotebookApp] Config option `template_path` not recognized by `LenvsSlidesExporter`.  Did you mean one of: `extra_template_paths, template_name, template_paths`?
+[W 17:33:46.145 NotebookApp] Config option `template_path` not recognized by `LenvsSlidesExporter`.  Did you mean one of: `extra_template_paths, template_name, template_paths`?
+[W 17:33:47.278 NotebookApp] Notebook trendline.ipynb is not trusted
+[I 17:34:43.401 NotebookApp] Saving file at /byVolume.ipynb
+[I 17:35:49.834 NotebookApp] Saving file at /trendline.ipynb
+[W 17:35:49.836 NotebookApp] Notebook trendline.ipynb is not trusted
+[I 17:37:49.804 NotebookApp] Saving file at /trendline.ipynb
+[W 17:37:49.806 NotebookApp] Notebook trendline.ipynb is not trusted
+[I 17:38:43.405 NotebookApp] Saving file at /byVolume.ipynb
+[I 17:39:50.027 NotebookApp] Saving file at /trendline.ipynb
+[W 17:39:50.029 NotebookApp] Notebook trendline.ipynb is not trusted
+[I 17:43:50.119 NotebookApp] Saving file at /trendline.ipynb
+[W 17:43:50.121 NotebookApp] Notebook trendline.ipynb is not trusted
+[I 17:45:50.089 NotebookApp] Saving file at /trendline.ipynb
+[W 17:45:50.091 NotebookApp] Notebook trendline.ipynb is not trusted
+[I 17:49:48.822 NotebookApp] Saving file at /trendline.ipynb
+[I 17:51:48.808 NotebookApp] Saving file at /trendline.ipynb
+[I 17:59:48.832 NotebookApp] Saving file at /trendline.ipynb
+[W 19:29:47.784 NotebookApp] WebSocket ping timeout after 119994 ms.
+[W 19:29:48.765 NotebookApp] WebSocket ping timeout after 119879 ms.
+[I 19:29:52.786 NotebookApp] Starting buffering for e87ba907-5cad-43f2-97c1-5eaa421339f8:3a7acdd829364ae9bf374b40bb413e4e
+[I 19:29:53.768 NotebookApp] Starting buffering for 173dfae0-e1e0-4456-b2b0-38be791d4657:328172c5967d49ed8352b13b84fb8d8b
+[W 20:27:16.023 NotebookApp] Config option `template_path` not recognized by `LenvsHTMLExporter`.  Did you mean one of: `extra_template_paths, template_name, template_paths`?
+[W 20:27:16.060 NotebookApp] Config option `template_path` not recognized by `LenvsHTMLExporter`.  Did you mean one of: `extra_template_paths, template_name, template_paths`?
+[W 20:27:16.116 NotebookApp] Config option `template_path` not recognized by `LenvsTocHTMLExporter`.  Did you mean one of: `extra_template_paths, template_name, template_paths`?
+[W 20:27:16.151 NotebookApp] Config option `template_path` not recognized by `LenvsTocHTMLExporter`.  Did you mean one of: `extra_template_paths, template_name, template_paths`?
+[W 20:27:16.269 NotebookApp] Config option `template_path` not recognized by `LenvsLatexExporter`.  Did you mean one of: `extra_template_paths, template_name, template_paths`?
+[W 20:27:16.289 NotebookApp] Config option `template_path` not recognized by `LenvsLatexExporter`.  Did you mean one of: `extra_template_paths, template_name, template_paths`?
+[W 20:27:16.532 NotebookApp] Config option `template_path` not recognized by `LenvsSlidesExporter`.  Did you mean one of: `extra_template_paths, template_name, template_paths`?
+[W 20:27:16.541 NotebookApp] Config option `template_path` not recognized by `LenvsSlidesExporter`.  Did you mean one of: `extra_template_paths, template_name, template_paths`?
+[W 20:27:16.644 NotebookApp] Config option `template_path` not recognized by `LenvsHTMLExporter`.  Did you mean one of: `extra_template_paths, template_name, template_paths`?
+[W 20:27:16.656 NotebookApp] Config option `template_path` not recognized by `LenvsHTMLExporter`.  Did you mean one of: `extra_template_paths, template_name, template_paths`?
+[W 20:27:16.676 NotebookApp] Config option `template_path` not recognized by `LenvsTocHTMLExporter`.  Did you mean one of: `extra_template_paths, template_name, template_paths`?
+[W 20:27:16.689 NotebookApp] Config option `template_path` not recognized by `LenvsTocHTMLExporter`.  Did you mean one of: `extra_template_paths, template_name, template_paths`?
+[W 20:27:16.732 NotebookApp] Config option `template_path` not recognized by `LenvsLatexExporter`.  Did you mean one of: `extra_template_paths, template_name, template_paths`?
+[W 20:27:16.739 NotebookApp] Config option `template_path` not recognized by `LenvsLatexExporter`.  Did you mean one of: `extra_template_paths, template_name, template_paths`?
+[W 20:27:16.900 NotebookApp] Config option `template_path` not recognized by `LenvsSlidesExporter`.  Did you mean one of: `extra_template_paths, template_name, template_paths`?
+[W 20:27:16.908 NotebookApp] Config option `template_path` not recognized by `LenvsSlidesExporter`.  Did you mean one of: `extra_template_paths, template_name, template_paths`?
+[W 20:27:17.609 NotebookApp] Notebook byVolume.ipynb is not trusted
+[W 20:27:33.249 NotebookApp] Config option `template_path` not recognized by `LenvsHTMLExporter`.  Did you mean one of: `extra_template_paths, template_name, template_paths`?
+[W 20:27:33.262 NotebookApp] Config option `template_path` not recognized by `LenvsHTMLExporter`.  Did you mean one of: `extra_template_paths, template_name, template_paths`?
+[W 20:27:33.283 NotebookApp] Config option `template_path` not recognized by `LenvsTocHTMLExporter`.  Did you mean one of: `extra_template_paths, template_name, template_paths`?
+[W 20:27:33.296 NotebookApp] Config option `template_path` not recognized by `LenvsTocHTMLExporter`.  Did you mean one of: `extra_template_paths, template_name, template_paths`?
+[W 20:27:33.339 NotebookApp] Config option `template_path` not recognized by `LenvsLatexExporter`.  Did you mean one of: `extra_template_paths, template_name, template_paths`?
+[W 20:27:33.347 NotebookApp] Config option `template_path` not recognized by `LenvsLatexExporter`.  Did you mean one of: `extra_template_paths, template_name, template_paths`?
+[W 20:27:33.514 NotebookApp] Config option `template_path` not recognized by `LenvsSlidesExporter`.  Did you mean one of: `extra_template_paths, template_name, template_paths`?
+[W 20:27:33.523 NotebookApp] Config option `template_path` not recognized by `LenvsSlidesExporter`.  Did you mean one of: `extra_template_paths, template_name, template_paths`?
+[W 20:27:33.633 NotebookApp] Config option `template_path` not recognized by `LenvsHTMLExporter`.  Did you mean one of: `extra_template_paths, template_name, template_paths`?
+[W 20:27:33.646 NotebookApp] Config option `template_path` not recognized by `LenvsHTMLExporter`.  Did you mean one of: `extra_template_paths, template_name, template_paths`?
+[W 20:27:33.667 NotebookApp] Config option `template_path` not recognized by `LenvsTocHTMLExporter`.  Did you mean one of: `extra_template_paths, template_name, template_paths`?
+[W 20:27:33.681 NotebookApp] Config option `template_path` not recognized by `LenvsTocHTMLExporter`.  Did you mean one of: `extra_template_paths, template_name, template_paths`?
+[W 20:27:33.726 NotebookApp] Config option `template_path` not recognized by `LenvsLatexExporter`.  Did you mean one of: `extra_template_paths, template_name, template_paths`?
+[W 20:27:33.733 NotebookApp] Config option `template_path` not recognized by `LenvsLatexExporter`.  Did you mean one of: `extra_template_paths, template_name, template_paths`?
+[W 20:27:33.901 NotebookApp] Config option `template_path` not recognized by `LenvsSlidesExporter`.  Did you mean one of: `extra_template_paths, template_name, template_paths`?
+[W 20:27:33.910 NotebookApp] Config option `template_path` not recognized by `LenvsSlidesExporter`.  Did you mean one of: `extra_template_paths, template_name, template_paths`?
+[W 20:27:34.127 NotebookApp] Notebook trendline.ipynb is not trusted
+[I 20:29:17.803 NotebookApp] Saving file at /byVolume.ipynb
+[I 20:29:34.326 NotebookApp] Saving file at /trendline.ipynb
+[W 20:29:34.327 NotebookApp] Notebook trendline.ipynb is not trusted
+[I 20:31:17.807 NotebookApp] Saving file at /byVolume.ipynb
+[W 20:40:17.861 NotebookApp] WebSocket ping timeout after 119911 ms.
+[I 20:40:22.862 NotebookApp] Starting buffering for e87ba907-5cad-43f2-97c1-5eaa421339f8:949868622d6746d18d72afc5ab720b41
+[W 20:40:34.319 NotebookApp] WebSocket ping timeout after 119978 ms.
+[I 20:40:39.320 NotebookApp] Starting buffering for 173dfae0-e1e0-4456-b2b0-38be791d4657:e0c00c51766a42c8a2ad301dabe68ea0
+[I 21:24:44.300 NotebookApp] Restoring connection for e87ba907-5cad-43f2-97c1-5eaa421339f8:949868622d6746d18d72afc5ab720b41
+[I 21:25:00.618 NotebookApp] Restoring connection for 173dfae0-e1e0-4456-b2b0-38be791d4657:e0c00c51766a42c8a2ad301dabe68ea0
+[W 21:40:30.619 NotebookApp] WebSocket ping timeout after 119993 ms.
+[I 21:40:35.620 NotebookApp] Starting buffering for 173dfae0-e1e0-4456-b2b0-38be791d4657:e0c00c51766a42c8a2ad301dabe68ea0
+[W 21:40:44.300 NotebookApp] WebSocket ping timeout after 119995 ms.
+[I 21:40:49.302 NotebookApp] Starting buffering for e87ba907-5cad-43f2-97c1-5eaa421339f8:949868622d6746d18d72afc5ab720b41
+[I 21:56:50.298 NotebookApp] Restoring connection for 173dfae0-e1e0-4456-b2b0-38be791d4657:e0c00c51766a42c8a2ad301dabe68ea0
+[I 21:56:50.322 NotebookApp] Restoring connection for e87ba907-5cad-43f2-97c1-5eaa421339f8:949868622d6746d18d72afc5ab720b41
+[I 22:39:19.574 NotebookApp] Saving file at /trendline.ipynb
+[W 22:39:19.575 NotebookApp] Notebook trendline.ipynb is not trusted
+[I 22:41:19.538 NotebookApp] Saving file at /trendline.ipynb
+[W 22:41:19.539 NotebookApp] Notebook trendline.ipynb is not trusted
+[I 22:42:22.786 NotebookApp] Saving file at /trendline.ipynb
+[W 22:42:22.787 NotebookApp] Notebook trendline.ipynb is not trusted
+[I 22:52:58.387 NotebookApp] Starting buffering for 173dfae0-e1e0-4456-b2b0-38be791d4657:e0c00c51766a42c8a2ad301dabe68ea0
+[I 22:52:58.397 NotebookApp] Starting buffering for e87ba907-5cad-43f2-97c1-5eaa421339f8:949868622d6746d18d72afc5ab720b41
+[I 22:52:59.437 NotebookApp] Restoring connection for e87ba907-5cad-43f2-97c1-5eaa421339f8:949868622d6746d18d72afc5ab720b41
+[I 22:52:59.469 NotebookApp] Restoring connection for 173dfae0-e1e0-4456-b2b0-38be791d4657:e0c00c51766a42c8a2ad301dabe68ea0
+[I 22:57:44.022 NotebookApp] Starting buffering for 173dfae0-e1e0-4456-b2b0-38be791d4657:e0c00c51766a42c8a2ad301dabe68ea0
+[I 22:57:46.650 NotebookApp] Kernel restarted: 173dfae0-e1e0-4456-b2b0-38be791d4657
+[I 22:57:46.697 NotebookApp] Restoring connection for 173dfae0-e1e0-4456-b2b0-38be791d4657:e0c00c51766a42c8a2ad301dabe68ea0
+CONDA_PREFIX=/conda/envs/alpha
+[I 22:57:47.826 NotebookApp] Replaying 8 buffered messages
+[I 22:59:19.572 NotebookApp] Saving file at /trendline.ipynb
+[I 23:01:19.586 NotebookApp] Saving file at /trendline.ipynb
+[I 23:03:19.622 NotebookApp] Saving file at /trendline.ipynb
+[I 23:05:19.631 NotebookApp] Saving file at /trendline.ipynb
+[I 23:11:19.635 NotebookApp] Saving file at /trendline.ipynb
+[I 23:13:19.640 NotebookApp] Saving file at /trendline.ipynb
+[I 23:17:19.644 NotebookApp] Saving file at /trendline.ipynb
+[I 23:19:19.736 NotebookApp] Saving file at /trendline.ipynb
+[I 23:21:19.744 NotebookApp] Saving file at /trendline.ipynb
+[W 23:35:16.698 NotebookApp] WebSocket ping timeout after 119968 ms.
+[I 23:35:21.700 NotebookApp] Starting buffering for 173dfae0-e1e0-4456-b2b0-38be791d4657:e0c00c51766a42c8a2ad301dabe68ea0
+[W 23:35:29.439 NotebookApp] WebSocket ping timeout after 119991 ms.
+[I 23:35:34.442 NotebookApp] Starting buffering for e87ba907-5cad-43f2-97c1-5eaa421339f8:949868622d6746d18d72afc5ab720b41
+[I 00:17:43.569 NotebookApp] Restoring connection for 173dfae0-e1e0-4456-b2b0-38be791d4657:e0c00c51766a42c8a2ad301dabe68ea0
+[I 00:17:56.179 NotebookApp] Restoring connection for e87ba907-5cad-43f2-97c1-5eaa421339f8:949868622d6746d18d72afc5ab720b41
+[W 00:52:56.180 NotebookApp] WebSocket ping timeout after 119992 ms.
+[I 00:53:01.182 NotebookApp] Starting buffering for e87ba907-5cad-43f2-97c1-5eaa421339f8:949868622d6746d18d72afc5ab720b41
+[W 00:53:13.571 NotebookApp] WebSocket ping timeout after 119983 ms.
+[I 00:53:18.573 NotebookApp] Starting buffering for 173dfae0-e1e0-4456-b2b0-38be791d4657:e0c00c51766a42c8a2ad301dabe68ea0
+[I 01:48:14.864 NotebookApp] Restoring connection for e87ba907-5cad-43f2-97c1-5eaa421339f8:949868622d6746d18d72afc5ab720b41
+[I 01:48:32.179 NotebookApp] Restoring connection for 173dfae0-e1e0-4456-b2b0-38be791d4657:e0c00c51766a42c8a2ad301dabe68ea0
+[W 01:49:44.865 NotebookApp] WebSocket ping timeout after 90001 ms.
+[I 01:49:49.867 NotebookApp] Starting buffering for e87ba907-5cad-43f2-97c1-5eaa421339f8:949868622d6746d18d72afc5ab720b41
+[W 01:50:02.180 NotebookApp] WebSocket ping timeout after 90000 ms.
+[I 01:50:07.182 NotebookApp] Starting buffering for 173dfae0-e1e0-4456-b2b0-38be791d4657:e0c00c51766a42c8a2ad301dabe68ea0
+[I 02:45:33.622 NotebookApp] Restoring connection for e87ba907-5cad-43f2-97c1-5eaa421339f8:949868622d6746d18d72afc5ab720b41
+[W 02:47:03.624 NotebookApp] WebSocket ping timeout after 90001 ms.
+[I 02:47:08.627 NotebookApp] Starting buffering for e87ba907-5cad-43f2-97c1-5eaa421339f8:949868622d6746d18d72afc5ab720b41
+[I 02:50:34.002 NotebookApp] Restoring connection for 173dfae0-e1e0-4456-b2b0-38be791d4657:e0c00c51766a42c8a2ad301dabe68ea0
+[W 02:53:04.005 NotebookApp] WebSocket ping timeout after 119994 ms.
+[I 02:53:09.009 NotebookApp] Starting buffering for 173dfae0-e1e0-4456-b2b0-38be791d4657:e0c00c51766a42c8a2ad301dabe68ea0
+[I 03:47:35.832 NotebookApp] Restoring connection for e87ba907-5cad-43f2-97c1-5eaa421339f8:949868622d6746d18d72afc5ab720b41
+[W 03:49:05.833 NotebookApp] WebSocket ping timeout after 90001 ms.
+[I 03:49:10.836 NotebookApp] Starting buffering for e87ba907-5cad-43f2-97c1-5eaa421339f8:949868622d6746d18d72afc5ab720b41
+[I 03:53:05.861 NotebookApp] Restoring connection for 173dfae0-e1e0-4456-b2b0-38be791d4657:e0c00c51766a42c8a2ad301dabe68ea0
+[W 03:55:35.862 NotebookApp] WebSocket ping timeout after 119921 ms.
+[I 03:55:40.863 NotebookApp] Starting buffering for 173dfae0-e1e0-4456-b2b0-38be791d4657:e0c00c51766a42c8a2ad301dabe68ea0
+[I 04:21:38.940 NotebookApp] Restoring connection for e87ba907-5cad-43f2-97c1-5eaa421339f8:949868622d6746d18d72afc5ab720b41
+[I 04:21:38.972 NotebookApp] Restoring connection for 173dfae0-e1e0-4456-b2b0-38be791d4657:e0c00c51766a42c8a2ad301dabe68ea0
+[W 04:24:08.942 NotebookApp] WebSocket ping timeout after 119993 ms.
+[W 04:24:08.972 NotebookApp] WebSocket ping timeout after 119985 ms.
+[I 04:24:13.944 NotebookApp] Starting buffering for e87ba907-5cad-43f2-97c1-5eaa421339f8:949868622d6746d18d72afc5ab720b41
+[I 04:24:13.973 NotebookApp] Starting buffering for 173dfae0-e1e0-4456-b2b0-38be791d4657:e0c00c51766a42c8a2ad301dabe68ea0
+[I 05:28:28.073 NotebookApp] Restoring connection for e87ba907-5cad-43f2-97c1-5eaa421339f8:949868622d6746d18d72afc5ab720b41
+[I 05:28:28.103 NotebookApp] Restoring connection for 173dfae0-e1e0-4456-b2b0-38be791d4657:e0c00c51766a42c8a2ad301dabe68ea0
+[W 05:29:58.074 NotebookApp] WebSocket ping timeout after 90000 ms.
+[W 05:29:58.104 NotebookApp] WebSocket ping timeout after 90000 ms.
+[I 05:30:03.089 NotebookApp] Starting buffering for e87ba907-5cad-43f2-97c1-5eaa421339f8:949868622d6746d18d72afc5ab720b41
+[I 05:30:03.105 NotebookApp] Starting buffering for 173dfae0-e1e0-4456-b2b0-38be791d4657:e0c00c51766a42c8a2ad301dabe68ea0
+[I 06:30:29.513 NotebookApp] Restoring connection for e87ba907-5cad-43f2-97c1-5eaa421339f8:949868622d6746d18d72afc5ab720b41
+[I 06:30:29.539 NotebookApp] Restoring connection for 173dfae0-e1e0-4456-b2b0-38be791d4657:e0c00c51766a42c8a2ad301dabe68ea0
+[W 06:31:59.514 NotebookApp] WebSocket ping timeout after 90000 ms.
+[W 06:31:59.540 NotebookApp] WebSocket ping timeout after 90001 ms.
+[I 06:32:04.518 NotebookApp] Starting buffering for e87ba907-5cad-43f2-97c1-5eaa421339f8:949868622d6746d18d72afc5ab720b41
+[I 06:32:04.541 NotebookApp] Starting buffering for 173dfae0-e1e0-4456-b2b0-38be791d4657:e0c00c51766a42c8a2ad301dabe68ea0
+[I 07:03:51.675 NotebookApp] Restoring connection for 173dfae0-e1e0-4456-b2b0-38be791d4657:e0c00c51766a42c8a2ad301dabe68ea0
+[I 07:03:52.923 NotebookApp] Restoring connection for e87ba907-5cad-43f2-97c1-5eaa421339f8:949868622d6746d18d72afc5ab720b41
+[I 07:04:29.932 NotebookApp] Saving file at /trendline.ipynb
+[I 07:04:58.712 NotebookApp] Saving file at /trendline.ipynb
+[I 07:20:14.214 NotebookApp] Saving file at /byVolume.ipynb
+[I 07:22:14.227 NotebookApp] Saving file at /byVolume.ipynb
+[I 07:24:14.266 NotebookApp] Saving file at /byVolume.ipynb
+[I 07:26:14.237 NotebookApp] Saving file at /byVolume.ipynb
+[I 07:28:14.237 NotebookApp] Saving file at /byVolume.ipynb
+[I 07:30:14.246 NotebookApp] Saving file at /byVolume.ipynb
+[I 07:32:14.244 NotebookApp] Saving file at /byVolume.ipynb
+[I 07:34:14.721 NotebookApp] Saving file at /byVolume.ipynb
+[I 07:36:14.378 NotebookApp] Saving file at /byVolume.ipynb
+[I 07:46:14.314 NotebookApp] Saving file at /byVolume.ipynb
+[I 07:46:59.591 NotebookApp] Starting buffering for e87ba907-5cad-43f2-97c1-5eaa421339f8:949868622d6746d18d72afc5ab720b41
+[I 07:47:00.611 NotebookApp] Kernel restarted: e87ba907-5cad-43f2-97c1-5eaa421339f8
+[I 07:47:00.642 NotebookApp] Restoring connection for e87ba907-5cad-43f2-97c1-5eaa421339f8:949868622d6746d18d72afc5ab720b41
+[I 07:47:01.173 NotebookApp] Replaying 3 buffered messages
+[I 07:48:14.252 NotebookApp] Saving file at /byVolume.ipynb
+[I 07:52:15.102 NotebookApp] Saving file at /byVolume.ipynb
+[I 07:54:15.399 NotebookApp] Saving file at /byVolume.ipynb
+[I 07:58:14.268 NotebookApp] Saving file at /byVolume.ipynb
+[I 07:58:34.824 NotebookApp] Kernel interrupted: e87ba907-5cad-43f2-97c1-5eaa421339f8
+[I 08:00:14.788 NotebookApp] Saving file at /byVolume.ipynb
+[I 08:02:14.630 NotebookApp] Saving file at /byVolume.ipynb
+[I 08:04:14.775 NotebookApp] Saving file at /byVolume.ipynb
+[I 08:06:15.129 NotebookApp] Saving file at /byVolume.ipynb
+[I 08:08:14.693 NotebookApp] Saving file at /byVolume.ipynb
+[I 08:10:14.745 NotebookApp] Saving file at /byVolume.ipynb
+[I 08:12:15.746 NotebookApp] Saving file at /byVolume.ipynb
+[I 08:14:14.748 NotebookApp] Saving file at /byVolume.ipynb
+[I 08:16:14.319 NotebookApp] Saving file at /byVolume.ipynb
+[I 08:18:14.330 NotebookApp] Saving file at /byVolume.ipynb
+[I 08:20:14.338 NotebookApp] Saving file at /byVolume.ipynb
+[I 08:22:14.507 NotebookApp] Saving file at /byVolume.ipynb
+[I 08:24:14.369 NotebookApp] Saving file at /byVolume.ipynb
+[I 08:26:14.359 NotebookApp] Saving file at /byVolume.ipynb
+[I 08:28:14.336 NotebookApp] Saving file at /byVolume.ipynb
+[I 08:32:14.339 NotebookApp] Saving file at /byVolume.ipynb
+[W 08:54:21.676 NotebookApp] WebSocket ping timeout after 119994 ms.
+[I 08:54:26.678 NotebookApp] Starting buffering for 173dfae0-e1e0-4456-b2b0-38be791d4657:e0c00c51766a42c8a2ad301dabe68ea0
+[W 08:54:30.642 NotebookApp] WebSocket ping timeout after 119953 ms.
+[I 08:54:35.645 NotebookApp] Starting buffering for e87ba907-5cad-43f2-97c1-5eaa421339f8:949868622d6746d18d72afc5ab720b41
+[I 08:59:01.911 NotebookApp] Restoring connection for e87ba907-5cad-43f2-97c1-5eaa421339f8:949868622d6746d18d72afc5ab720b41
+[I 08:59:01.941 NotebookApp] Restoring connection for 173dfae0-e1e0-4456-b2b0-38be791d4657:e0c00c51766a42c8a2ad301dabe68ea0
+[W 09:24:31.912 NotebookApp] WebSocket ping timeout after 119983 ms.
+[W 09:24:31.942 NotebookApp] WebSocket ping timeout after 119991 ms.
+[I 09:24:36.915 NotebookApp] Starting buffering for e87ba907-5cad-43f2-97c1-5eaa421339f8:949868622d6746d18d72afc5ab720b41
+[I 09:24:36.944 NotebookApp] Starting buffering for 173dfae0-e1e0-4456-b2b0-38be791d4657:e0c00c51766a42c8a2ad301dabe68ea0
+[I 11:14:22.951 NotebookApp] Restoring connection for e87ba907-5cad-43f2-97c1-5eaa421339f8:949868622d6746d18d72afc5ab720b41
+[I 11:14:22.992 NotebookApp] Restoring connection for 173dfae0-e1e0-4456-b2b0-38be791d4657:e0c00c51766a42c8a2ad301dabe68ea0
+[W 11:20:22.952 NotebookApp] WebSocket ping timeout after 119993 ms.
+[W 11:20:22.993 NotebookApp] WebSocket ping timeout after 119985 ms.
+[I 11:20:27.954 NotebookApp] Starting buffering for e87ba907-5cad-43f2-97c1-5eaa421339f8:949868622d6746d18d72afc5ab720b41
+[I 11:20:27.995 NotebookApp] Starting buffering for 173dfae0-e1e0-4456-b2b0-38be791d4657:e0c00c51766a42c8a2ad301dabe68ea0
+[W 21:03:21.620 NotebookApp] Config option `template_path` not recognized by `LenvsHTMLExporter`.  Did you mean one of: `extra_template_paths, template_name, template_paths`?
+[W 21:03:21.634 NotebookApp] Config option `template_path` not recognized by `LenvsHTMLExporter`.  Did you mean one of: `extra_template_paths, template_name, template_paths`?
+[W 21:03:21.654 NotebookApp] Config option `template_path` not recognized by `LenvsTocHTMLExporter`.  Did you mean one of: `extra_template_paths, template_name, template_paths`?
+[W 21:03:21.667 NotebookApp] Config option `template_path` not recognized by `LenvsTocHTMLExporter`.  Did you mean one of: `extra_template_paths, template_name, template_paths`?
+[W 21:03:21.710 NotebookApp] Config option `template_path` not recognized by `LenvsLatexExporter`.  Did you mean one of: `extra_template_paths, template_name, template_paths`?
+[W 21:03:21.717 NotebookApp] Config option `template_path` not recognized by `LenvsLatexExporter`.  Did you mean one of: `extra_template_paths, template_name, template_paths`?
+[W 21:03:21.920 NotebookApp] Config option `template_path` not recognized by `LenvsSlidesExporter`.  Did you mean one of: `extra_template_paths, template_name, template_paths`?
+[W 21:03:21.928 NotebookApp] Config option `template_path` not recognized by `LenvsSlidesExporter`.  Did you mean one of: `extra_template_paths, template_name, template_paths`?
+[W 21:03:22.032 NotebookApp] Config option `template_path` not recognized by `LenvsHTMLExporter`.  Did you mean one of: `extra_template_paths, template_name, template_paths`?
+[W 21:03:22.046 NotebookApp] Config option `template_path` not recognized by `LenvsHTMLExporter`.  Did you mean one of: `extra_template_paths, template_name, template_paths`?
+[W 21:03:22.066 NotebookApp] Config option `template_path` not recognized by `LenvsTocHTMLExporter`.  Did you mean one of: `extra_template_paths, template_name, template_paths`?
+[W 21:03:22.079 NotebookApp] Config option `template_path` not recognized by `LenvsTocHTMLExporter`.  Did you mean one of: `extra_template_paths, template_name, template_paths`?
+[W 21:03:22.121 NotebookApp] Config option `template_path` not recognized by `LenvsLatexExporter`.  Did you mean one of: `extra_template_paths, template_name, template_paths`?
+[W 21:03:22.129 NotebookApp] Config option `template_path` not recognized by `LenvsLatexExporter`.  Did you mean one of: `extra_template_paths, template_name, template_paths`?
+[W 21:03:22.290 NotebookApp] Config option `template_path` not recognized by `LenvsSlidesExporter`.  Did you mean one of: `extra_template_paths, template_name, template_paths`?
+[W 21:03:22.299 NotebookApp] Config option `template_path` not recognized by `LenvsSlidesExporter`.  Did you mean one of: `extra_template_paths, template_name, template_paths`?
+[W 21:03:23.004 NotebookApp] Notebook byVolume.ipynb is not trusted
+[I 21:05:23.221 NotebookApp] Saving file at /byVolume.ipynb
+[I 21:11:23.261 NotebookApp] Saving file at /byVolume.ipynb
+[I 21:13:23.253 NotebookApp] Saving file at /byVolume.ipynb
+[W 21:13:50.198 NotebookApp] Config option `template_path` not recognized by `LenvsHTMLExporter`.  Did you mean one of: `extra_template_paths, template_name, template_paths`?
+[W 21:13:50.211 NotebookApp] Config option `template_path` not recognized by `LenvsHTMLExporter`.  Did you mean one of: `extra_template_paths, template_name, template_paths`?
+[W 21:13:50.231 NotebookApp] Config option `template_path` not recognized by `LenvsTocHTMLExporter`.  Did you mean one of: `extra_template_paths, template_name, template_paths`?
+[W 21:13:50.244 NotebookApp] Config option `template_path` not recognized by `LenvsTocHTMLExporter`.  Did you mean one of: `extra_template_paths, template_name, template_paths`?
+[W 21:13:50.287 NotebookApp] Config option `template_path` not recognized by `LenvsLatexExporter`.  Did you mean one of: `extra_template_paths, template_name, template_paths`?
+[W 21:13:50.294 NotebookApp] Config option `template_path` not recognized by `LenvsLatexExporter`.  Did you mean one of: `extra_template_paths, template_name, template_paths`?
+[W 21:13:50.456 NotebookApp] Config option `template_path` not recognized by `LenvsSlidesExporter`.  Did you mean one of: `extra_template_paths, template_name, template_paths`?
+[W 21:13:50.464 NotebookApp] Config option `template_path` not recognized by `LenvsSlidesExporter`.  Did you mean one of: `extra_template_paths, template_name, template_paths`?
+[W 21:13:50.577 NotebookApp] Config option `template_path` not recognized by `LenvsHTMLExporter`.  Did you mean one of: `extra_template_paths, template_name, template_paths`?
+[W 21:13:50.591 NotebookApp] Config option `template_path` not recognized by `LenvsHTMLExporter`.  Did you mean one of: `extra_template_paths, template_name, template_paths`?
+[W 21:13:50.613 NotebookApp] Config option `template_path` not recognized by `LenvsTocHTMLExporter`.  Did you mean one of: `extra_template_paths, template_name, template_paths`?
+[W 21:13:50.627 NotebookApp] Config option `template_path` not recognized by `LenvsTocHTMLExporter`.  Did you mean one of: `extra_template_paths, template_name, template_paths`?
+[W 21:13:50.673 NotebookApp] Config option `template_path` not recognized by `LenvsLatexExporter`.  Did you mean one of: `extra_template_paths, template_name, template_paths`?
+[W 21:13:50.681 NotebookApp] Config option `template_path` not recognized by `LenvsLatexExporter`.  Did you mean one of: `extra_template_paths, template_name, template_paths`?
+[W 21:13:50.858 NotebookApp] Config option `template_path` not recognized by `LenvsSlidesExporter`.  Did you mean one of: `extra_template_paths, template_name, template_paths`?
+[W 21:13:50.868 NotebookApp] Config option `template_path` not recognized by `LenvsSlidesExporter`.  Did you mean one of: `extra_template_paths, template_name, template_paths`?
+[W 21:13:51.548 NotebookApp] Notebook trendline.ipynb is not trusted
+[I 21:15:51.904 NotebookApp] Saving file at /trendline.ipynb
+[W 21:15:51.905 NotebookApp] Notebook trendline.ipynb is not trusted
+[I 21:21:51.824 NotebookApp] Saving file at /trendline.ipynb
+[W 21:21:51.825 NotebookApp] Notebook trendline.ipynb is not trusted
+[I 21:41:51.844 NotebookApp] Saving file at /trendline.ipynb
+[W 21:41:51.845 NotebookApp] Notebook trendline.ipynb is not trusted
+[I 21:43:51.872 NotebookApp] Saving file at /trendline.ipynb
+[W 21:43:51.873 NotebookApp] Notebook trendline.ipynb is not trusted
+[I 21:43:55.174 NotebookApp] Starting buffering for 173dfae0-e1e0-4456-b2b0-38be791d4657:3884fe4ea4f444b5825f1b17bad34432
+[I 21:43:56.590 NotebookApp] Kernel restarted: 173dfae0-e1e0-4456-b2b0-38be791d4657
+[I 21:43:56.696 NotebookApp] Restoring connection for 173dfae0-e1e0-4456-b2b0-38be791d4657:3884fe4ea4f444b5825f1b17bad34432
+CONDA_PREFIX=/conda/envs/alpha
+[I 21:43:58.205 NotebookApp] Replaying 6 buffered messages
+[I 21:45:51.843 NotebookApp] Saving file at /trendline.ipynb
+[I 21:47:51.855 NotebookApp] Saving file at /trendline.ipynb
+[I 21:49:51.857 NotebookApp] Saving file at /trendline.ipynb
+[I 21:51:51.873 NotebookApp] Saving file at /trendline.ipynb
+[I 21:53:51.866 NotebookApp] Saving file at /trendline.ipynb
+[I 21:55:51.857 NotebookApp] Saving file at /trendline.ipynb
+[I 21:57:10.310 NotebookApp] Starting buffering for 173dfae0-e1e0-4456-b2b0-38be791d4657:3884fe4ea4f444b5825f1b17bad34432
+[I 21:57:11.032 NotebookApp] Kernel restarted: 173dfae0-e1e0-4456-b2b0-38be791d4657
+[I 21:57:11.075 NotebookApp] Restoring connection for 173dfae0-e1e0-4456-b2b0-38be791d4657:3884fe4ea4f444b5825f1b17bad34432
+CONDA_PREFIX=/conda/envs/alpha
+[I 21:57:12.350 NotebookApp] Replaying 3 buffered messages
+[I 21:57:51.868 NotebookApp] Saving file at /trendline.ipynb
+[I 21:59:51.897 NotebookApp] Saving file at /trendline.ipynb
+[I 22:01:51.857 NotebookApp] Saving file at /trendline.ipynb
+[I 22:03:51.875 NotebookApp] Saving file at /trendline.ipynb
+[I 22:05:51.898 NotebookApp] Saving file at /trendline.ipynb
+[I 22:11:51.899 NotebookApp] Saving file at /trendline.ipynb
+[I 22:13:52.850 NotebookApp] Saving file at /trendline.ipynb
+[I 22:21:52.853 NotebookApp] Saving file at /trendline.ipynb
+[I 22:23:52.886 NotebookApp] Saving file at /trendline.ipynb
+[I 22:25:52.892 NotebookApp] Saving file at /trendline.ipynb
+[I 22:26:00.516 NotebookApp] Starting buffering for 173dfae0-e1e0-4456-b2b0-38be791d4657:3884fe4ea4f444b5825f1b17bad34432
+[I 22:26:01.238 NotebookApp] Kernel restarted: 173dfae0-e1e0-4456-b2b0-38be791d4657
+[I 22:26:01.315 NotebookApp] Restoring connection for 173dfae0-e1e0-4456-b2b0-38be791d4657:3884fe4ea4f444b5825f1b17bad34432
+CONDA_PREFIX=/conda/envs/alpha
+[I 22:26:02.332 NotebookApp] Replaying 16 buffered messages
+[I 22:27:52.867 NotebookApp] Saving file at /trendline.ipynb
+[I 22:29:52.864 NotebookApp] Saving file at /trendline.ipynb
+[I 22:31:52.869 NotebookApp] Saving file at /trendline.ipynb
+[I 22:33:52.865 NotebookApp] Saving file at /trendline.ipynb
+[I 22:35:52.896 NotebookApp] Saving file at /trendline.ipynb
+[I 22:37:52.888 NotebookApp] Saving file at /trendline.ipynb
+[I 22:39:52.926 NotebookApp] Saving file at /trendline.ipynb
+[I 22:41:52.878 NotebookApp] Saving file at /trendline.ipynb
+[I 22:42:37.624 NotebookApp] Starting buffering for 173dfae0-e1e0-4456-b2b0-38be791d4657:3884fe4ea4f444b5825f1b17bad34432
+[I 22:42:38.141 NotebookApp] Kernel restarted: 173dfae0-e1e0-4456-b2b0-38be791d4657
+[I 22:42:38.292 NotebookApp] Restoring connection for 173dfae0-e1e0-4456-b2b0-38be791d4657:3884fe4ea4f444b5825f1b17bad34432
+CONDA_PREFIX=/conda/envs/alpha
+[I 22:42:39.302 NotebookApp] Replaying 3 buffered messages
+[I 22:43:52.890 NotebookApp] Saving file at /trendline.ipynb
+[I 22:44:04.354 NotebookApp] Starting buffering for 173dfae0-e1e0-4456-b2b0-38be791d4657:3884fe4ea4f444b5825f1b17bad34432
+[I 22:44:04.971 NotebookApp] Kernel restarted: 173dfae0-e1e0-4456-b2b0-38be791d4657
+[I 22:44:05.116 NotebookApp] Restoring connection for 173dfae0-e1e0-4456-b2b0-38be791d4657:3884fe4ea4f444b5825f1b17bad34432
+CONDA_PREFIX=/conda/envs/alpha
+[I 22:44:06.125 NotebookApp] Replaying 3 buffered messages
+[I 22:45:52.892 NotebookApp] Saving file at /trendline.ipynb
+[I 22:47:52.889 NotebookApp] Saving file at /trendline.ipynb
+[I 22:51:52.901 NotebookApp] Saving file at /trendline.ipynb
+[I 22:53:52.889 NotebookApp] Saving file at /trendline.ipynb
+[I 22:55:52.901 NotebookApp] Saving file at /trendline.ipynb
+[W 23:09:35.118 NotebookApp] WebSocket ping timeout after 119945 ms.
+[I 23:09:40.120 NotebookApp] Starting buffering for 173dfae0-e1e0-4456-b2b0-38be791d4657:3884fe4ea4f444b5825f1b17bad34432
+[W 23:09:53.276 NotebookApp] WebSocket ping timeout after 119990 ms.
+[I 23:09:58.277 NotebookApp] Starting buffering for e87ba907-5cad-43f2-97c1-5eaa421339f8:0fea2988401c48ce9584bebd98094af2
+[I 09:26:16.062 NotebookApp] Restoring connection for e87ba907-5cad-43f2-97c1-5eaa421339f8:0fea2988401c48ce9584bebd98094af2
+[I 09:26:41.785 NotebookApp] Restoring connection for 173dfae0-e1e0-4456-b2b0-38be791d4657:3884fe4ea4f444b5825f1b17bad34432
+[I 09:55:06.250 NotebookApp] Starting buffering for e87ba907-5cad-43f2-97c1-5eaa421339f8:0fea2988401c48ce9584bebd98094af2
+[I 09:55:06.252 NotebookApp] Starting buffering for 173dfae0-e1e0-4456-b2b0-38be791d4657:3884fe4ea4f444b5825f1b17bad34432

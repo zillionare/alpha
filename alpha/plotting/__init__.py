@@ -18,6 +18,7 @@ def format_labels(frames):
 
     return formatted
 
+
 def format_frame(frame):
     if hasattr(frame, "hour") and frame.hour != 0:
         fmt = "MM-DD HH:mm"
@@ -76,13 +77,9 @@ def draw_trendline(
     splitter_x = [n - ylen] * len(splitter_y)
     ax.plot(splitter_x, splitter_y, "r:")
 
-    frames = _format_frames(bars["frame"][-n:])
-    if n // ylen * ylen == n:
-        positions = list(np.arange(n // ylen) * ylen)
-    else:
-        positions = list(np.arange(n // ylen + 1) * ylen)
+    labels = format_labels(bars["frame"][-n:])
+    positions = list(np.arange(n))
 
-    labels = [frames[i] for i in positions]
     ax.set_xticks(positions)
     ax.set_xticklabels(labels, rotation=45)
 
