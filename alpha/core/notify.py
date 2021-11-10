@@ -70,18 +70,18 @@ def say(text):
     _tts.say(text)
     _tts.runAndWait()
 
+
 async def text_to_speech(text):
     file = tempfile.mktemp(dir="/tmp/alpha/audio/", suffix=".wav")
     async with aiohttp.ClientSession() as session:
-        async with session.get(
-            f"{cfg.alpha.tts_server}text={text}"
-        ) as resp:
+        async with session.get(f"{cfg.alpha.tts_server}text={text}") as resp:
             if resp.status == 200:
                 with open(file, "wb") as f:
                     f.write(await resp.read())
                     return file
 
     return None
+
 
 async def nb_say(text):
     file = await text_to_speech(text)
