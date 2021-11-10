@@ -35,6 +35,7 @@ import logging
 g = {}
 logger = logging.getLogger(__name__)
 
+
 async def init_notebook(adaptor="omicron"):
     cfg4py.init(get_config_dir())
     if adaptor in ["omicron", "both"]:
@@ -147,7 +148,7 @@ async def get_bars(code: str, n: int, frame_type: str = "1d", end: Frame = None)
     ft = FrameType(frame_type)
 
     tz = "Asia/Shanghai"
-    end = arrow.get(end,tzinfo=tz) if end else arrow.now(tz=tz)
+    end = arrow.get(end, tzinfo=tz) if end else arrow.now(tz=tz)
     if not tf.is_open_time(end):
         end = tf.floor(end, ft)
 
@@ -207,7 +208,13 @@ def mail_notify(subject: str, model: str, params: dict, report: pd.DataFrame):
 
 
 async def scan(
-    trigger, nbars, frame_type=FrameType.DAY, tm=None, nstocks=100, codes=None,silent=True
+    trigger,
+    nbars,
+    frame_type=FrameType.DAY,
+    tm=None,
+    nstocks=100,
+    codes=None,
+    silent=True,
 ):
     results = []
 
@@ -251,21 +258,41 @@ def name_to_code(name):
     secs = Securities()
     return secs._secs[secs._secs["display_name"] == name]["code"][0]
 
+
 async def scheduler(job, *args, **kwargs):
     wakeup_time = []
     now = arrow.now()
 
     # get wakeup time
-    for tm in ["09:45", "10:00", "10:15", "10:30", "10:45", "11:00", "11:15", "11:30", "13:15", "13:30",
-              "13:45", "14:00", "14:15", "14:30", "14:45"]:
+    for tm in [
+        "09:45",
+        "10:00",
+        "10:15",
+        "10:30",
+        "10:45",
+        "11:00",
+        "11:15",
+        "11:30",
+        "13:15",
+        "13:30",
+        "13:45",
+        "14:00",
+        "14:15",
+        "14:30",
+        "14:45",
+    ]:
         hour, minute = map(int, tm.split(":"))
-        wakeup_time.append(arrow.Arrow(now.year, now.month, now.day, hour, minute, tzinfo="Asia/Shanghai"))
+        wakeup_time.append(
+            arrow.Arrow(
+                now.year, now.month, now.day, hour, minute, tzinfo="Asia/Shanghai"
+            )
+        )
 
     for tm in wakeup_time:
         if arrow.now() > tm:
             continue
 
-        seconds = (tm.timestamp - arrow.now().timestamp)
+        seconds = tm.timestamp - arrow.now().timestamp
         await asyncio.sleep(seconds)
         print(f"=========== {tm.hour}:{tm.minute:02d}============")
         await job(*args, **kwargs)
