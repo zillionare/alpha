@@ -6,6 +6,8 @@ import ta
 from numpy.lib.stride_tricks import sliding_window_view
 from omicron.core.numpy_extensions import find_runs
 from omicron.core.types import FrameType
+from scipy.signal import argrelextrema
+import talib
 
 
 import numpy as np
@@ -83,6 +85,7 @@ def predict_by_moving_average(
 
     return preds, pmae
 
+
 def parabolic_flip(ts, rng=7, ma_win=5, calc_ma=True):
     """抛物线转向信号
 
@@ -96,16 +99,17 @@ def parabolic_flip(ts, rng=7, ma_win=5, calc_ma=True):
     ts_ = ts[-rng:]
     (a, b, c), pmae = polyfit(ts_)
 
-    y_ = np.polyval((a,b,c), np.arange(rng))
+    y_ = np.polyval((a, b, c), np.arange(rng))
 
     # uncomment this to draw the lines
     # plt.plot(np.arange(len(ts)-rng, len(ts)), y_)
     # plt.plot(ts)
 
-    vx = round(-b/(2*a),1)
+    vx = round(-b / (2 * a), 1)
 
     flag = 1 if y_[-1] > y_[-2] else -1
-    return flag, rng - vx, round(pmae, 5)
+    return flag, rng - vx, round(a, 4), round(pmae, 5)
+
 
 def moving_average(ts: np.array, win: int):
     """计算时间序列ts在win窗口内的移动平均
@@ -546,7 +550,8 @@ def maline_support_ratio(close, ma_win, n) -> Tuple:
 
     return np.count_nonzero(close[-n:] >= ma) / n, close[-1] >= ma[-1]
 
-def run_length_flip(ts:List[bool])->float:
+
+def run_length_flip(ts: List[bool]) -> float:
     """计算逻辑值序列`ts`由正到负（或者反之）的翻转，并返回最后翻转的序列长度比。
 
     如果返回值为正，表明`ts`要么全为正，要么最后的连续序列为正。反之亦然。如果返回值在[-1,1]之间，表明在一个较长的连续序列之后，刚刚发生一个较短的反转序列。返回值的绝对值越大，说明反转之后趋势延续越久。
@@ -559,9 +564,10 @@ def run_length_flip(ts:List[bool])->float:
         lf, rf = flags[-2:]
         ll, rl = length[-2:]
         sign = 1 if rf else -1
-        rlf = sign * rl/ll
+        rlf = sign * rl / ll
 
     return round(rlf, 2)
+
 
 def bullish_candlestick_ratio(bars, n) -> float:
     """n个周期里，阳线占比
@@ -634,6 +640,7 @@ def ma_d2(close, win) -> np.array:
 
     return moving_average(d2, win)
 
+
 def ddv(ts, win) -> Tuple[np.array, np.array]:
     """数组ts移动平均值的一阶和二阶导"""
     ma = moving_average(ts, win)
@@ -665,6 +672,7 @@ def rolling(x, win, func):
 
     return np.array(results)
 
+
 def reversing(close):
     """股价向上/向下反转
 
@@ -683,35 +691,371 @@ def reversing(close):
         return -1
     return 0
 
-def flip_features(code, close, frame_type, ma=None):
+
+def williams_r(bars, timeperiod=60) -> np.array:
+    """求Williams %R
+
+    Args:
+        bars ([type]): [description]
+    Returns:
+        wr at each frame
     """
-    1. rsi
-    2. 抛物线转向？
-    3. msr？
+    high = bars["high"].astype("f8")
+    low = bars["low"].astype("f8")
+    close = bars["close"].astype("f8")
+
+    return talib.WILLR(high, low, close, timeperiod=14)
+
+
+def down_shadow(bars):
+    """求下影线的长度，百分比表示
+
+    Args:
+        bars ([type]): [description]
     """
+    if len(bars.shape) == 0:
+        return min(bars["open"], bars["close"]) / bars["low"] - 1
+
+    base = np.select(bars["open"] > bars["close"], bars["close"], bars["open"])
+    return base / bars["low"] - 1
+
+
+def up_shadow(bars):
+    """求上影线长度，百分比表示"""
+    if len(bars.shape) == 0:
+        return bars["high"] / max(bars["open"], bars["close"]) - 1
+
+    base = np.select(bars["open"] > bars["close"], bars["open"], bars["close"])
+    return bars["high"] / base - 1
+
+
+def double_bottom(bars, win=10, gap=1e-3) -> int:
+    """在`n`个周期里，当日最低点是否下探前低且收盘价未创新低？
+
+
+    Args:
+        bars ([type]): [description]
+        win (int, optional): [description]. Defaults to 10.
+
+    Returns:
+        [int]: 如果为双底，则返回1，否则返回0
+    """
+    low = bars["low"][-win:-1]
+    close = bars["close"][-win:-1]
+
+    ll = np.min(low)
+    lc = np.min(close)
+
+    l0 = bars["low"][-1]
+    c0 = bars["close"][-1]
+
+    if c0 > lc and abs(l0 / ll - 1) < gap:
+        return 1
+
+    return 0
+
+
+def double_top(bars, win=10, gap=1e-3):
+    """在`n`个周期里，当日最高点是否上探前高并且收盘未创新高
+
+    Args:
+        bars ([type]): [description]
+        win (int, optional): [description]. Defaults to 10.
+
+    Returns:
+        [type]: 如果存在双顶，返回1，否则返回0
+    """
+    high = bars["high"][-win:-1]
+    close = bars["close"][-win:-1]
+
+    hh = np.max(high)
+    hc = np.max(close)
+
+    h0 = bars["high"][-1]
+    c0 = bars["close"][-1]
+
+    if hc > c0 and abs(h0 / hh - 1) < gap:
+        return 1
+
+    return 0
+
+
+def peaks_and_valleys(ts, min_altitude_ratio=1e-3) -> Tuple:
+    """求一维数组`ts`表示的的峰值和谷底，本函数可以辅助用以确定局部顶和底。
+
+
+    使用order = 1即最相邻三个点来确认峰值和谷底。为平滑波动，事先对数组求移动平均值。
+
+    `min_altitude_ratio`用来指定峰值与相邻点的海拔高度的最小值。小于这个最小值的，将不被认为是峰值。在这里，相邻点可能是峰值（或者谷底）右侧的1~3个点，也就是信号可能晚最多3个周期才能确认。
+
+    ![](https://images.jieyu.ai/images/202111/20211108182305.png)
+
+    Examples:
+        >>> ts = np.array([3589.86, 3586.2 , 3587.35, 3587.  , 3590.6 , 3593.53, 3602.47,
+                    3603.62, 3595.87, 3582.53, 3587.56, 3594.78, 3596.02, 3591.88,
+                    3586.08, 3598.18, 3593.5 , 3587.3 , 3584.57, 3582.6 , 3588.16,
+                    3586.72, 3592.24, 3596.06, 3593.38, 3597.39, 3603.25, 3609.86,
+                    3610.58, 3618.01, 3615.55, 3612.88, 3603.94, 3597.5 , 3599.46,
+                    3597.64, 3575.2 , 3565.64, 3559.96, 3564.71, 3561.38, 3559.98,
+                    3555.47, 3562.31, 3535.2 , 3528.66, 3532.11, 3529.  , 3524.13,
+                    3523.6 , 3520.83, 3518.42, 3505.15, 3515.32, 3525.08, 3523.94,
+                    3531.4 , 3540.49, 3544.02, 3547.34, 3540.21, 3539.08, 3549.08,
+                    3549.93, 3555.34, 3545.89, 3546.1 , 3544.48, 3554.43, 3548.42,
+                    3537.14, 3522.33, 3477.68, 3482.24, 3499.03, 3505.63, 3497.15,
+                    3501.23, 3498.22, 3492.46, 3484.18, 3482.13, 3502.18, 3498.54,
+                    3515.66, 3514.5 , 3523.32, 3521.07, 3526.13, 3520.53, 3524.83,
+                    3526.87, 3518.77, 3522.16, 3514.98, 3518.57, 3506.63, 3506.4 ,
+                    3501.08, 3491.57], dtype=np.float32)
+        >>> peaks_and_valleys(ts)
+        (array([ 8, 15, 31, 43, 68, 78, 91]), array([13, 21, 53, 67, 81]))
+
+    Args:
+        ts ([type]): [description]
+        min_altitude_ratio ([type], optional): [description]. Defaults to 1e-3.
+        ma ([type], optional): [description]. Defaults to None.
+
+    Returns:
+        [Tuple]: indices of valleys and peaks
+    """
+
+    ma = moving_average(ts, 5)
+
+    local_ma = argrelextrema(ma, np.greater, order=1)[0]
+    local_mi = argrelextrema(ma, np.less, order=1)[0]
+
+    if len(local_ma):
+        local_ma += 4
+    if len(local_mi):
+        local_mi += 4
+
+    peaks = set()
+    # the peaks are calced by ma, so we need to adjust
+    for ppeak in local_ma:
+        if ppeak < 5:
+            peaks.add(ppeak)
+            continue
+
+        view = ts[ppeak - 5 : ppeak + 5]
+        pmax = np.argmax(view)
+        vmax = np.max(view)
+
+        if pmax not in [0, len(view) - 1]:
+            lmin = np.min(view[:pmax])
+            rmin = np.min(view[pmax + 1 :])
+            if (
+                vmax / lmin - 1 > min_altitude_ratio
+                and vmax / rmin - 1 > min_altitude_ratio
+            ):
+                peaks.add(ppeak + pmax - 5)
+        else:
+            peaks.add(ppeak)
+
+    valleys = set()
+    for pvalley in local_mi:
+        if pvalley < 5:
+            valleys.append(pvalley)
+            continue
+        view = ts[pvalley - 5 : pvalley + 5]
+        pmin = np.argmin(view)
+        vmin = np.min(view)
+
+        if pmin not in [0, len(view) - 1]:
+            lmax = np.max(view[:pmin])
+            rmax = np.max(view[pmin + 1 :])
+            if (
+                lmax / vmin - 1 > min_altitude_ratio
+                and rmax / vmin - 1 > min_altitude_ratio
+            ):
+                valleys.add(pvalley + pmin - 5)
+        else:
+            valleys.add(pvalley)
+
+    return sorted(peaks), sorted(valleys)
+
+
+def dark_cloud_cover(bars, penetration=-0.025):
+    """乌云盖顶，即日线高开大阴线，并且收盘价向下插入到前一日实体内
+
+    Returns:
+        -1 if there's not dark cloud cover, otherwise frames since signal fired
+    """
+    open_ = bars["open"]
+    close = bars["close"]
+
+    pos = np.argwhere(
+        (close[:-1] > open_[:-1])
+        & (open_[1:] > close[:-1])
+        & (close[1:] / close[:-1] - 1 < penetration)
+    ).flatten()
+
+    if len(pos):
+        return len(bars) - 1 - (pos + 1)
+
+    return [-1]
+
+
+def hammer(bars, shadow_length=0.03) -> Tuple:
+    """锤头
+
+    锤头是指日线开盘后，股价下行，随后又被强烈的买盘推至开盘价上方，形成一个带长下影线的阳线实体。
+    https://www.investopedia.com/articles/active-trading/062315/using-bullish-candlestick-patterns-buy-stocks.asp
+
+    返回结果包含了下影线的长度（通过百分比度量）
+    """
+    open_ = bars["open"]
+    close = bars["close"]
+    low = bars["low"]
+
+    shadow = open_ / low - 1
+
+    if len(bars.shape) == 0:
+        if open_ < close and shadow > shadow_length:
+            return True, shadow
+
+        return None, None
+
+    pos = np.argwhere((open_ < close) & (shadow > shadow_length)).flatten()
+    return pos, shadow[pos]
+
+
+def inverted_hammer(bars, shadow_length=0.03) -> Tuple:
+    """倒锤头，即仙人指路。当出现在低位时，可能意味着主力将要发动进攻。
+
+    需要注意的是，从更短周期k线来看，上攻时需要带量，否则只是个别散户的游戏，没有意义。
+
+    https://www.investopedia.com/articles/active-trading/062315/using-bullish-candlestick-patterns-buy-stocks.asp
+
+    Args:
+        bars ([type]): [description]
+        shadow_length (float, optional): [description]. Defaults to 0.03.
+    """
+    open_ = bars["open"]
+    close = bars["close"]
+    high = bars["high"]
+
+    shadow = high / open_ - 1
+
+    # 如果传入的是标量，即仅一根线
+    if len(bars.shape) == 0:
+        if open_ < close and shadow > shadow_length:
+            return True, shadow
+
+        return None, None
+
+    pos = np.argwhere((open_ < close) & (shadow > shadow_length)).flatten()
+    return pos, shadow[pos]
+
+
+def parabolic_features(ts, rng=7, ma_win=5, calc_ma=True):
+    """检测`ts`代表的最后7个周期的均线中，是否存在抛物线特征。"""
+    if calc_ma:
+        ts = moving_average(ts, ma_win)
+
+    ts_ = ts[-rng:]
+    (a, b, c), pmae = polyfit(ts_)
+
+    # predict till next frame
+    y_ = np.polyval((a, b, c), np.arange(rng + 1))
+
+    # uncomment this to draw the lines
+    # plt.plot(np.arange(len(ts)-rng, len(ts)), y_)
+    # plt.plot(ts)
+
+    vx = round(-b / (2 * a), 1)
+
+    next_ts = reverse_moving_average(y_, rng, ma_win)
+    pred_roc = next_ts / ts[-1] - 1
+
+    return np.sign(pred_roc), pred_roc, rng - vx, round(a, 4), round(pmae, 5)
+
+
+def reversal_features(
+    code, bars, frame_type: FrameType, ma=None, wr_win=60, peak_altitude=1e-2
+):
+    # 顺序
+    # 0. WR
+    # 1. RSI
+    # 2. parabolic flip
+    # 3. stock pattern
+    # 4. local maximum/minimum
     from alpha.core.rsi_stats import rsi30, rsiday
 
+    assert frame_type in [FrameType.DAY, FrameType.MIN30]
+    features = []
+
+    open_, high, low, close = bars["open"], bars["high"], bars["low"], bars["close"]
+
     if ma is None:
-        ma = moving_average(close, 5)
+        ma = moving_average(bars["close"], 5)
 
-    rsi = relative_strength_index(close, period=6)[-1]
+        bars = bars[4:]
+        open_, high, low, close = bars["open"], bars["high"], bars["low"], bars["close"]
 
-    stats = rsi30 if frame_type == FrameType.MIN30 else rsiday
-    prsi = stats.get_proba(code, rsi)
+    # wr
+    hh = np.max(high[-wr_win:])
+    ll = np.min(low[-wr_win:])
+    wr = (hh - close[-1]) / (hh - ll)
 
-    ma_direction, dist_to_vx, pmae = parabolic_flip(ma, calc_ma=False)
+    features.append(wr)
 
-    rlf = run_length_flip(close[-10:] > ma[-10:])
+    # rsi and prsi
+    rsi = relative_strength_index(close, period=6)[-3:]
 
-    # 大阴线或者连续阴线导致不规则的反转;反之亦然
-    if close[-1] < close[-6] and np.any(close[-5:-1]>close[-6]):
-        long_bearish_line = True
-    else:
-        long_bearish_line = None
+    rsistats = rsi30 if frame_type == FrameType.MIN30 else rsiday
+    prsi = [rsistats.get_proba(code, v) or -1 for v in rsi]
 
-    if close[-1] > close[-6] and np.any(close[-5:-1]<close[-6]):
-        long_bullish_line = True
-    else:
-        long_bullish_line = None
+    features.extend(prsi)
+    features.extend(rsi)
 
-    return [prsi, rsi, ma_direction, dist_to_vx, pmae, rlf, long_bearish_line, long_bullish_line]
+    # parabolic features
+    features.extend(parabolic_features(close))
+
+    # stock pattern
+    # double bottom | hammer | invert_hammer| long down shadow | long up shadow | double top | darkcloud cover
+    db = double_bottom(bars)
+
+    flag, shadow = hammer(bars[-1])
+    hm = shadow if flag else 0
+
+    flag, shadow = inverted_hammer(bars[-1])
+    ihm = shadow if flag else 0
+
+    ds = down_shadow(bars[-1])
+    us = up_shadow(bars[-1])
+
+    dt = double_top(bars)
+
+    dcc = dark_cloud_cover(bars[-2:])[0]
+
+    # local maximum/minimum
+    n = 10
+    peaks, valleys = peaks_and_valleys(close[-n:], min_altitude_ratio=peak_altitude)
+    peak = n - peaks[-1] if len(peaks) else -1
+    valley = n - valleys[-1] if len(valleys) else -1
+
+    features.extend([db, hm, ihm, ds, us, dt, dcc, peak, valley])
+
+    columns = [
+        "wr",
+        "prsi_2",
+        "prsi_1",
+        "prsi_0",
+        "rsi_2",
+        "rsi_1",
+        "rsi_0",
+        "parab_flag",
+        "parab_pred_roc",
+        "parab_vx",
+        "parab_a",
+        "parab_pmae",
+        "double_bottom",
+        "hammer",
+        "inverted_hammer",
+        "down_shadow",
+        "upper_shadow",
+        "double_top",
+        "dark_cloud_cover",
+        "peak",
+        "valley",
+    ]
+    return features, columns
