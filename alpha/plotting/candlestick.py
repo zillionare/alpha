@@ -3,10 +3,9 @@
 import datetime
 import os
 from io import BytesIO
-from typing import NewType, Optional, Union
+from typing import List, NewType, Optional, Union
 
 import arrow
-from black import E
 
 # Cannot load backend 'TkAgg' which requires the 'tk' interactive framework, as 'headless' is currently running
 # matplotlib.use("TkAgg")
@@ -33,6 +32,8 @@ logger = logging.getLogger(__name__)
 
 
 plt.rc("font", family=["Microsoft YaHei", "Heiti TC", "Songti SC", "STHeitiSC-Light"])
+
+
 class Candlestick:
     def __init__(
         self,
@@ -60,9 +61,7 @@ class Candlestick:
             "30m": [5, 10, 20, 60],
         }
 
-        plt.rc(
-            "font", size=font_size
-        )
+        plt.rc("font", size=font_size)
         plt.rcParams["axes.unicode_minus"] = False
 
         # how many n_bars will be drawn in the fig
@@ -173,7 +172,9 @@ class Candlestick:
             file = os.path.join(save_to, f"{code}_{end.format('YY-MM-DD')}.png")
             self.fig.savefig(file, dpi=self.dpi)
 
-    def plot_bars(self, bars: np.array, title: str = None, save_as: str = None):
+    def plot_bars(
+        self, bars: np.array, title: str = None, save_as: str = None, signals=[]
+    ):
         """给定一个bar数组，绘制k线图
 
         要求在构造CandleStick对象时，指定一个与此对应的惟一的frame设置。
@@ -186,7 +187,7 @@ class Candlestick:
         assert len(self.frames) == 1
 
         ma_groups = list(self.frames.values())[0]
-        self.plot_(bars, ma_groups, self.axes[0], self.axes[1], title)
+        self.plot_(bars, ma_groups, self.axes[0], self.axes[1], title, signals)
 
         if save_as:
             self.fig.savefig(save_as, dpi=self.dpi)
@@ -198,6 +199,7 @@ class Candlestick:
         ax_candle_stick,
         ax_volume,
         title: str = None,
+        signals: List = [],
     ):
         """
         draw candlestick (with ma) and volume for given quotes
@@ -229,6 +231,7 @@ class Candlestick:
             bars[-n:],
             facecolor=facecolor,
             edgecolor=edgecolor,
+            signals=signals,
         )
 
         # draw ma
@@ -298,7 +301,12 @@ class Candlestick:
         return colors
 
     def candle_stick_plot(
-        self, ax, bars: np.array, facecolor: np.array = None, edgecolor: np.array = None
+        self,
+        ax,
+        bars: np.array,
+        facecolor: np.array = None,
+        edgecolor: np.array = None,
+        signals=[],
     ):
         """
         args:
@@ -340,4 +348,7 @@ class Candlestick:
 
         rect_pc = PatchCollection(rects, edgecolor=edgecolor, facecolor=facecolor)
         ax.add_collection(rect_pc)
+
+        for pos, text, color in signals:
+            ax.text(pos-0.5, c[pos], text, color=color)
         ax.autoscale_view()
