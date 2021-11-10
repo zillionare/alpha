@@ -19,14 +19,14 @@ logging:
       - console
     level: INFO
 redis:
-  dsn: redis://172.17.0.1:6379
-  #dsn: redis://127.0.0.1:6379
+  #dsn: redis://172.17.0.1:6379
+  dsn: redis://127.0.0.1:6379
 postgres:
   enabled: false
 omega:
   urls:
-    quotes_server: http://172.17.0.1:3181
-    #quotes_server: http://127.0.0.1:3181
+    #quotes_server: http://172.17.0.1:3181
+    quotes_server: http://127.0.0.1:3181
 alpha:
     data_home: ~/zillionare/alpha/data
     tts_server: http://127.0.0.1:5002/api/tts?
