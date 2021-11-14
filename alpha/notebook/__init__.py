@@ -216,12 +216,26 @@ async def scan(
     codes=None,
     silent=True,
 ):
+    """[summary]
+
+    Args:
+        trigger ([type]): trigger(code, name, bars, results, frame_type)
+        nbars ([type]): [description]
+        frame_type ([type], optional): [description]. Defaults to FrameType.DAY.
+        tm ([type], optional): [description]. Defaults to None.
+        nstocks (int, optional): [description]. Defaults to 100.
+        codes ([type], optional): [description]. Defaults to None.
+        silent (bool, optional): [description]. Defaults to True.
+
+    Returns:
+        [type]: [description]
+    """
     results = []
 
     end = arrow.get(tm) if tm else arrow.now()
     codes = codes or Securities().choose(["stock"])
 
-    nstocks = nstocks or len(codes)
+    nstocks = len(codes) if nstocks == -1 else nstocks
     t0 = time.time()
     for i, code in enumerate(codes):
         if i >= nstocks - 1:
