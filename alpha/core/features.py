@@ -1,17 +1,17 @@
 import itertools
 import math
 from typing import Any, List, Tuple, Union
-import pandas as pd
-import ta
-from numpy.lib.stride_tricks import sliding_window_view
-from omicron.core.numpy_extensions import find_runs
-from omicron.core.types import FrameType
-from scipy.signal import argrelextrema
-import talib
-
 
 import numpy as np
+import pandas as pd
+import ta
+import talib
+from numpy.lib.stride_tricks import sliding_window_view
 from numpy.typing import ArrayLike
+from omicron.core.numpy_extensions import find_runs
+from omicron.core.talib import cross
+from omicron.core.types import FrameType
+from scipy.signal import argrelextrema
 
 argpos_permutations = {
     n: list(itertools.permutations(range(n))) for n in (2, 3, 4, 5, 6, 7)
@@ -730,7 +730,7 @@ def up_shadow(bars):
 
 
 def double_bottom(bars, win=10, gap=1e-3) -> int:
-    """在`n`个周期里，当日最低点是否下探前低且收盘价未创新低？
+    """在`win`个周期里，当日最低点是否下探前低且收盘价未创新低？
 
 
     Args:
@@ -756,7 +756,7 @@ def double_bottom(bars, win=10, gap=1e-3) -> int:
 
 
 def double_top(bars, win=10, gap=1e-3):
-    """在`n`个周期里，当日最高点是否上探前高并且收盘未创新高
+    """在`win`个周期里，当日最高点是否上探前高并且收盘未创新高
 
     Args:
         bars ([type]): [description]
@@ -784,7 +784,7 @@ def peaks_and_valleys(ts, min_altitude_ratio=1e-3) -> Tuple:
     """求一维数组`ts`表示的的峰值和谷底，本函数可以辅助用以确定局部顶和底。
 
 
-    使用order = 1即最相邻三个点来确认峰值和谷底。为平滑波动，事先对数组求移动平均值。
+    使用order = 2即最相邻五个点来确认峰值和谷底。为平滑波动，事先对数组求移动平均值。
 
     `min_altitude_ratio`用来指定峰值与相邻点的海拔高度的最小值。小于这个最小值的，将不被认为是峰值。在这里，相邻点可能是峰值（或者谷底）右侧的1~3个点，也就是信号可能晚最多3个周期才能确认。
 
@@ -820,8 +820,8 @@ def peaks_and_valleys(ts, min_altitude_ratio=1e-3) -> Tuple:
 
     ma = moving_average(ts, 5)
 
-    local_ma = argrelextrema(ma, np.greater, order=1)[0]
-    local_mi = argrelextrema(ma, np.less, order=1)[0]
+    local_ma = argrelextrema(ma, np.greater, order=2)[0]
+    local_mi = argrelextrema(ma, np.less, order=2)[0]
 
     if len(local_ma):
         local_ma += 4
@@ -966,11 +966,13 @@ def parabolic_features(ts, rng=7, ma_win=5, calc_ma=True):
     next_ts = reverse_moving_average(y_, rng, ma_win)
     pred_roc = next_ts / ts[-1] - 1
 
-    return np.sign(pred_roc), pred_roc, rng - vx, round(a, 4), round(pmae, 5)
+    dist = rng - vx
+
+    return np.sign(pred_roc), pred_roc, dist, round(a, 4), round(pmae, 5)
 
 
 def reversal_features(
-    code, bars, frame_type: FrameType, ma=None, wr_win=60, peak_altitude=1e-2
+    code, bars, frame_type: FrameType, ma=None, wr_win=60, peak_altitude=1e-3
 ):
     # 顺序
     # 0. WR
@@ -994,7 +996,7 @@ def reversal_features(
     # wr
     hh = np.max(high[-wr_win:])
     ll = np.min(low[-wr_win:])
-    wr = (hh - close[-1]) / (hh - ll)
+    wr = 1 - (hh - close[-1]) / (hh - ll)
 
     features.append(wr)
 
@@ -1059,3 +1061,160 @@ def reversal_features(
         "valley",
     ]
     return features, columns
+
+
+def divergency(indicator, price, check_win=40) -> int:
+    """检测指标与价格之间的背离
+
+    如果指标在相邻的位置持续走低（或者走高），只保留最后一个位置上的数据进行计算。
+
+    最多检测两次同方向背离。注意传入的指标和price都必须为正的序列。如果不满足此条件，需要进行预处理。
+    如果返回2，表明发生两次底背离（价格仍在走低，但指标并未跟随走低）；如果返回-2，则表明发生两次顶背离（价格仍在走高，但指标并未跟随走高）。返回1和-1同理，但意味着仅发生一次背离。
+    Returns:
+        int: 背离次数（正负号表示方向），背离时指标位置
+    """
+    indicator = filterna(indicator)
+    price = filterna(price)
+
+    cw = check_win
+    min_len = min(len(indicator), len(price), cw)
+    indicator = indicator[-min_len:]
+    price = price[-min_len:]
+
+    indice = top_n_argpos(-indicator, min(10, len(indicator)))
+
+    # 对连续出现的坐标，只保留最后一个
+    pos = []
+
+    pos_ = sorted(indice, reverse=True)
+    for i, p in enumerate(pos_):
+        if i == 0:
+            pos.append(p)
+            continue
+        if p != pos_[i - 1] - 1:
+            pos.append(p)
+
+    # 最多检测两次背离
+    if len(pos) > 3:
+        pos = pos[:3]
+
+    ind = indicator[pos]
+    pri = price[pos]
+
+    # later time positioned first
+    if np.all(np.diff(ind) < 0) and np.all(np.diff(pri) > 0):
+        return len(pos) - 1, pos
+    if np.all(np.diff(ind) > 0) and np.all(np.diff(pri) < 0):
+        return -len(pos) + 1, pos
+
+    return 0, None
+
+
+def long_parallel(arrays) -> Tuple[bool, int]:
+    """检测二维数组`arrays`是否为多头排列
+
+    `arrays`可以为二维numpy数组，也可以是二维Python数组。
+
+    返回值: (是否为多头排列, 多头排列的长度)
+    """
+    arrays = np.array(arrays)
+
+    flags = np.repeat(True, len(arrays[0]))
+    rows = len(arrays)
+
+    for i in range(rows - 1):
+        flags &= arrays[i] >= arrays[i + 1]
+
+    flags, _, lengths = find_runs(flags)
+    return flags[-1], lengths[-1]
+
+
+def short_parallel(arrays) -> Tuple[bool, int]:
+    """检测二维数组`arrays`是否为多头排列
+
+    `arrays`可以为二维numpy数组，也可以是二维Python数组。
+
+    返回值: (是否为多头排列, 多头排列的长度)
+    """
+    arrays = np.array(arrays)
+
+    flags = np.repeat(True, len(arrays[0]))
+    rows = len(arrays)
+
+    for i in range(rows - 1, 0, -1):
+        flags &= arrays[i] >= arrays[i - 1]
+
+    flags, _, lengths = find_runs(flags)
+    return flags[-1], lengths[-1]
+
+
+def altitude(bars: np.ndarray) -> float:
+    """计算收盘价在序列中的高度，类似于wr指标
+
+    返回值接近1时，表示收盘价越接近前高。当返回值为1时，意味着正在创新高。
+    返回值接近0时，表示收盘价越接近前低。当返回值为0时，意味着正在创新低。
+    """
+    hh = np.max(bars["high"])
+    ll = np.min(bars["low"])
+
+    close = bars["close"]
+
+    return 1 - (hh - close[-1]) / (hh - ll)
+
+
+def ma_line_features(close, wins, check_window=10):
+    """均线特征，包括多（空）头排列，金叉、死叉"""
+    cw = check_window
+
+    mas = []
+    features = {}
+    for win in wins:
+        ma = moving_average(close, win)
+        if len(ma) < cw:
+            return None
+
+        mas.append(ma[-cw:].tolist())
+
+    mas = np.array(mas)
+    flag, length = long_parallel(mas)
+    print("long", flag, length)
+    if flag:
+        features["parallel"] = length
+    else:
+        flag, length = short_parallel(mas)
+        print("short", flag, length)
+        if flag:
+            features["parallel"] = -1 * length
+
+    for i, (w1, w2) in enumerate(zip(wins[:-1], wins[1:])):
+        key = f"{w1}x{w2}"
+        flag, idx = cross(mas[i][-cw:], mas[i + 1][-cw:])
+        idx = cw - idx
+        features[key] = flag * idx
+
+    arr = [*mas[:, -1], close[-1]]
+    arg_c = len(arr) - 1
+    sorted_pos = np.argsort(arr)
+    for i in range(len(sorted_pos)):
+        if sorted_pos[i] == arg_c:
+            if i == 0:
+                features["support"] = "NA"
+                pos = sorted_pos[i+1]
+                features["supress"] = f"ma{wins[pos]}"
+                features["supress_gap"] = round(close[-1] / arr[pos] - 1, 3)
+            elif i == len(sorted_pos) - 1:
+                features["supress"] = "NA"
+                pos = sorted_pos[i - 1]
+                features["support"] = f"ma{wins[pos]}"
+                features["support_gap"] = round(close[-1] / arr[pos] - 1, 3)
+            else:
+                pos = sorted_pos[i - 1]
+                features["support"] = f"ma{wins[pos]}"
+                features["support_gap"] = round(close[-1] / arr[pos] - 1, 3)
+
+                pos = sorted_pos[i+1]
+                features["supress"] = f"ma{wins[pos]}"
+                features["supress_gap"] = round(close[-1] / arr[pos] - 1, 3)
+            break
+
+    return features
