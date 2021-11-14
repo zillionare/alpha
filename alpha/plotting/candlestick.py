@@ -31,7 +31,16 @@ Frame = NewType("Frame", (datetime.date, datetime.datetime, arrow.Arrow, str))
 logger = logging.getLogger(__name__)
 
 
-plt.rc("font", family=["Microsoft YaHei", "Heiti TC", "Songti SC", "STHeitiSC-Light"])
+plt.rc(
+    "font",
+    family=[
+        "WenQuanYi Micro Hei",
+        "Microsoft YaHei",
+        "Heiti TC",
+        "Songti SC",
+        "STHeitiSC-Light",
+    ],
+)
 
 
 class Candlestick:
@@ -350,5 +359,5 @@ class Candlestick:
         ax.add_collection(rect_pc)
 
         for pos, text, color in signals:
-            ax.text(pos-0.5, c[pos], text, color=color)
+            ax.text(pos - 0.5, c[pos], text, color=color)
         ax.autoscale_view()
