@@ -10,6 +10,7 @@ from IPython.display import Audio
 from IPython.display import display
 import asyncio
 import logging
+import platform
 
 cfg = cfg4py.init(get_config_dir())
 logger = logging.getLogger(__name__)
@@ -53,15 +54,11 @@ def send_mail(subject: str, content: str, from_addrs: str = None, to_addrs: str 
 def init_tts():
     _tts = pyttsx3.init()
 
-    # voices = _tts.setProperty("voice", "com.apple.speech.synthesis.voice.mei-jia")
-    _tts.setProperty("voice", "zh")
-    # voices = _tts.getProperty('voices')
+    if "macOS" in platform.platform():
+        voices = _tts.setProperty("voice", "com.apple.speech.synthesis.voice.mei-jia")
+    else:
+        _tts.setProperty("voice", "zh")
 
-    # for voice in voices:
-    #     if voice.name == "Mandarin":
-    #         _tts.setProperty("voice", 'zh')
-    # else:
-    #     logger.warning("No Mandarin voice found")
     return _tts
 
 

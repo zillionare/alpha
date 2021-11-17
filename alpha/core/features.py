@@ -5,7 +5,6 @@ from typing import Any, List, Tuple, Union
 import numpy as np
 import pandas as pd
 import ta
-import talib
 from numpy.lib.stride_tricks import sliding_window_view
 from numpy.typing import ArrayLike
 from omicron.core.numpy_extensions import find_runs
@@ -692,19 +691,19 @@ def reversing(close):
     return 0
 
 
-def williams_r(bars, timeperiod=60) -> np.array:
-    """求Williams %R
+# def williams_r(bars, timeperiod=60) -> np.array:
+#     """求Williams %R
 
-    Args:
-        bars ([type]): [description]
-    Returns:
-        wr at each frame
-    """
-    high = bars["high"].astype("f8")
-    low = bars["low"].astype("f8")
-    close = bars["close"].astype("f8")
+#     Args:
+#         bars ([type]): [description]
+#     Returns:
+#         wr at each frame
+#     """
+#     high = bars["high"].astype("f8")
+#     low = bars["low"].astype("f8")
+#     close = bars["close"].astype("f8")
 
-    return talib.WILLR(high, low, close, timeperiod=14)
+#     return talib.WILLR(high, low, close, timeperiod=14)
 
 
 def down_shadow(bars):
@@ -1163,7 +1162,7 @@ def altitude(bars: np.ndarray) -> float:
 
 
 def ma_line_features(close, wins, check_window=10):
-    """均线特征，包括多（空）头排列，金叉、死叉"""
+    """均线特征，包括多（空）头排列，金叉、死叉, 一阳穿多线，一阴穿多线"""
     cw = check_window
 
     mas = []
@@ -1199,7 +1198,7 @@ def ma_line_features(close, wins, check_window=10):
         if sorted_pos[i] == arg_c:
             if i == 0:
                 features["support"] = "NA"
-                pos = sorted_pos[i+1]
+                pos = sorted_pos[i + 1]
                 features["supress"] = f"ma{wins[pos]}"
                 features["supress_gap"] = round(close[-1] / arr[pos] - 1, 3)
             elif i == len(sorted_pos) - 1:
@@ -1212,7 +1211,7 @@ def ma_line_features(close, wins, check_window=10):
                 features["support"] = f"ma{wins[pos]}"
                 features["support_gap"] = round(close[-1] / arr[pos] - 1, 3)
 
-                pos = sorted_pos[i+1]
+                pos = sorted_pos[i + 1]
                 features["supress"] = f"ma{wins[pos]}"
                 features["supress_gap"] = round(close[-1] / arr[pos] - 1, 3)
             break
