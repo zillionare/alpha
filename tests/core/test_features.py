@@ -1,3 +1,4 @@
+import datetime
 import itertools
 import os
 import pickle
@@ -5,19 +6,8 @@ import unittest
 
 import numpy as np
 
-from alpha.core.features import (
-    fillna,
-    ma_permutation,
-    moving_average,
-    pos_encode_v2,
-    predict_by_moving_average,
-    relation_with_prev_high,
-    replace_zero,
-    reverse_moving_average,
-    transform_y_by_change_pct,
-    weighted_moving_average,
-)
-from tests import data_dir
+from alpha.core.features import *
+from tests import data_dir, load_bars_from_file
 
 
 class TestFeatures(unittest.TestCase):
@@ -244,3 +234,457 @@ class TestFeatures(unittest.TestCase):
 
         arr = np.array([1, 2, 0, 4, 5])
         self.assertListEqual([1, 2, 0.001, 4, 5], replace_zero(arr, 0.001).tolist())
+
+    def test_peaks_and_valleys(self):
+        ts = np.array(
+            [
+                3589.86,
+                3586.2,
+                3587.35,
+                3587.0,
+                3590.6,
+                3593.53,
+                3602.47,
+                3603.62,
+                3595.87,
+                3582.53,
+                3587.56,
+                3594.78,
+                3596.02,
+                3591.88,
+                3586.08,
+                3598.18,
+                3593.5,
+                3587.3,
+                3584.57,
+                3582.6,
+                3588.16,
+                3586.72,
+                3592.24,
+                3596.06,
+                3593.38,
+                3597.39,
+                3603.25,
+                3609.86,
+                3610.58,
+                3618.01,
+                3615.55,
+                3612.88,
+                3603.94,
+                3597.5,
+                3599.46,
+                3597.64,
+                3575.2,
+                3565.64,
+                3559.96,
+                3564.71,
+                3561.38,
+                3559.98,
+                3555.47,
+                3562.31,
+                3535.2,
+                3528.66,
+                3532.11,
+                3529.0,
+                3524.13,
+                3523.6,
+                3520.83,
+                3518.42,
+                3505.15,
+                3515.32,
+                3525.08,
+                3523.94,
+                3531.4,
+                3540.49,
+                3544.02,
+                3547.34,
+                3540.21,
+                3539.08,
+                3549.08,
+                3549.93,
+                3555.34,
+                3545.89,
+                3546.1,
+                3544.48,
+                3554.43,
+                3548.42,
+                3537.14,
+                3522.33,
+                3477.68,
+                3482.24,
+                3499.03,
+                3505.63,
+                3497.15,
+                3501.23,
+                3498.22,
+                3492.46,
+                3484.18,
+                3482.13,
+                3502.18,
+                3498.54,
+                3515.66,
+                3514.5,
+                3523.32,
+                3521.07,
+                3526.13,
+                3520.53,
+                3524.83,
+                3526.87,
+                3518.77,
+                3522.16,
+                3514.98,
+                3518.57,
+                3506.63,
+                3506.4,
+                3501.08,
+                3491.57,
+            ],
+            dtype=np.float32,
+        )
+
+        peaks, valleys = peaks_and_valleys(ts)
+        self.assertListEqual([8, 15, 31, 43, 68, 78, 91], peaks.tolist())
+        self.assertListEqual([13, 21, 53, 67, 81], valleys.tolist())
+
+    def test_double_bottom(self):
+        bars = np.array(
+            [
+                (
+                    datetime.date(2021, 10, 12),
+                    3581.3,
+                    3583.64,
+                    3515.14,
+                    3546.94,
+                    4.05393748e10,
+                    4.61983492e11,
+                    1.0,
+                ),
+                (
+                    datetime.date(2021, 10, 13),
+                    3543.49,
+                    3569.13,
+                    3515.65,
+                    3561.76,
+                    3.25050667e10,
+                    4.05020009e11,
+                    1.0,
+                ),
+            ],
+            dtype=[
+                ("frame", "O"),
+                ("open", "<f4"),
+                ("high", "<f4"),
+                ("low", "<f4"),
+                ("close", "<f4"),
+                ("volume", "<f8"),
+                ("amount", "<f8"),
+                ("factor", "<f4"),
+            ],
+        )
+        self.assertEqual(1, double_bottom(bars))
+
+    def test_double_top(self):
+        bars = np.array(
+            [
+                (
+                    datetime.date(2021, 9, 10),
+                    3691.19,
+                    3722.87,
+                    3681.64,
+                    3703.11,
+                    6.35200433e10,
+                    7.59084638e11,
+                    1.0,
+                ),
+                (
+                    datetime.date(2021, 9, 13),
+                    3699.25,
+                    3716.83,
+                    3692.82,
+                    3715.37,
+                    5.57484019e10,
+                    6.96192355e11,
+                    1.0,
+                ),
+                (
+                    datetime.date(2021, 9, 14),
+                    3709.63,
+                    3723.85,
+                    3655.63,
+                    3662.6,
+                    5.64952386e10,
+                    6.93778088e11,
+                    1.0,
+                ),
+            ],
+            dtype=[
+                ("frame", "O"),
+                ("open", "<f4"),
+                ("high", "<f4"),
+                ("low", "<f4"),
+                ("close", "<f4"),
+                ("volume", "<f8"),
+                ("amount", "<f8"),
+                ("factor", "<f4"),
+            ],
+        )
+        actual = double_top(bars)
+        self.assertEqual(1, actual)
+
+    def test_dark_cloud_cover(self):
+        # 中国西电， 2021-10-08
+        bars = np.array(
+            [
+                (
+                    datetime.date(2021, 9, 16),
+                    6.7,
+                    6.7,
+                    6.1,
+                    6.15,
+                    1.80939829e08,
+                    1.14896863e09,
+                    1.13,
+                ),
+                (
+                    datetime.date(2021, 9, 17),
+                    6.15,
+                    6.41,
+                    6.04,
+                    6.22,
+                    1.22350285e08,
+                    7.61650655e08,
+                    1.13,
+                ),
+                (
+                    datetime.date(2021, 9, 22),
+                    6.11,
+                    6.8400006,
+                    6.0599995,
+                    6.8,
+                    2.48218679e08,
+                    1.64408854e09,
+                    1.13,
+                ),
+                (
+                    datetime.date(2021, 9, 23),
+                    6.85,
+                    7.03,
+                    6.62,
+                    6.68,
+                    1.89183891e08,
+                    1.28564316e09,
+                    1.13,
+                ),
+                (
+                    datetime.date(2021, 9, 24),
+                    6.69,
+                    6.82,
+                    6.36,
+                    6.41,
+                    1.30129346e08,
+                    8.52839497e08,
+                    1.13,
+                ),
+                (
+                    datetime.date(2021, 9, 27),
+                    6.83,
+                    6.8400006,
+                    6.01,
+                    6.13,
+                    1.91771414e08,
+                    1.21969780e09,
+                    1.13,
+                ),
+                (
+                    datetime.date(2021, 9, 28),
+                    6.02,
+                    6.37,
+                    6.0,
+                    6.24,
+                    1.12730269e08,
+                    7.01084142e08,
+                    1.13,
+                ),
+                (
+                    datetime.date(2021, 9, 29),
+                    6.13,
+                    6.39,
+                    6.03,
+                    6.0899997,
+                    1.03117968e08,
+                    6.39593806e08,
+                    1.13,
+                ),
+                (
+                    datetime.date(2021, 9, 30),
+                    6.11,
+                    6.5,
+                    6.08,
+                    6.4,
+                    1.47902182e08,
+                    9.30570362e08,
+                    1.13,
+                ),
+                (
+                    datetime.date(2021, 10, 8),
+                    6.6,
+                    6.6,
+                    6.0599995,
+                    6.08,
+                    1.17332954e08,
+                    7.27529393e08,
+                    1.13,
+                ),
+            ],
+            dtype=[
+                ("frame", "O"),
+                ("open", "<f4"),
+                ("high", "<f4"),
+                ("low", "<f4"),
+                ("close", "<f4"),
+                ("volume", "<f8"),
+                ("amount", "<f8"),
+                ("factor", "<f4"),
+            ],
+        )
+
+        actual = dark_cloud_cover(bars)
+        self.assertListEqual([0], actual.tolist())
+
+    def test_hammer(self):
+        bars = np.array(
+            [
+                (
+                    datetime.date(2021, 9, 24),
+                    45.75,
+                    47.02,
+                    43.7,
+                    47.02,
+                    4448616.0,
+                    2.02563918e08,
+                    1.04,
+                )
+            ],
+            dtype=[
+                ("frame", "O"),
+                ("open", "<f4"),
+                ("high", "<f4"),
+                ("low", "<f4"),
+                ("close", "<f4"),
+                ("volume", "<f8"),
+                ("amount", "<f8"),
+                ("factor", "<f4"),
+            ],
+        )
+
+        flag, sl = hammer(bars)
+        self.assertListEqual([0], flag.tolist())
+
+    def test_inverted_hammer(self):
+        bars = np.array(
+            [
+                (
+                    datetime.date(2021, 9, 16),
+                    17.89,
+                    19.76,
+                    17.76,
+                    18.73,
+                    6314343.0,
+                    1.19839305e08,
+                    1.01,
+                )
+            ],
+            dtype=[
+                ("frame", "O"),
+                ("open", "<f4"),
+                ("high", "<f4"),
+                ("low", "<f4"),
+                ("close", "<f4"),
+                ("volume", "<f8"),
+                ("amount", "<f8"),
+                ("factor", "<f4"),
+            ],
+        )
+
+        flag, sl = inverted_hammer(bars)
+        self.assertListEqual([0], flag.tolist())
+
+    def test_reversal_features(self):
+        bars = load_bars_from_file("sh.30m.20111105.200")
+
+        features, columns = reversal_features("000001.XSHG", bars, FrameType.MIN30)
+        print(dict(zip(features, columns)))
+
+    def test_peaks_and_valleys(self):
+        bars = load_bars_from_file("sh.30m.20111105.200")
+
+        close = bars["close"]
+        peaks, valleys = peaks_and_valleys(close[60:])
+
+        self.assertListEqual([4, 15, 31], peaks)
+        self.assertListEqual([7, 12, 21], valleys)
+
+    def test_down_shadow(self):
+        bars = load_bars_from_file("sh.30m.20111105.200")
+        # 2021-10-21 11:30 ~ 2021-10-28 11:00
+        bars = bars[127:167]
+        ds = down_shadow(bars[-1])
+        print(ds)
+
+    def test_long_parallel(self):
+        close = np.array([3.07, 3.09, 3.21, 3.34, 3.38, 3.7 , 3.77, 3.62, 3.64, 3.5 , 3.46,
+       3.55, 3.77, 3.76, 3.87, 4.32, 4.1 , 4.11, 3.84, 3.76, 3.94, 4.08,
+       4.18, 4.03, 4.18, 4.28, 4.24, 4.08, 4.12, 4.16, 4.08, 4.18, 4.04,
+       3.78, 3.83, 3.76, 3.8 , 3.94, 3.89, 3.9 , 3.8 , 3.86, 4.04, 3.98,
+       4.1 , 4.17, 4.07, 4.07, 4.05, 4.13, 4.07, 4.3 , 4.42, 4.22, 4.41,
+       4.44, 4.35, 4.24, 4.65, 4.57, 4.35, 4.6 , 4.48, 4.61, 4.67, 4.55,
+       4.25, 4.09, 4.1 , 4.06, 4.36, 4.29, 4.31, 4.16, 4.06, 4.14, 3.91,
+       3.86, 3.78, 3.93, 4.38, 4.3 , 4.2 , 4.56, 4.4 , 4.71, 4.75, 4.7 ,
+       5.05, 6.06])
+
+        mas = []
+        for w in [5, 10, 20, 30]:
+            mas.append(moving_average(close, w)[-10:])
+        flag, sl = long_parallel(mas)
+        self.assertTrue(flag)
+        self.assertEqual(sl, 1)
+
+    def test_short_parallel(self):
+        close = np.array([13.589999 , 13.45     , 13.7      , 13.53     , 13.35     ,
+       13.36     , 13.25     , 12.77     , 12.95     , 14.25     ,
+       14.850001 , 14.24     , 13.9      , 14.0199995, 14.68     ,
+       14.91     , 16.4      , 16.56     , 16.88     , 15.76     ,
+       16.45     , 16.46     , 17.07     , 17.19     , 16.47     ,
+       16.19     , 15.549999 , 15.17     , 15.2      , 15.950001 ,
+       15.28     , 14.199999 , 13.650001 , 13.78     , 12.42     ,
+       11.9      , 11.84     , 11.71     , 11.84     , 11.630001 ])
+
+        mas = []
+        for w in [5, 10, 20, 30]:
+           mas.append(moving_average(close, w)[-10:])
+
+        flag, sl = short_parallel(mas)
+        self.assertTrue(flag)
+        self.assertEqual(sl, 2)
+
+    def test_ma_line_features(self):
+        close = np.array([3.07, 3.09, 3.21, 3.34, 3.38, 3.7 , 3.77, 3.62, 3.64, 3.5 , 3.46,
+       3.55, 3.77, 3.76, 3.87, 4.32, 4.1 , 4.11, 3.84, 3.76, 3.94, 4.08,
+       4.18, 4.03, 4.18, 4.28, 4.24, 4.08, 4.12, 4.16, 4.08, 4.18, 4.04,
+       3.78, 3.83, 3.76, 3.8 , 3.94, 3.89, 3.9 , 3.8 , 3.86, 4.04, 3.98,
+       4.1 , 4.17, 4.07, 4.07, 4.05, 4.13, 4.07, 4.3 , 4.42, 4.22, 4.41,
+       4.44, 4.35, 4.24, 4.65, 4.57, 4.35, 4.6 , 4.48, 4.61, 4.67, 4.55,
+       4.25, 4.09, 4.1 , 4.06, 4.36, 4.29, 4.31, 4.16, 4.06, 4.14, 3.91,
+       3.86, 3.78, 3.93, 4.38, 4.3 , 4.2 , 4.56, 4.4 , 4.71, 4.75, 4.7 ,
+       5.05, 6.06])
+
+        actual = ma_line_features(close, [5, 10, 20, 30])
+        self.assertDictEqual({
+            "parallel": 1,
+            "5x10": 9,
+            "10x20": 6,
+            "20x30": 2,
+            "support": 'ma5',
+            "supress": 'NA',
+            "support_gap": 0.199
+        }, actual)

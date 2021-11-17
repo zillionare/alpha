@@ -7,13 +7,25 @@ from alpha.core.features import moving_average, predict_by_moving_average
 cm = {5: "b", 10: "g", 20: "c", 60: "m", 120: "y", 250: "tab:orange", "raw": "tab:gray"}
 
 
-def _format_frames(frames):
-    if frames[0].hour != 0:
-        fmt = "YY-MM-DD HH:mm"
+def format_labels(frames):
+    formatted = []
+    gap = 4 if hasattr(frames[0], "hour") else 2
+    for i, frame in enumerate(frames):
+        if i % gap == 0:
+            formatted.append(format_frame(frame))
+        else:
+            formatted.append("")
+
+    return formatted
+
+
+def format_frame(frame):
+    if hasattr(frame, "hour") and frame.hour != 0:
+        fmt = "MM-DD HH:mm"
     else:
         fmt = "YY-MM-DD"
 
-    return [arrow.get(frame).format(fmt) for frame in frames]
+    return arrow.get(frame).format(fmt)
 
 
 def draw_trendline(
@@ -65,13 +77,9 @@ def draw_trendline(
     splitter_x = [n - ylen] * len(splitter_y)
     ax.plot(splitter_x, splitter_y, "r:")
 
-    frames = _format_frames(bars["frame"][-n:])
-    if n // ylen * ylen == n:
-        positions = list(np.arange(n // ylen) * ylen)
-    else:
-        positions = list(np.arange(n // ylen + 1) * ylen)
+    labels = format_labels(bars["frame"][-n:])
+    positions = list(np.arange(n))
 
-    labels = [frames[i] for i in positions]
     ax.set_xticks(positions)
     ax.set_xticklabels(labels, rotation=45)
 

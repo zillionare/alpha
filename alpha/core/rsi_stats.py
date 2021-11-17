@@ -1,4 +1,4 @@
-from alpha.core.features import fillna, relative_strength_index
+from alpha.core.features import relative_strength_index
 from omicron.core.types import FrameType
 import os
 import pickle
@@ -63,15 +63,14 @@ class RsiStats:
             try:
                 sec = Security(code)
                 bars = await sec.load_bars(start, end, self.frame_type)
+                bars = bars[np.isfinite(bars["close"])]
                 close = bars["close"]
-                valid_bars = np.count_nonzero(np.isfinite(close))
-                if valid_bars < nbars * 0.75:
+                if len(bars) < nbars * 0.75:
                     logger.warning(
-                        "%s contains only %s bars, less than required", code, valid_bars
+                        "%s contains only %s bars, less than required", code, len(bars)
                     )
                     continue
 
-                close = fillna(bars["close"].copy())
                 # 前18位均为nan
                 rsi = relative_strength_index(close, period=6)[18:]
                 hist[code] = np.histogram(rsi, bins=100, range=(0, 100))

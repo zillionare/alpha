@@ -3,7 +3,7 @@
 import datetime
 import os
 from io import BytesIO
-from typing import NewType, Optional, Union
+from typing import List, NewType, Optional, Union
 
 import arrow
 
@@ -31,6 +31,18 @@ Frame = NewType("Frame", (datetime.date, datetime.datetime, arrow.Arrow, str))
 logger = logging.getLogger(__name__)
 
 
+plt.rc(
+    "font",
+    family=[
+        "WenQuanYi Micro Hei",
+        "Microsoft YaHei",
+        "Heiti TC",
+        "Songti SC",
+        "STHeitiSC-Light",
+    ],
+)
+
+
 class Candlestick:
     def __init__(
         self,
@@ -40,7 +52,7 @@ class Candlestick:
         bw=20,
         lw=20,
         font_size=12,
-        hw_ratio=0.75,
+        hw_ratio=0.6,
     ):
         """[summary]
 
@@ -58,9 +70,7 @@ class Candlestick:
             "30m": [5, 10, 20, 60],
         }
 
-        plt.rc(
-            "font", family=["Microsoft YaHei", "Heiti TC", "Songti SC"], size=font_size
-        )
+        plt.rc("font", size=font_size)
         plt.rcParams["axes.unicode_minus"] = False
 
         # how many n_bars will be drawn in the fig
@@ -163,7 +173,7 @@ class Candlestick:
 
             self.plot_(bars, ma_wins, candlestick_ax, volume_ax)
 
-        title = title or f"{code} {self.format_frames([end])[0]}"
+        title = title or f"{code} {self.format_frame(end)}"
         if title:
             self.fig.suptitle(title)
 
@@ -171,7 +181,9 @@ class Candlestick:
             file = os.path.join(save_to, f"{code}_{end.format('YY-MM-DD')}.png")
             self.fig.savefig(file, dpi=self.dpi)
 
-    def plot_bars(self, bars: np.array, title: str = None, save_as: str = None):
+    def plot_bars(
+        self, bars: np.array, title: str = None, save_as: str = None, signals=[]
+    ):
         """给定一个bar数组，绘制k线图
 
         要求在构造CandleStick对象时，指定一个与此对应的惟一的frame设置。
@@ -184,7 +196,7 @@ class Candlestick:
         assert len(self.frames) == 1
 
         ma_groups = list(self.frames.values())[0]
-        self.plot_(bars, ma_groups, self.axes[0], self.axes[1], title)
+        self.plot_(bars, ma_groups, self.axes[0], self.axes[1], title, signals)
 
         if save_as:
             self.fig.savefig(save_as, dpi=self.dpi)
@@ -196,6 +208,7 @@ class Candlestick:
         ax_candle_stick,
         ax_volume,
         title: str = None,
+        signals: List = [],
     ):
         """
         draw candlestick (with ma) and volume for given quotes
@@ -208,7 +221,7 @@ class Candlestick:
             title: the title of the fig
         return:
         """
-        n = self.plot_window_size
+        n = min(self.plot_window_size, len(bars))
         bars = bars.copy()
         factor = np.nanmax(bars["high"])
         for key in ["open", "close", "high", "low"]:
@@ -227,6 +240,7 @@ class Candlestick:
             bars[-n:],
             facecolor=facecolor,
             edgecolor=edgecolor,
+            signals=signals,
         )
 
         # draw ma
@@ -239,27 +253,35 @@ class Candlestick:
         ups = bars["close"][-n:] > bars["open"][-n:]
 
         volume = bars["volume"][-n:]
-        frames = self.format_frames(bars["frame"][-n:])
         ax_volume.bar(range(n), volume, color=np.where(ups, "r", "g"), width=self.bw)
 
-        label_pos = list(np.arange(n // 8 + 1) * 8)
-        if label_pos[-1] >= len(frames):
-            label_pos.pop(-1)
+        labels = self.format_labels(bars["frame"][-n:])
+        label_pos = list(np.arange(n))
 
-        labels = [frames[i] for i in label_pos]
         ax_volume.set_xticks(label_pos)
         ax_volume.set_xticklabels(labels, rotation=45)
 
         if title:
             self.fig.suptitle(title)
 
-    def format_frames(self, frames):
-        if hasattr(frames[0], "hour") and frames[0].hour != 0:
+    def format_labels(self, frames):
+        formatted = []
+        gap = 4 if hasattr(frames[0], "hour") else 2
+        for i, frame in enumerate(frames):
+            if i % gap == 0:
+                formatted.append(self.format_frame(frame))
+            else:
+                formatted.append("")
+
+        return formatted
+
+    def format_frame(self, frame):
+        if hasattr(frame, "hour") and frame.hour != 0:
             fmt = "MM-DD HH:mm"
         else:
             fmt = "YY-MM-DD"
 
-        return [arrow.get(frame).format(fmt) for frame in frames]
+        return arrow.get(frame).format(fmt)
 
     def calc_edgecolor(self, bars: np.array) -> np.array:
         """
@@ -288,7 +310,12 @@ class Candlestick:
         return colors
 
     def candle_stick_plot(
-        self, ax, bars: np.array, facecolor: np.array = None, edgecolor: np.array = None
+        self,
+        ax,
+        bars: np.array,
+        facecolor: np.array = None,
+        edgecolor: np.array = None,
+        signals=[],
     ):
         """
         args:
@@ -330,4 +357,7 @@ class Candlestick:
 
         rect_pc = PatchCollection(rects, edgecolor=edgecolor, facecolor=facecolor)
         ax.add_collection(rect_pc)
+
+        for pos, text, color in signals:
+            ax.text(pos - 0.5, c[pos], text, color=color)
         ax.autoscale_view()

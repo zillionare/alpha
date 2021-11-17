@@ -7,6 +7,7 @@ import socket
 import subprocess
 import sys
 from contextlib import closing
+import numpy as np
 
 import aiohttp
 import cfg4py
@@ -99,31 +100,21 @@ async def start_omega(timeout=60):
     raise subprocess.SubprocessError("Omega server malfunction.")
 
 
-def load_bars_from_file(sec: str, frame_type: str, ext: str = "csv", sep="\t"):
-    file = os.path.join(os.path.dirname(__file__), f"{sec}.{frame_type}.{ext}")
-    df = pd.read_csv(file, sep=sep)
-    df["frame"] = pd.to_datetime(df["frame"])
+def load_bars_from_file(name, ext: str = "csv", sep="\t"):
+    file = os.path.join(data_dir(), f"{name}.{ext}")
+    df = pd.read_csv(file, sep=sep, parse_dates=True)
 
-    # frame    open    high    low    close    volume
-    dtypes = [
-        ("frame", "O"),
-        ("open", "<f4"),
-        ("high", "<f4"),
-        ("low", "<f4"),
-        ("close", "<f4"),
-        ("volume", "<f8"),
+    df["frame"] = pd.to_datetime(df["frame"])
+    df.set_index("frame", inplace=True)
+    dtype = [
+        ("frame", "<M8[ms]"),
+        ("open", "f4"),
+        ("high", "f4"),
+        ("low", "f4"),
+        ("close", "f4"),
+        ("volume", "f8"),
+        ("amount", "f8"),
+        ("factor", "f4"),
     ]
 
-    print(dtypes)
-    # return dataframe_to_structured_array(df, dtypes=dtypes)
-
-
-# async def main():
-#     import omicron
-#     init_test_env()
-#     await omicron.init()
-#     sh_index = load_bars_from_file("000001.XSHG", "1d")
-
-
-# if __name__ == '__main__':
-#     asyncio.run(main())
+    return np.array(df.to_records(), dtype=dtype)

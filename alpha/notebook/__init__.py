@@ -1,6 +1,7 @@
 from typing import Union
 import datetime
 import time
+import asyncio
 
 import arrow
 import cfg4py
@@ -15,31 +16,35 @@ from omicron.models.securities import Securities
 from omicron.models.security import Security
 
 from alpha.config import get_config_dir
+from alpha.core import Frame
 from alpha.core.features import *
 from alpha.core.morph import MorphFeatures
 from alpha.features.volume import top_volume_direction
 from alpha.plotting import draw_trendline, draw_ma_lines
 from alpha.plotting.candlestick import Candlestick
 from pretty_html_table import build_table
-from alpha.core.notify import send_html_email, say
+from alpha.core.notify import send_html_email, say, nb_say
 from alpha.core.rsi_stats import RsiStats
 import os
 from jqdatasdk import *
 import jqdatasdk as jq
 from arrow import Arrow
 from alpha.utils import *
+import logging
 
 g = {}
+logger = logging.getLogger(__name__)
 
 
-async def init_notebook(adaptor='both'):
+async def init_notebook(adaptor="omicron"):
     cfg4py.init(get_config_dir())
-    if adaptor in ['omicron', 'both']:
+    if adaptor in ["omicron", "both"]:
         await omicron.init()
-    if adaptor in ['jq', 'both']:
+    if adaptor in ["jq", "both"]:
         init_jq()
 
     clear_output()
+
 
 def init_jq():
     account = os.getenv("JQ_ACCOUNT")
@@ -120,6 +125,48 @@ def jq_get_bars(
     return bars
 
 
+async def get_bars(code: str, n: int, frame_type: str = "1d", end: Frame = None):
+    """获取`code`的`n`个`frame_type`的K线数据。
+
+    在notebook中使用的辅助函数，简化为一些常用操作。
+
+    Args:
+        code ([type]): [description]
+        n ([type]): [description]
+        frame_type ([type], optional): [description]. Defaults to '1d'.
+        end ([type], optional): [description]. Defaults to None.
+
+    Returns:
+        [type]: [description]
+    """
+    if not "." in code:
+        if code.startswith("6"):
+            code += ".XSHG"
+        else:
+            code += ".XSHE"
+
+    ft = FrameType(frame_type)
+
+    tz = "Asia/Shanghai"
+    end = arrow.get(end, tzinfo=tz) if end else arrow.now(tz=tz)
+    if not tf.is_open_time(end):
+        end = tf.floor(end, ft)
+
+    if ft in tf.minute_level_frames:
+        start = tf.shift(tf.floor(end, ft), -n + 1, ft)
+    else:
+        start = tf.shift(end, -n + 1, ft)
+
+    sec = Security(code)
+    try:
+        bars = await sec.load_bars(start, end, ft)
+    except Exception as e:
+        return None
+
+    bars = bars[-n:]
+    return bars[np.isfinite(bars["close"])]
+
+
 def jq_get_turnover_realtime(code, volume, close):
     """获取`code`最新的换手率。 jq_get_turnover无法获取盘中最新的换手率数据。该数据只能在24：00以后才能获取。
 
@@ -159,30 +206,107 @@ def mail_notify(subject: str, model: str, params: dict, report: pd.DataFrame):
     """
     send_html_email(subject, html)
 
-async def scan(trigger, n, frame_type=FrameType.DAY, tm=None, test=False):
+
+async def scan(
+    trigger,
+    nbars,
+    frame_type=FrameType.DAY,
+    tm=None,
+    nstocks=100,
+    codes=None,
+    silent=True,
+):
+    """[summary]
+
+    Args:
+        trigger ([type]): trigger(code, name, bars, results, frame_type)
+        nbars ([type]): [description]
+        frame_type ([type], optional): [description]. Defaults to FrameType.DAY.
+        tm ([type], optional): [description]. Defaults to None.
+        nstocks (int, optional): [description]. Defaults to 100.
+        codes ([type], optional): [description]. Defaults to None.
+        silent (bool, optional): [description]. Defaults to True.
+
+    Returns:
+        [type]: [description]
+    """
     results = []
 
     end = arrow.get(tm) if tm else arrow.now()
-    start = tf.shift(tf.floor(end, frame_type), -n+1, frame_type)
-    codes =Securities().choose(["stock"])
+    codes = codes or Securities().choose(["stock"])
 
+    nstocks = len(codes) if nstocks == -1 else nstocks
     t0 = time.time()
     for i, code in enumerate(codes):
-        if test and i >= 10:
+        if i >= nstocks - 1:
             break
-        if (i+1) % 500 == 0:
+        if (i + 1) % 500 == 0:
             elapsed = int(time.time() - t0)
-            eta = int((len(codes) - i) * elapsed / (i+1))
+            eta = int((len(codes) - i) * elapsed / (i + 1))
             print(f"progress: {i + 1}/{len(codes)}, elapsed: {elapsed}, ETA: {eta}")
         sec = Security(code)
         name = sec.display_name
         try:
-            bars = await sec.load_bars(start, end, frame_type)
-            bars = bars[np.isfinite(bars["close"])]
-
+            bars = await get_bars(code, nbars, frame_type, end)
             trigger(code, name, bars, results, frame_type)
-        except Exception:
+        except Exception as e:
+            if not silent:
+                logger.exception(e)
             continue
 
-    say("扫描结束")
+    # say("扫描结束")
     return results
+
+
+def name_to_code(name):
+    """将股票名转换为代码。
+
+    TODO： 此函数应该放到Securities中
+
+    Args:
+        name ([type]): [description]
+
+    Returns:
+        [type]: [description]
+    """
+    secs = Securities()
+    return secs._secs[secs._secs["display_name"] == name]["code"][0]
+
+
+async def scheduler(job, *args, **kwargs):
+    wakeup_time = []
+    now = arrow.now()
+
+    # get wakeup time
+    for tm in [
+        "09:45",
+        "10:00",
+        "10:15",
+        "10:30",
+        "10:45",
+        "11:00",
+        "11:15",
+        "11:30",
+        "13:15",
+        "13:30",
+        "13:45",
+        "14:00",
+        "14:15",
+        "14:30",
+        "14:45",
+    ]:
+        hour, minute = map(int, tm.split(":"))
+        wakeup_time.append(
+            arrow.Arrow(
+                now.year, now.month, now.day, hour, minute, tzinfo="Asia/Shanghai"
+            )
+        )
+
+    for tm in wakeup_time:
+        if arrow.now() > tm:
+            continue
+
+        seconds = tm.timestamp - arrow.now().timestamp
+        await asyncio.sleep(seconds)
+        print(f"=========== {tm.hour}:{tm.minute:02d}============")
+        await job(*args, **kwargs)

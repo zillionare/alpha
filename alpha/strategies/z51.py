@@ -21,6 +21,7 @@ import logging
 
 logger = logging.getLogger(__name__)
 
+
 class Z51(Z05):
     """类似于Z05,但通过使用预先计算的指标，使回测速度更快
 
@@ -99,8 +100,12 @@ class Z51(Z05):
 
         for i in range(3, abs(aligned)):
             if all(
-                [np.all(good_rsi[i-3:i+1]),
-                msr[i] > self.msr, mbr[i] > self.bcr, macc[i] > self.d1]
+                [
+                    np.all(good_rsi[i - 3 : i + 1]),
+                    msr[i] > self.msr,
+                    mbr[i] > self.bcr,
+                    macc[i] > self.d1,
+                ]
             ):
                 self.orders.append(
                     {
@@ -123,7 +128,7 @@ class Z51(Z05):
         for order in self.orders:
             if order["status"] == "opened":
                 pos = order["buy_pos"]
-                self.close_order(order, bars[pos + 1: pos + self.holding_days])
+                self.close_order(order, bars[pos + 1 : pos + self.holding_days])
 
         return self.backtest_summary(start, end)
 
