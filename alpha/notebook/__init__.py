@@ -160,11 +160,11 @@ async def get_bars(code: str, n: int, frame_type: str = "1d", end: Frame = None)
     sec = Security(code)
     try:
         bars = await sec.load_bars(start, end, ft)
+        bars = bars[np.isfinite(bars["close"])]
     except Exception as e:
         return None
 
-    bars = bars[-n:]
-    return bars[np.isfinite(bars["close"])]
+    return bars[-n:]
 
 
 def jq_get_turnover_realtime(code, volume, close):
