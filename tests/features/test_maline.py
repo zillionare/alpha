@@ -1,11 +1,18 @@
 import datetime
 import unittest
 import numpy as np
+import omicron
 
 from alpha.features.maline import MaLineFeatures
+from alpha.notebook import get_bars
+from tests import init_test_env
 
 
-class TestMalineFeatures(unittest.TestCase):
+class TestMalineFeatures(unittest.IsolatedAsyncioTestCase):
+    async def asyncSetUp(self) -> None:
+        init_test_env()
+        await omicron.init()
+
     def test_ma_line_features(self):
         bars = np.array(
             [
@@ -61,4 +68,9 @@ class TestMalineFeatures(unittest.TestCase):
             ),
         )
         actual = MaLineFeatures(bars, [5, 10, 20, 30])
+        print(actual)
+
+    async def test_ma_line_features_002(self):
+        bars = await get_bars('603917.XSHG', 250, '1d', end='2021-11-03')
+        actual = MaLineFeatures(bars)
         print(actual)

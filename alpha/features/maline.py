@@ -5,13 +5,27 @@ from alpha.core.features import long_parallel, moving_average, polyfit, short_pa
 
 
 class MaLineFeatures:
-    def __init__(self, bars, wins, check_window=10):
+    def __init__(self, bars, check_window=10):
         """均线特征，包括多（空）头排列，金叉、死叉, 一阳穿多线，一阴穿多线"""
         close = bars["close"]
         open_ = bars["open"]
 
         self.bars = bars
-        self.wins = wins
+        if len(bars) > 120 + check_window:
+            self.wins = [5,10,20,30,60,120]
+            self.parallel_groups = [(0, 1, 2), (3, 4, 5)]
+        elif len(bars) > 60 + check_window:
+            self.wins = [5, 10, 20, 30, 60]
+            self.parallel_groups = [(0, 1, 2), (2, 3, 4)]
+        elif len(bars) > 30 + check_window:
+            self.wins = [5, 10, 20, 30]
+            self.parallel_groups = [(0, 1, 2), (2, 3)]
+        elif len(bars) > 20 + check_window:
+            self.wins = [5, 10, 20]
+            self.parallel_groups = [(0, 1, 2), None]
+        else:
+            raise ValueError(f"bars length must be greater than {len(bars) + check_window}")
+
         self.cw = check_window
 
         mas = []
@@ -23,18 +37,22 @@ class MaLineFeatures:
 
             mas.append(ma[-self.cw :].tolist())
 
-        mas = np.array(mas)
-        flag, length = long_parallel(mas)
-        print("long", flag, length)
-        if flag:
-            features["parallel"] = length
-        else:
-            flag, length = short_parallel(mas)
-            print("short", flag, length)
+        mas = np.array(mas, dtype="<f4")
+        for pg in self.parallel_groups:
+            if pg is None:
+                continue
+
+            wins = ",".join([f"{self.wins[i]}" for i in pg])
+            key = f"parallel({wins})"
+            flag, length = long_parallel(mas[pg, :])
             if flag:
-                features["parallel"] = -1 * length
+                features[key] = length
             else:
-                features["parallel"] = 0
+                flag, length = short_parallel(mas)
+                if flag:
+                    features[key] = -1 * length
+                else:
+                    features[key] = 0
 
         # 金叉、死叉
         for i, (w1, w2) in enumerate(zip(self.wins[:-1], self.wins[1:])):
@@ -92,13 +110,18 @@ class MaLineFeatures:
         features["bearish_strike"] = bearish_strike
 
         # 参考趋势线
-        min_error = 1
+        pmae_threshold = 1e-3
         trendline = 0
         for i, ma in enumerate(mas):
-            (a, b, c), pmae = polyfit(ma[-self.cw:]/ma[0])
-            if pmae < min_error and abs(a) < 5e-4: # 近乎直线
-                min_error = pmae
-                trendline = self.wins[i]
+            (a, b, c), pmae = polyfit(ma[-self.cw :] / ma[0])
+            # 近乎直线，当前不破参考趋势线
+            if pmae <= pmae_threshold and abs(a) < 1e-3:
+                if b > 0 and np.all(close[-2:] > ma[-2:]):
+                    trendline = self.wins[i]
+                    break
+                elif b < 0 and np.all(close[-2:] < ma[-2:]):
+                    trendline = self.wins[i]
+                    break
 
         features["trendline"] = trendline
         if trendline != 0:
@@ -113,47 +136,55 @@ class MaLineFeatures:
         return [self.features[name] for name in self.feature_names]
 
     def __str__(self) -> str:
-        parallelled_days = self.features["parallel"]
-        if parallelled_days > 0:
-            desc = [f"{'多头排列':<10}{parallelled_days:<15}"]
-        elif parallelled_days < 0:
-            desc = [f"{'空头排列':<10}{parallelled_days:<15}"]
-        else:
-            desc = []
+        desc = []
+        for pg in self.parallel_groups:
+            if pg is None:
+                continue
+
+            wins = ",".join([f"{self.wins[i]}" for i in pg])
+            key = f"parallel({wins})"
+
+            parallelled_days = self.features[key]
+            if parallelled_days > 0:
+                desc.append(f"{'多头(' + wins + ')':<15}{parallelled_days:<15}")
+            elif parallelled_days < 0:
+                desc.append(f"{'空头(' + wins + ')':<15}{parallelled_days:<15}")
+            else:
+                pass
 
         for w1, w2 in zip(self.wins[:-1], self.wins[1:]):
             key = f"{w1}x{w2}"
             cross = self.features[key]
             if cross < 0:
                 text = f"{abs(cross)}日前死叉"
-                desc.append(f"{key:<10}{text:<15}")
+                desc.append(f"{key:<16}{text:<15}")
             elif cross > 0:
                 text = f"{abs(cross)}日前金叉"
-                desc.append(f"{key:<10}{text:<15}")
+                desc.append(f"{key:<16}{text:<15}")
 
         if self.features["support"] is not None:
-            desc.append(f"{'支撑线':<8}{self.features['support']}日均线")
-            desc.append(f"{'支撑位':<8}{self.features['support_gap']:.1%}")
+            desc.append(f"{'支撑线':<14}{self.features['support']}日均线")
+            desc.append(f"{'支撑位':<14}{self.features['support_gap']:.1%}")
 
         if self.features["supress"] is not None:
-            desc.append(f"{'压力线':<8}{self.features['supress']}日均线")
-            desc.append(f"{'压力位':<8}{self.features['supress_gap']:.1%}")
+            desc.append(f"{'压力线':<14}{self.features['supress']}日均线")
+            desc.append(f"{'压力位':<14}{self.features['supress_gap']:.1%}")
 
         slope = self.features["slope"]
         trendline = self.features["trendline"]
         if slope and slope > 0:
             text = f"沿{trendline}日线上行"
-            desc.append(f"{'趋势线':<8}{text:<15}")
+            desc.append(f"{'趋势线':<14}{text:<15}")
         elif slope and slope < 0:
             text = f"沿{trendline}日线上行"
-            desc.append(f"{'趋势线':<8}{text:<15}")
+            desc.append(f"{'趋势线':<14}{text:<15}")
 
         bull_strike = ",".join([str(x) for x in self.features["bull_strike"]])
         bearish_strike = ",".join([str(x) for x in self.features["bearish_strike"]])
 
         if bull_strike:
-            desc.append(f"{'一阳穿多线':<7}{bull_strike}日均线")
+            desc.append(f"{'一阳穿多线':<13}{bull_strike}日均线")
         if bearish_strike:
-            desc.append(f"{'一阴穿多线':<7}{bearish_strike}日均线")
+            desc.append(f"{'一阴穿多线':<13}{bearish_strike}日均线")
 
         return "\n".join(desc)

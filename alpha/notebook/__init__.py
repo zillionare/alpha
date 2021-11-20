@@ -30,6 +30,7 @@ from jqdatasdk import *
 import jqdatasdk as jq
 from arrow import Arrow
 from alpha.utils import *
+from alpha.features.maline import MaLineFeatures
 import logging
 
 g = {}
@@ -164,7 +165,7 @@ async def get_bars(code: str, n: int, frame_type: str = "1d", end: Frame = None)
     except Exception as e:
         return None
 
-    return bars[-n:]
+    return bars
 
 
 def jq_get_turnover_realtime(code, volume, close):
