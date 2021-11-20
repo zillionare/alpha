@@ -310,3 +310,19 @@ async def scheduler(job, *args, **kwargs):
         await asyncio.sleep(seconds)
         print(f"=========== {tm.hour}:{tm.minute:02d}============")
         await job(*args, **kwargs)
+
+def performance(bars, check_wins = [1, 3, 5, 8, 13, 21]):
+    """股票买入后的表现
+
+    使用固定时间平仓法，可用作快速检验策略的表现。
+    """
+    pstart = bars["open"][0]
+
+    results = []
+    results.append(np.max(bars["close"]) / pstart - 1)
+    results.append(np.min(bars["close"]) / pstart - 1)
+    for n in check_wins:
+        close = bars["close"][n]
+        results.append(close / pstart - 1)
+
+    return results
