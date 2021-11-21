@@ -71,6 +71,6 @@ class TestMalineFeatures(unittest.IsolatedAsyncioTestCase):
         print(actual)
 
     async def test_ma_line_features_002(self):
-        bars = await get_bars('603917.XSHG', 250, '1d', end='2021-11-03')
+        bars = await get_bars("603917.XSHG", 250, "1d", end="2021-11-03")
         actual = MaLineFeatures(bars)
         print(actual)

@@ -5,26 +5,28 @@ from alpha.core.features import long_parallel, moving_average, polyfit, short_pa
 
 
 class MaLineFeatures:
-    def __init__(self, bars, check_window=10):
+    def __init__(self, bars, wins=[5, 10, 20, 30, 60, 120], check_window=10):
         """均线特征，包括多（空）头排列，金叉、死叉, 一阳穿多线，一阴穿多线"""
         close = bars["close"]
         open_ = bars["open"]
 
         self.bars = bars
-        if len(bars) > 120 + check_window:
-            self.wins = [5,10,20,30,60,120]
+        self.wins = wins
+        if wins == [5, 10, 20, 30, 60, 120]:
             self.parallel_groups = [(0, 1, 2), (3, 4, 5)]
-        elif len(bars) > 60 + check_window:
-            self.wins = [5, 10, 20, 30, 60]
+        elif wins == [5, 10, 20, 30, 60]:
             self.parallel_groups = [(0, 1, 2), (2, 3, 4)]
-        elif len(bars) > 30 + check_window:
-            self.wins = [5, 10, 20, 30]
+        elif wins == [5, 10, 20, 30]:
             self.parallel_groups = [(0, 1, 2), (2, 3)]
-        elif len(bars) > 20 + check_window:
-            self.wins = [5, 10, 20]
+        elif wins == [5, 10, 20]:
             self.parallel_groups = [(0, 1, 2), None]
+        elif wins == [5, 10]:
+            self.parallel_groups = [(0, 1), None]
         else:
-            raise ValueError(f"bars length must be greater than {len(bars) + check_window}")
+            raise ValueError("invalid wins value")
+
+        if len(bars) < max(self.wins) + check_window - 1:
+            raise ValueError("not enough bars")
 
         self.cw = check_window
 
@@ -125,15 +127,22 @@ class MaLineFeatures:
 
         features["trendline"] = trendline
         if trendline != 0:
-            features["slope"] = b
+            features["trendline_slope"] = b
         else:
-            features["slope"] = None
+            features["trendline_slope"] = None
 
         self.features = features
         self.feature_names = sorted(features.keys())
 
     def as_vector(self):
-        return [self.features[name] for name in self.feature_names]
+        vec = []
+        for name in self.feature_names:
+            if name.endswith("_strike"):
+                vec.append(len(self.features[name]))
+            else:
+                vec.append(self.features[name])
+
+        return vec
 
     def __str__(self) -> str:
         desc = []
@@ -170,14 +179,16 @@ class MaLineFeatures:
             desc.append(f"{'压力线':<14}{self.features['supress']}日均线")
             desc.append(f"{'压力位':<14}{self.features['supress_gap']:.1%}")
 
-        slope = self.features["slope"]
+        slope = self.features["trendline_slope"]
         trendline = self.features["trendline"]
         if slope and slope > 0:
             text = f"沿{trendline}日线上行"
             desc.append(f"{'趋势线':<14}{text:<15}")
+            desc.append(f"{'趋势线斜率':<14}{slope:.4f}")
         elif slope and slope < 0:
-            text = f"沿{trendline}日线上行"
+            text = f"沿{trendline}日线下行"
             desc.append(f"{'趋势线':<14}{text:<15}")
+            desc.append(f"{'趋势线斜率':<14}{slope:.4f}")
 
         bull_strike = ",".join([str(x) for x in self.features["bull_strike"]])
         bearish_strike = ",".join([str(x) for x in self.features["bearish_strike"]])
