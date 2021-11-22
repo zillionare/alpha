@@ -779,94 +779,33 @@ def double_top(bars, win=10, gap=1e-3):
     return 0
 
 
-def peaks_and_valleys(ts, min_altitude_ratio=1e-3) -> Tuple:
+def peaks_and_valleys(ts, min_altitude_ratio=5e-3, width=4) -> Tuple:
     """求一维数组`ts`表示的的峰值和谷底，本函数可以辅助用以确定局部顶和底。
 
+    考虑到本函数在量化中的用途，我们仅使用当前点与其右侧的`width`个点进行比较，如果右侧的`width`个点中，存在最大值大于当前点 * (1+min_altitude_ratio)，则认为当前点为底部；反之，如果存在极小值小于当前点 * （1 - min_altitude_ratio)，则认为当前点为顶部。
 
-    使用order = 2即最相邻五个点来确认峰值和谷底。为平滑波动，事先对数组求移动平均值。
+    args:
+        ts: 一维数组，表示任意时间序列
+        min_altitude_ratio: 当前点与其右侧的`width`个点中，存在最大值大于当前点 * (1+min_altitude_ratio)，则认为当前点为底部；反之，如果存在极小值小于当前点 * （1 - min_altitude_ratio)，则认为当前点为顶部。
+        width: 与右侧的`width`个点进行比较。
 
-    `min_altitude_ratio`用来指定峰值与相邻点的海拔高度的最小值。小于这个最小值的，将不被认为是峰值。在这里，相邻点可能是峰值（或者谷底）右侧的1~3个点，也就是信号可能晚最多3个周期才能确认。
-
-    ![](https://images.jieyu.ai/images/202111/20211108182305.png)
-
-    Examples:
-        >>> ts = np.array([3589.86, 3586.2 , 3587.35, 3587.  , 3590.6 , 3593.53, 3602.47,
-                    3603.62, 3595.87, 3582.53, 3587.56, 3594.78, 3596.02, 3591.88,
-                    3586.08, 3598.18, 3593.5 , 3587.3 , 3584.57, 3582.6 , 3588.16,
-                    3586.72, 3592.24, 3596.06, 3593.38, 3597.39, 3603.25, 3609.86,
-                    3610.58, 3618.01, 3615.55, 3612.88, 3603.94, 3597.5 , 3599.46,
-                    3597.64, 3575.2 , 3565.64, 3559.96, 3564.71, 3561.38, 3559.98,
-                    3555.47, 3562.31, 3535.2 , 3528.66, 3532.11, 3529.  , 3524.13,
-                    3523.6 , 3520.83, 3518.42, 3505.15, 3515.32, 3525.08, 3523.94,
-                    3531.4 , 3540.49, 3544.02, 3547.34, 3540.21, 3539.08, 3549.08,
-                    3549.93, 3555.34, 3545.89, 3546.1 , 3544.48, 3554.43, 3548.42,
-                    3537.14, 3522.33, 3477.68, 3482.24, 3499.03, 3505.63, 3497.15,
-                    3501.23, 3498.22, 3492.46, 3484.18, 3482.13, 3502.18, 3498.54,
-                    3515.66, 3514.5 , 3523.32, 3521.07, 3526.13, 3520.53, 3524.83,
-                    3526.87, 3518.77, 3522.16, 3514.98, 3518.57, 3506.63, 3506.4 ,
-                    3501.08, 3491.57], dtype=np.float32)
-        >>> peaks_and_valleys(ts)
-        (array([ 8, 15, 31, 43, 68, 78, 91]), array([13, 21, 53, 67, 81]))
-
-    Args:
-        ts ([type]): [description]
-        min_altitude_ratio ([type], optional): [description]. Defaults to 1e-3.
-        ma ([type], optional): [description]. Defaults to None.
-
-    Returns:
-        [Tuple]: indices of valleys and peaks
     """
-
-    ma = moving_average(ts, 5)
-
-    local_ma = argrelextrema(ma, np.greater, order=2)[0]
-    local_mi = argrelextrema(ma, np.less, order=2)[0]
-
-    if len(local_ma):
-        local_ma += 4
-    if len(local_mi):
-        local_mi += 4
+    local_ma = argrelextrema(ts, np.greater, order=width)[0]
+    local_mi = argrelextrema(ts, np.less, order=width)[0]
 
     peaks = set()
     # the peaks are calced by ma, so we need to adjust
     for ppeak in local_ma:
-        if ppeak < 5:
-            peaks.add(ppeak)
-            continue
-
-        view = ts[ppeak - 5 : ppeak + 5]
-        pmax = np.argmax(view)
-        vmax = np.max(view)
-
-        if pmax not in [0, len(view) - 1]:
-            lmin = np.min(view[:pmax])
-            rmin = np.min(view[pmax + 1 :])
-            if (
-                vmax / lmin - 1 > min_altitude_ratio
-                and vmax / rmin - 1 > min_altitude_ratio
-            ):
-                peaks.add(ppeak + pmax - 5)
-        else:
+        right = min(ppeak + width + 1, len(ts))
+        mn = np.min(ts[ppeak + 1:right])
+        if ts[ppeak] / mn - 1 >= min_altitude_ratio:
             peaks.add(ppeak)
 
     valleys = set()
     for pvalley in local_mi:
-        if pvalley < 5:
-            valleys.append(pvalley)
-            continue
-        view = ts[pvalley - 5 : pvalley + 5]
-        pmin = np.argmin(view)
-        vmin = np.min(view)
-
-        if pmin not in [0, len(view) - 1]:
-            lmax = np.max(view[:pmin])
-            rmax = np.max(view[pmin + 1 :])
-            if (
-                lmax / vmin - 1 > min_altitude_ratio
-                and rmax / vmin - 1 > min_altitude_ratio
-            ):
-                valleys.add(pvalley + pmin - 5)
-        else:
+        right = min(pvalley + width + 1, len(ts))
+        mx = np.max(ts[pvalley + 1:right])
+        if ts[pvalley] / mx - 1 <= -min_altitude_ratio:
             valleys.add(pvalley)
 
     return sorted(peaks), sorted(valleys)
@@ -1159,4 +1098,3 @@ def altitude(bars: np.ndarray) -> float:
     close = bars["close"]
 
     return 1 - (hh - close[-1]) / (hh - ll)
-

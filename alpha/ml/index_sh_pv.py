@@ -18,14 +18,14 @@ from scipy.stats import randint, uniform
 
 
 class IndexShPeakValleys:
-    def __init__(self, inference_mode=False):
+    def __init__(self, version, inference_mode=False):
+        self.ver = version
         self.code = "000001.XSHG"
-        self.data_path = os.path.expanduser(
-            "~/zillionare/alpha/data/"
-        )
-        self.model_path = os.path.expanduser(
-            "~/zillionare/alpha/models/"
-        )
+        self.data_path = f"~/zillionare/alpha/data/pv/{self.ver}"
+        self.data_path = os.path.expanduser(self.data_path)
+
+        self.model_path = f"~/zillionare/alpha/models/pv/{self.ver}"
+        self.model_path = os.path.expanduser(self.model_path)
 
         if inference_mode:
             file = os.path.join(self.model_path, "sh30m.pv.xgb.pkl")
@@ -34,33 +34,48 @@ class IndexShPeakValleys:
         else:
             self.model = None
 
-    async def make_dataset(self, cpr=1, save_to=None):
+    async def make_dataset(self, save_to=None):
         """制作顶底的标注数据"""
         bars = await get_bars(self.code, 12000, "30m")
         peaks, valleys = peaks_and_valleys(bars["close"])
 
         features = []
         for i in peaks:
-            if i < 100 or i == len(bars) - 1:
+            if i < 100 or i == len(bars) - 2:
                 continue
 
-            bars_ = bars[i - 99 : i + 1]
-            feature, _ = reversal_features(self.code, bars_, FrameType.MIN30)
-            features.append([*feature, 0, i])
+            # 对每一个顶和底，我们都使用当前点及其后一个点的数据来进行学习
+            # 因为有一些特征，可能是当前点就能预测的，有一些特征，则需要等待信号确认的时间
+            for j in [i, i + 1]:
+                bars_ = bars[j - 99 : j + 1]
+                feature, _ = reversal_features(self.code, bars_, FrameType.MIN30)
+                features.append([*feature, 0, j])
 
         for i in valleys:
             if i < 100 or i == len(bars) - 1:
                 continue
 
-            bars_ = bars[i - 99 : i + 1]
-            feature, _ = reversal_features(self.code, bars_, FrameType.MIN30)
-            features.append([*feature, 1, i])
+            for j in [i, i + 1]:
+                bars_ = bars[j - 99 : j + 1]
+                feature, _ = reversal_features(self.code, bars_, FrameType.MIN30)
+                features.append([*feature, 1, j])
 
+        # 将顶、底及前后各一个点的数据排除掉，这些数据容易干扰顶底的预测
+        peaks = np.asarray(peaks)
         pv = set(peaks)
+        pv.update(set(peaks - 1))
+        pv.update(set(peaks + 1))
+
+        valleys = np.asarray(valleys)
         pv.update(set(valleys))
-        count_of_middle = int(len(pv) * cpr)
-        middle = list(set(np.arange(100, len(bars) - 1)).difference(pv))
-        for i in random.sample(middle, count_of_middle):
+        pv.update(set(valleys - 1))
+        pv.update(set(valleys + 1))
+
+        middle = list(set(np.arange(100, len(bars) - 2)).difference(pv))
+        for i in middle:
+            if i < 100 or i == len(bars) - 2:
+                continue
+
             bars_ = bars[i - 99 : i + 1]
             feature, _ = reversal_features(self.code, bars_, FrameType.MIN30)
             features.append([*feature, 2, i])
@@ -163,16 +178,20 @@ class IndexShPeakValleys:
     def predict(self, bars: np.ndarray):
         features, _ = reversal_features(self.code, bars, FrameType.MIN30)
         label = self.model.predict(np.array([features]))[0]
-        return label, {
-            0: "顶部反转",
-            1: "底部反转",
-            2: "趋势延续",
-        }.get(label)
+        return (
+            label,
+            {
+                0: "顶部反转",
+                1: "底部反转",
+                2: "趋势延续",
+            }.get(label),
+        )
 
     async def watch(self):
         """监控模型"""
         bars = await get_bars(self.code, 100, "30m")
         return self.predict(bars)
+
 
 if __name__ == "__main__":
     import asyncio
@@ -181,20 +200,16 @@ if __name__ == "__main__":
     import cfg4py
 
     cfg4py.init(get_config_dir())
+
     async def main():
         await omicron.init()
-        pv = IndexShPeakValleys()
-        for cpr in [0.4, 0.5, 0.6, 0.7, 0.8, 0.9]:
-            os.makedirs(f"/tmp/alpha/{cpr}", exist_ok=True)
-            save_to = f"/tmp/alpha/{cpr}/pv.ds.pkl"
-            await pv.make_dataset(cpr, save_to)
+        pv = IndexShPeakValleys(version="v1")
+        os.makedirs(f"/tmp/alpha/", exist_ok=True)
+        save_to = f"/tmp/alpha/"
+        await pv.make_dataset(save_to)
 
-            data = pickle.load(open(save_to, "rb"))
-            print(f"CPR is {cpr}")
-            pv.train(data, save_to=f"/tmp/alpha/{cpr}/pv.model.pkl")
+        ds = f"/tmp/alpha/sh30m.pv.ds.pkl"
+        data = pickle.load(open(ds, "rb"))
+        pv.train(data, save_to=f"/tmp/alpha/")
 
     asyncio.run(main())
-
-
-
-
