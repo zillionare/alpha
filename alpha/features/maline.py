@@ -118,7 +118,7 @@ class MaLineFeatures:
         features["bearish_strike"] = bearish_strike
 
         # 参考趋势线
-        pmae_threshold = 1e-3
+        pmae_threshold = 1.5e-3
         trendline = 0
         for i, ma in enumerate(mas):
             (a, b, c), pmae = polyfit(ma[-self.cw :] / ma[0])
