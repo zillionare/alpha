@@ -1,16 +1,19 @@
-import datetime
-import os
-import pickle
+
 import unittest
 
 import numpy as np
-from dateutil.tz import tzfile
+import omicron
 
 from alpha.features.volume import top_volume_direction
-from tests import data_dir
+from alpha.notebook import get_bars
+from tests import data_dir, init_test_env
 
 
-class TestVolumeFeatures(unittest.TestCase):
+class TestVolumeFeatures(unittest.IsolatedAsyncioTestCase):
+    async def asyncSetUp(self):
+        init_test_env()
+        await omicron.init()
+
     def test_volume_features(self):
         # 600163.XSHG 2021-09-02 11:30
 
@@ -38,11 +41,16 @@ class TestVolumeFeatures(unittest.TestCase):
             ],
         )
 
-        vr = top_volume_direction(bars, n=10)
-        exp = [5.4, 0]
+        vr = top_volume_direction(bars, n=5)
+        exp = [2.1, 0]
         np.testing.assert_array_almost_equal(exp, vr, 1)
 
         bars["volume"][5] *= 3
-        vr = top_volume_direction(bars, n=10)
-        exp = [5.4, -0.97]
+        vr = top_volume_direction(bars, n=5)
+        exp = [-2.8, 0.97]
         np.testing.assert_array_almost_equal(exp, vr, 1)
+
+    async def test_top_volume_direction(self):
+        bars = await get_bars("000058.XSHE", 60)
+        vr = top_volume_direction(bars, n=10)
+        print(vr)

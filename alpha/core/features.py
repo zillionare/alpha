@@ -1009,7 +1009,7 @@ def divergency(indicator, price, check_win=40) -> int:
     最多检测两次同方向背离。注意传入的指标和price都必须为正的序列。如果不满足此条件，需要进行预处理。
     如果返回2，表明发生两次底背离（价格仍在走低，但指标并未跟随走低）；如果返回-2，则表明发生两次顶背离（价格仍在走高，但指标并未跟随走高）。返回1和-1同理，但意味着仅发生一次背离。
     Returns:
-        int: 背离次数（正负号表示方向），背离时指标位置
+        tuple: 背离次数（正负号表示方向），背离时指标位置
     """
     indicator = filterna(indicator)
     price = filterna(price)
