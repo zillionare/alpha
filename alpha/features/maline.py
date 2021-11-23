@@ -1,3 +1,4 @@
+from typing import List
 from typing_extensions import OrderedDict
 import numpy as np
 from omicron.core.talib import cross
@@ -6,7 +7,11 @@ from alpha.core.features import long_parallel, moving_average, polyfit, short_pa
 
 class MaLineFeatures:
     def __init__(self, bars, wins=[5, 10, 20, 30, 60, 120], check_window=10):
-        """均线特征，包括多（空）头排列，金叉、死叉, 一阳穿多线，一阴穿多线"""
+        """均线特征，包括多（空）头排列，金叉、死叉, 一阳穿多线，一阴穿多线
+
+        Args:
+            bars (np.structured array): 日线数据,长度应大于wins[-1] + check_window - 1
+        """
         close = bars["close"]
         open_ = bars["open"]
 
@@ -25,8 +30,9 @@ class MaLineFeatures:
         else:
             raise ValueError("invalid wins value")
 
-        if len(bars) < max(self.wins) + check_window - 1:
-            raise ValueError("not enough bars")
+        min_bars = max(self.wins) + check_window - 1
+        if len(bars) < min_bars:
+            raise ValueError(f"not enough bars, {min_bars} required, {len(bars)} passed")
 
         self.cw = check_window
 
@@ -199,3 +205,20 @@ class MaLineFeatures:
             desc.append(f"{'一阴穿多线':<13}{bearish_strike}日均线")
 
         return "\n".join(desc)
+
+    @classmethod
+    def feature_names(cls, n: int, wins: List, check_win=10) -> List[str]:
+        """确定因子名称
+
+        当MaLineFeatures提取特征时，长度和均线组不同，特征个数可能不同，因此需要本函数来确定因子名称
+        Args:
+            n (int): [description]
+            wins (List): [description]
+
+        Returns:
+            List[str]: [description]
+        """
+        bars = np.ones((n,), dtype=[("frame", "O"), ("open", float), ("high", float), ("low", float), ("close", float), ("volume", float), ("amount", float)])
+
+        mf = MaLineFeatures(bars, wins, check_win)
+        return mf.feature_names
