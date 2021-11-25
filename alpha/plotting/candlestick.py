@@ -117,27 +117,10 @@ class Candlestick:
             "raw": "tab:gray",
         }
 
-    def init_fig(self, y_lims=None):
+    def reset(self, y_lims=None):
+        """reset so we can draw another one"""
         for i, ax in enumerate(self.axes):
             ax.cla()
-            # if i%2 == 0:
-            #     plt.setp(ax.get_xticklabels(), visible=False)
-            #     ax.xaxis.set_tick_params(length=0)
-            #     ax.grid(True, color="#cccccc", linestyle="-", linewidth="0.5")
-
-            # ax.spines["top"].set_visible(False)
-            # ax.spines["right"].set_visible(False)
-
-            if y_lims is not None and i % 2 == 0:
-                ax.set_ylim(y_lims[0])
-
-            if y_lims is not None and i % 2 != 0:
-                ax.set_ylim(y_lims[1])
-
-        # self.axes[-1].spines["bottom"].set_visible(False)
-
-        # self.fig.tight_layout(h_pad=0)
-        # self.fig.canvas.draw()
 
     def close(self):
         self.fig.close()
@@ -192,6 +175,7 @@ class Candlestick:
             bars (np.array): [description]
             title (str, optional): [description]. Defaults to None.
             save_as (str, optional): [description]. Defaults to None.
+            signals (list, optional): [(pos, marker, color)]
         """
         assert len(self.frames) == 1
 
