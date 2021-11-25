@@ -156,7 +156,7 @@ class Candlestick:
 
             self.plot_(bars, ma_wins, candlestick_ax, volume_ax)
 
-        title = title or f"{code} {self.format_frame(end)}"
+        title = title or f"{sec.display_name} {self.format_frame(end)}"
         if title:
             self.fig.suptitle(title)
 
