@@ -156,6 +156,7 @@ async def get_bars(code: str, n: int, frame_type: str = "1d", end: Frame = None)
     if ft in tf.minute_level_frames:
         start = tf.shift(tf.floor(end, ft), -n + 1, ft)
     else:
+        end = end.date()
         start = tf.shift(end, -n + 1, ft)
 
     sec = Security(code)
