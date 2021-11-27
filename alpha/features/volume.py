@@ -28,16 +28,16 @@ def top_volume_direction(bars: np.array, n=10):
     pmax = np.argmax(volume)
 
     # 最大成交量前n个bar的均量
-    vmean = np.mean(bars_["volume"][pmax - 2*n:-n + pmax])
+    vmean = np.mean(bars_["volume"][pmax - 2 * n : -n + pmax])
 
     vol = (volume * flags)[pmax:]
     vmax = vol[0]
 
     if flags[pmax] == 1 and np.any(vol[1:] < 0):
-        vr = [vmax / vmean, np.min(vol)/vmax]
+        vr = [vmax / vmean, np.min(vol) / vmax]
     elif flags[pmax] == -1 and np.any(vol[1:] > 0):
-        vr = [vmax / vmean, abs(np.max(vol)/vmax)]
+        vr = [vmax / vmean, abs(np.max(vol) / vmax)]
     else:
-        vr = [vmax/vmean, 0]
+        vr = [vmax / vmean, 0]
 
     return vr
