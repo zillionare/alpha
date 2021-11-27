@@ -797,14 +797,14 @@ def peaks_and_valleys(ts, min_altitude_ratio=5e-3, width=4) -> Tuple:
     # the peaks are calced by ma, so we need to adjust
     for ppeak in local_ma:
         right = min(ppeak + width + 1, len(ts))
-        mn = np.min(ts[ppeak + 1:right])
+        mn = np.min(ts[ppeak + 1 : right])
         if ts[ppeak] / mn - 1 >= min_altitude_ratio:
             peaks.add(ppeak)
 
     valleys = set()
     for pvalley in local_mi:
         right = min(pvalley + width + 1, len(ts))
-        mx = np.max(ts[pvalley + 1:right])
+        mx = np.max(ts[pvalley + 1 : right])
         if ts[pvalley] / mx - 1 <= -min_altitude_ratio:
             valleys.add(pvalley)
 
@@ -1048,12 +1048,12 @@ def divergency(indicator, price, check_win=40) -> int:
     return 0, None
 
 
-def long_parallel(arrays) -> Tuple[bool, int]:
-    """检测二维数组`arrays`是否为多头排列
+def parallel(arrays) -> int:
+    """检测二维数组`arrays`多头/空头排列情况
 
-    `arrays`可以为二维numpy数组，也可以是二维Python数组。
+    本函数可用以检测均线的多头排列和空头排列。返回值若为正，表明发生多头排列，数值表明多头排列存在的时间周期数；若为负，则表明发生空头排列，数值的绝对值表明空头排列存在的周期数。零表明不存在多头/空头排列。
 
-    返回值: (是否为多头排列, 多头排列的长度)
+    返回值: int
     """
     arrays = np.array(arrays)
 
@@ -1064,27 +1064,18 @@ def long_parallel(arrays) -> Tuple[bool, int]:
         flags &= arrays[i] >= arrays[i + 1]
 
     flags, _, lengths = find_runs(flags)
-    return flags[-1], lengths[-1]
-
-
-def short_parallel(arrays) -> Tuple[bool, int]:
-    """检测二维数组`arrays`是否为多头排列
-
-    `arrays`可以为二维numpy数组，也可以是二维Python数组。
-
-    返回值: (是否为多头排列, 多头排列的长度)
-    """
-    arrays = np.array(arrays)
+    if flags[-1]:
+        return lengths[-1]
 
     flags = np.repeat(True, len(arrays[0]))
-    rows = len(arrays)
-
     for i in range(rows - 1, 0, -1):
         flags &= arrays[i] >= arrays[i - 1]
 
     flags, _, lengths = find_runs(flags)
-    return flags[-1], lengths[-1]
+    if flags[-1]:
+        return -lengths[-1]
 
+    return 0
 
 def altitude(bars: np.ndarray) -> float:
     """计算收盘价在序列中的高度，类似于wr指标

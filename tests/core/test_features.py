@@ -730,9 +730,8 @@ class TestFeatures(unittest.TestCase):
         mas = []
         for w in [5, 10, 20, 30]:
             mas.append(moving_average(close, w)[-10:])
-        flag, sl = long_parallel(mas)
-        self.assertTrue(flag)
-        self.assertEqual(sl, 1)
+        ll = parallel(mas)
+        self.assertEqual(1, ll)
 
     def test_short_parallel(self):
         close = np.array(
@@ -784,6 +783,5 @@ class TestFeatures(unittest.TestCase):
         for w in [5, 10, 20, 30]:
             mas.append(moving_average(close, w)[-10:])
 
-        flag, sl = short_parallel(mas)
-        self.assertTrue(flag)
-        self.assertEqual(sl, 2)
+        sl = parallel(mas)
+        self.assertEqual(sl, -2)
