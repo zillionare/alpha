@@ -1,12 +1,14 @@
+from typing import Tuple
 import numpy as np
 
-from alpha.core.features import fillna, replace_zero, top_n_argpos
+from alpha.core.features import fillna, replace_zero, rolling, top_n_argpos
 
 
-def top_volume_direction(bars: np.array, n=10):
+def top_volume_direction(bars: np.array, n=10) -> Tuple[float, float]:
     """计算`n`周期内，较大成交量的方向和比值。
 
     成交量方向：如果当前股价上涨则成交量方向为1，下跌则为-1
+
     计算方法：
         1. 找出最大成交量的位置
         2. 找出其后一个最大异向成交量的位置
@@ -15,6 +17,9 @@ def top_volume_direction(bars: np.array, n=10):
     args:
         bars: 包含了OHLC和volume的行情数据，类型为numpy structured array, 长度应该大于`2 * n`
         n: 参与计算的周期。太长则影响到最大成交量的影响力。
+
+    return:
+        最大成交量量比及方向，最大成交之后，异向成交量与最大成交量的比值。0，0表示不适用（如当期为最大成交量，此后不存在异向成交量）
 
     """
     assert len(bars) >= 2 * n, "bars length should be greater than 2 * n"
@@ -41,3 +46,24 @@ def top_volume_direction(bars: np.array, n=10):
         vr = [vmax / vmean, 0]
 
     return vr
+
+
+def moving_net_volume(bars, win=5) -> np.array:
+    """移动净余成交量
+    args:
+        bars: 包含了OHLC和volume的行情数据，类型为numpy structured array, 长度应该大于`2 * n`
+
+    return:
+        float: `win`周期内归一化的的移动和
+
+    """
+    vol = bars["volume"]
+    close = bars["close"]
+    open_ = bars["open"]
+
+    vol = vol / vol[0]
+
+    flags = np.select((close > open_, close < open_), [1, -1], 0)
+    signed_vol = vol * flags
+
+    return rolling(signed_vol, win, np.sum)

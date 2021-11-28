@@ -8,8 +8,8 @@ import ta
 from numpy.lib.stride_tricks import sliding_window_view
 from numpy.typing import ArrayLike
 from omicron.core.numpy_extensions import find_runs
-from omicron.core.talib import cross
 from omicron.core.types import FrameType
+from omicron.models.security import Security
 from scipy.signal import argrelextrema
 
 argpos_permutations = {
@@ -691,50 +691,32 @@ def reversing(close):
     return 0
 
 
-# def williams_r(bars, timeperiod=60) -> np.array:
-#     """求Williams %R
-
-#     Args:
-#         bars ([type]): [description]
-#     Returns:
-#         wr at each frame
-#     """
-#     high = bars["high"].astype("f8")
-#     low = bars["low"].astype("f8")
-#     close = bars["close"].astype("f8")
-
-#     return talib.WILLR(high, low, close, timeperiod=14)
-
-
-def down_shadow(bars):
-    """求下影线的长度，百分比表示
-
-    Args:
-        bars ([type]): [description]
-    """
+def shadow_features(bars):
+    """求上下影线及实体的长度，百分比表示"""
     if len(bars.shape) == 0:
-        return min(bars["open"], bars["close"]) / bars["low"] - 1
+        up = bars["high"] / max(bars["open"], bars["close"]) - 1
+        down = min(bars["open"], bars["close"]) / bars["low"] - 1
+        body = bars["close"] / bars["open"] - 1
 
-    base = np.select(bars["open"] > bars["close"], bars["close"], bars["open"])
-    return base / bars["low"] - 1
-
-
-def up_shadow(bars):
-    """求上影线长度，百分比表示"""
-    if len(bars.shape) == 0:
-        return bars["high"] / max(bars["open"], bars["close"]) - 1
+        return up, down, body
 
     base = np.select(bars["open"] > bars["close"], bars["open"], bars["close"])
-    return bars["high"] / base - 1
+
+    up = bars["high"] / base - 1
+    down = base / bars["low"] - 1
+    body = bars["close"] / bars["open"] - 1
+
+    return up, down, body
 
 
-def double_bottom(bars, win=10, gap=1e-3) -> int:
+def double_bottom(bars, win=10, gap=3e-3) -> int:
     """在`win`个周期里，当日最低点是否下探前低且收盘价未创新低？
 
 
     Args:
         bars ([type]): [description]
         win (int, optional): [description]. Defaults to 10.
+        gap (float, optional): 对指数及30分钟线，gap=3e-3，股票日线1e-2或者5e-3
 
     Returns:
         [int]: 如果为双底，则返回1，否则返回0
@@ -748,18 +730,19 @@ def double_bottom(bars, win=10, gap=1e-3) -> int:
     l0 = bars["low"][-1]
     c0 = bars["close"][-1]
 
-    if c0 > lc and abs(l0 / ll - 1) < gap:
+    if c0 > lc and l0 > ll and abs(l0 / ll - 1) < gap:
         return 1
 
     return 0
 
 
-def double_top(bars, win=10, gap=1e-3):
+def double_top(bars, win=10, gap=3e-3):
     """在`win`个周期里，当日最高点是否上探前高并且收盘未创新高
 
     Args:
         bars ([type]): [description]
         win (int, optional): [description]. Defaults to 10.
+        gap (float, optional): 对指数及30分钟线，gap=3e-3，股票日线1e-2或者5e-3
 
     Returns:
         [type]: 如果存在双顶，返回1，否则返回0
@@ -773,7 +756,7 @@ def double_top(bars, win=10, gap=1e-3):
     h0 = bars["high"][-1]
     c0 = bars["close"][-1]
 
-    if hc > c0 and abs(h0 / hh - 1) < gap:
+    if c0 < hc and h0 < hh and abs(h0 / hh - 1) < gap:
         return 1
 
     return 0
@@ -811,25 +794,21 @@ def peaks_and_valleys(ts, min_altitude_ratio=5e-3, width=4) -> Tuple:
     return sorted(peaks), sorted(valleys)
 
 
-def dark_cloud_cover(bars, penetration=-0.025):
-    """乌云盖顶，即日线高开大阴线，并且收盘价向下插入到前一日实体内
+def dark_cloud_cover(bars) -> bool:
+    """乌云盖顶，今日高开走低，吞没前一日实体
 
+    与https://www.investopedia.com/articles/active-trading/062315/using-bullish-candlestick-patterns-buy-stocks.asp#3-the-piercing-line不同，经典的乌云盖顶需要头一日为阳线，且第二日不要求低于实体
     Returns:
-        -1 if there's not dark cloud cover, otherwise frames since signal fired
     """
-    open_ = bars["open"]
-    close = bars["close"]
+    bars_ = bars[-2:]
 
-    pos = np.argwhere(
-        (close[:-1] > open_[:-1])
-        & (open_[1:] > close[:-1])
-        & (close[1:] / close[:-1] - 1 < penetration)
-    ).flatten()
+    close = bars_["close"]
+    open_ = bars_["open"]
 
-    if len(pos):
-        return len(bars) - 1 - (pos + 1)
+    low = min(close[0], open_[0])
+    high = max(close[0], open_[0])
 
-    return [-1]
+    return open_[1] > high and close[1] < low
 
 
 def hammer(bars, shadow_length=0.03) -> Tuple:
@@ -882,31 +861,6 @@ def inverted_hammer(bars, shadow_length=0.03) -> Tuple:
 
     pos = np.argwhere((open_ < close) & (shadow > shadow_length)).flatten()
     return pos, shadow[pos]
-
-
-def parabolic_features(ts, rng=7, ma_win=5, calc_ma=True):
-    """检测`ts`代表的最后7个周期的均线中，是否存在抛物线特征。"""
-    if calc_ma:
-        ts = moving_average(ts, ma_win)
-
-    ts_ = ts[-rng:]
-    (a, b, c), pmae = polyfit(ts_)
-
-    # predict till next frame
-    y_ = np.polyval((a, b, c), np.arange(rng + 1))
-
-    # uncomment this to draw the lines
-    # plt.plot(np.arange(len(ts)-rng, len(ts)), y_)
-    # plt.plot(ts)
-
-    vx = round(-b / (2 * a), 1)
-
-    next_ts = reverse_moving_average(y_, rng, ma_win)
-    pred_roc = next_ts / ts[-1] - 1
-
-    dist = rng - vx
-
-    return np.sign(pred_roc), pred_roc, dist, round(a, 4), round(pmae, 5)
 
 
 def reversal_features(
@@ -1077,6 +1031,7 @@ def parallel(arrays) -> int:
 
     return 0
 
+
 def altitude(bars: np.ndarray) -> float:
     """计算收盘价在序列中的高度，类似于wr指标
 
@@ -1089,3 +1044,72 @@ def altitude(bars: np.ndarray) -> float:
     close = bars["close"]
 
     return 1 - (hh - close[-1]) / (hh - ll)
+
+
+def has_higher_high(bars: np.ndarray, n=5) -> bool:
+    """检测`n`周期里是否有更高的高点
+
+    返回值: bool
+    """
+    bars_ = bars[-n:]
+
+    high = bars_["high"]
+
+    return np.any(high[1:] > high[0])
+
+
+def has_lower_low(bars: np.ndarray, n=5) -> bool:
+    """检测`n`周期里是否有更低的低点
+
+    返回值: bool
+    """
+    bars_ = bars[-n:]
+
+    low = bars_["low"]
+
+    return np.any(low[1:] < low[0])
+
+
+def three_crows(bars: np.ndarray) -> bool:
+    """检测三黑鸦
+
+    最近三个周期是否有三个黑鸦，并且当前收盘价低于4日前
+    返回值: bool
+    """
+    bars_ = bars[-5:]
+
+    close = bars_["close"]
+
+    return np.all(close[2:5] < close[1:4]) and close[-1] < close[0]
+
+
+def three_red_soldiers(bars: np.ndarray) -> bool:
+    """检测三红兵
+
+    最近三个周期是否有三个红兵，并且当前收盘价高于4日前
+    返回值: bool
+    """
+    bars_ = bars[-5:]
+
+    close = bars_["close"]
+
+    return np.all(close[2:5] > close[1:4]) and close[-1] > close[0]
+
+
+def piercing_line(bars: np.ndarray) -> bool:
+    """检测穿越线
+
+    dark cloud cover的相反形态。 https://www.investopedia.com/articles/active-trading/062315/using-bullish-candlestick-patterns-buy-stocks.asp#3-the-piercing-line
+
+    这里的方法与上述有所不同，我们只要求今天低开，收盘吞没前一日实体
+    返回值: bool
+    """
+    bars_ = bars[-2:]
+
+    close = bars_["close"]
+    open_ = bars_["open"]
+
+    low = min(close[0], open_[0])
+    high = max(close[0], open_[0])
+
+    return open_[1] < low and close[1] > high

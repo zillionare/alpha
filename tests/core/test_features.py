@@ -436,86 +436,6 @@ class TestFeatures(unittest.TestCase):
         bars = np.array(
             [
                 (
-                    datetime.date(2021, 9, 16),
-                    6.7,
-                    6.7,
-                    6.1,
-                    6.15,
-                    1.80939829e08,
-                    1.14896863e09,
-                    1.13,
-                ),
-                (
-                    datetime.date(2021, 9, 17),
-                    6.15,
-                    6.41,
-                    6.04,
-                    6.22,
-                    1.22350285e08,
-                    7.61650655e08,
-                    1.13,
-                ),
-                (
-                    datetime.date(2021, 9, 22),
-                    6.11,
-                    6.8400006,
-                    6.0599995,
-                    6.8,
-                    2.48218679e08,
-                    1.64408854e09,
-                    1.13,
-                ),
-                (
-                    datetime.date(2021, 9, 23),
-                    6.85,
-                    7.03,
-                    6.62,
-                    6.68,
-                    1.89183891e08,
-                    1.28564316e09,
-                    1.13,
-                ),
-                (
-                    datetime.date(2021, 9, 24),
-                    6.69,
-                    6.82,
-                    6.36,
-                    6.41,
-                    1.30129346e08,
-                    8.52839497e08,
-                    1.13,
-                ),
-                (
-                    datetime.date(2021, 9, 27),
-                    6.83,
-                    6.8400006,
-                    6.01,
-                    6.13,
-                    1.91771414e08,
-                    1.21969780e09,
-                    1.13,
-                ),
-                (
-                    datetime.date(2021, 9, 28),
-                    6.02,
-                    6.37,
-                    6.0,
-                    6.24,
-                    1.12730269e08,
-                    7.01084142e08,
-                    1.13,
-                ),
-                (
-                    datetime.date(2021, 9, 29),
-                    6.13,
-                    6.39,
-                    6.03,
-                    6.0899997,
-                    1.03117968e08,
-                    6.39593806e08,
-                    1.13,
-                ),
-                (
                     datetime.date(2021, 9, 30),
                     6.11,
                     6.5,
@@ -549,7 +469,44 @@ class TestFeatures(unittest.TestCase):
         )
 
         actual = dark_cloud_cover(bars)
-        self.assertListEqual([0], actual.tolist())
+        self.assertTrue(actual)
+
+        bars = np.array(
+            [
+                (
+                    datetime.date(2021, 9, 24),
+                    6.69,
+                    6.82,
+                    6.36,
+                    6.41,
+                    1.30129346e08,
+                    8.52839497e08,
+                    1.13,
+                ),
+                (
+                    datetime.date(2021, 9, 27),
+                    6.83,
+                    6.8400006,
+                    6.01,
+                    6.13,
+                    1.91771414e08,
+                    1.21969780e09,
+                    1.13,
+                ),
+            ],
+            dtype=[
+                ("frame", "O"),
+                ("open", "<f4"),
+                ("high", "<f4"),
+                ("low", "<f4"),
+                ("close", "<f4"),
+                ("volume", "<f8"),
+                ("amount", "<f8"),
+                ("factor", "<f4"),
+            ],
+        )
+
+        self.assertTrue(dark_cloud_cover(bars))
 
     def test_hammer(self):
         bars = np.array(
@@ -624,12 +581,15 @@ class TestFeatures(unittest.TestCase):
         self.assertListEqual([4, 15, 31], peaks)
         self.assertListEqual([7, 12, 21], valleys)
 
-    def test_down_shadow(self):
-        bars = load_bars_from_file("sh.30m.20111105.200")
-        # 2021-10-21 11:30 ~ 2021-10-28 11:00
-        bars = bars[127:167]
-        ds = down_shadow(bars[-1])
-        print(ds)
+    def test_shadow_features(self):
+        bars = np.array(
+            (9.2, 9.4, 9.0, 9.3),
+            dtype=[("open", "<f4"), ("high", "<f4"), ("low", "<f4"), ("close", "<f4")],
+        )
+        up, down, body = shadow_features(bars)
+        self.assertAlmostEqual(up, 0.01, 2)
+        self.assertAlmostEqual(down, 0.02, 2)
+        self.assertAlmostEqual(body, 0.01, 2)
 
     def test_long_parallel(self):
         close = np.array(
@@ -785,3 +745,42 @@ class TestFeatures(unittest.TestCase):
 
         sl = parallel(mas)
         self.assertEqual(sl, -2)
+
+    def test_piercing_line(self):
+        # 中国西电 2021-8-25
+        bars = np.array(
+            [
+                (
+                    datetime.date(2021, 8, 24),
+                    5.134588,
+                    5.1644974,
+                    4.965096,
+                    5.0049763,
+                    1.01742282e08,
+                    5.15075322e08,
+                    1.13,
+                ),
+                (
+                    datetime.date(2021, 8, 25),
+                    4.94,
+                    5.23,
+                    4.87,
+                    5.22,
+                    1.14042512e08,
+                    5.79181904e08,
+                    1.133392,
+                ),
+            ],
+            dtype=[
+                ("frame", "O"),
+                ("open", "<f4"),
+                ("high", "<f4"),
+                ("low", "<f4"),
+                ("close", "<f4"),
+                ("volume", "<f8"),
+                ("amount", "<f8"),
+                ("factor", "<f4"),
+            ],
+        )
+
+        self.assertTrue(piercing_line(bars))

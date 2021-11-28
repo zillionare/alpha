@@ -32,6 +32,7 @@ from arrow import Arrow
 from alpha.utils import *
 from alpha.features.maline import MaLineFeatures
 import logging
+from alpha.core.glance import Glance
 
 g = {}
 logger = logging.getLogger(__name__)
@@ -149,14 +150,17 @@ async def get_bars(code: str, n: int, frame_type: str = "1d", end: Frame = None)
     ft = FrameType(frame_type)
 
     tz = "Asia/Shanghai"
-    end = arrow.get(end, tzinfo=tz) if end else arrow.now(tz=tz)
-    if not tf.is_open_time(end):
-        end = tf.floor(end, ft)
+    if end is None:
+        if frame_type == "1d":
+            end = arrow.now().date()
+        else:
+            end = tf.floor(arrow.now(), FrameType.MIN1)
+    else:
+        end = arrow.get(end, tzinfo=tz)
 
     if ft in tf.minute_level_frames:
         start = tf.shift(tf.floor(end, ft), -n + 1, ft)
     else:
-        end = end.date()
         start = tf.shift(end, -n + 1, ft)
 
     sec = Security(code)

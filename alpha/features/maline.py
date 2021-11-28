@@ -2,6 +2,7 @@ from typing import List, Tuple
 import numpy as np
 from omicron.core.talib import cross
 from alpha.core.features import moving_average, parallel, polyfit
+from omicron.core.numpy_extensions import find_runs
 
 
 class MaLineFeatures:
@@ -13,133 +14,141 @@ class MaLineFeatures:
         """
         self.cw = check_window
         common_columns = [
-            "trendline_slope",
-            "trendline",
-            "support",
-            "support_gap",
-            "supress",
-            "supress_gap",
-            "parallel",
+            ("trendline_slope", "{:.3f}"),
+            ("trendline", "{:.0f}"),
+            ("support", "{:.0f}"),
+            ("support_gap", "{:.1%}"),
+            ("supress", "{:.0f}"),
+            ("supress_gap", "{:.1%}"),
+            ("parallel", "{:.0f}"),
+            ("ma5_relation", "{:.2f}"),
+            ("dma5_1", "{:.2%}"),
+            ("dma5_2", "{:.2%}"),
+            ("dma10_1", "{:.2%}"),
+            ("dma10_2", "{:.2%}"),
         ]
 
         line_params_20 = [
-            "a5",
-            "b5",
-            "pmae5",
-            "vx5",
-            "a10",
-            "b10",
-            "pmae10",
-            "vx10",
-            "a20",
-            "b20",
-            "pmae20",
-            "vx20",
+            ("a5", "{:.2%}"),
+            ("b5", "{:.2%}"),
+            ("pmae5", "{:.2%}"),
+            ("vx5", "{:.1f}"),
+            ("a10", "{:.2%}"),
+            ("b10", "{:.2%}"),
+            ("pmae10", "{:.2%}"),
+            ("vx10", "{:.1f}"),
+            ("a20", "{:.2%}"),
+            ("b20", "{:.2%}"),
+            ("pmae20", "{:.2%}"),
+            ("vx20", "{:.1f}"),
         ]
 
         line_params_30 = [
             *line_params_20,
-            "a30",
-            "b30",
-            "pmae30",
-            "vx30"]
+            ("a30", "{:.2%}"),
+            ("b30", "{:.2%}"),
+            ("pmae30", "{:.2%}"),
+            ("vx30", "{:.1f}"),
+        ]
 
         line_params_60 = [
             *line_params_30,
-            "a60",
-            "b60",
-            "pmae60",
-            "vx60"
+            ("a60", "{:.2%}"),
+            ("b60", "{:.2%}"),
+            ("pmae60", "{:.2%}"),
+            ("vx60", "{:.1f}"),
         ]
 
         line_params_120 = [
             *line_params_60,
-            "a120",
-            "b120",
-            "pmae120",
-            "vx120"
+            ("a120", "{:.2%}"),
+            ("b120", "{:.2%}"),
+            ("pmae120", "{:.2%}"),
+            ("vx120", "{:.1f}"),
         ]
 
         line_params_250 = [
             *line_params_120,
-            "a250",
-            "b250",
-            "pmae250",
-            "vx250"
+            ("a250", "{:.2%}"),
+            ("b250", "{:.2%}"),
+            ("pmae250", "{:.2%}"),
+            ("vx250", "{:.1f}"),
         ]
 
         cross_columns_20 = [
-            "cross_5x10",
-            "cross_10x20",
+            ("cross_5x10", "{:.0f}"),
+            ("cross_10x20", "{:.0f}"),
         ]
+
         cross_columns_30 = [
             *cross_columns_20,
-            "cross_20x30"
+            ("cross_20x30", "{:.0f}"),
         ]
 
         cross_columns_60 = [
             *cross_columns_30,
-            "cross_30x60",
+            ("cross_30x60", "{:.0f}"),
         ]
 
         cross_columns_120 = [
             *cross_columns_60,
-            "cross_60x120",
+            ("cross_60x120", "{:.0f}"),
         ]
 
         cross_columns_250 = [
             *cross_columns_120,
-            "cross_120x250",
+            ("cross_120x250", "{:.0f}"),
         ]
 
         bull_strike_columns_20 = [
-            "bull_strike_5",
-            "bull_strike_10",
-            "bull_strike_20",
+            ("bull_strike_5", "{}"),
+            ("bull_strike_10", "{}"),
+            ("bull_strike_20", "{}"),
         ]
         bull_strike_columns_30 = [
             *bull_strike_columns_20,
-            "bull_strike_30"
+            ("bull_strike_30", "{}"),
         ]
 
         bull_strike_columns_60 = [
             *bull_strike_columns_30,
-            "bull_strike_60",
+            ("bull_strike_60", "{}"),
         ]
 
         bull_strike_columns_120 = [
             *bull_strike_columns_60,
-            "bull_strike_120",
+            ("bull_strike_120", "{}"),
         ]
 
         bull_strike_columns_250 = [
             *bull_strike_columns_120,
-            "bull_strike_250",
+            ("bull_strike_250", "{}"),
         ]
 
         bearish_strike_columns_20 = [
-            "bear_strike_5",
-            "bear_strike_10",
-            "bear_strike_20",
+            ("bear_strike_5", "{}"),
+            ("bear_strike_10", "{}"),
+            ("bear_strike_20", "{}"),
         ]
+
         bearish_strike_columns_30 = [
             *bearish_strike_columns_20,
-            "bear_strike_30"
+            ("bear_strike_30", "{}"),
         ]
 
         bearish_strike_columns_60 = [
             *bearish_strike_columns_30,
-            "bear_strike_60",
+            ("bear_strike_60", "{}"),
         ]
 
         bearish_strike_columns_120 = [
             *bearish_strike_columns_60,
-            "bear_strike_120",
+            ("bear_strike_120", "{}"),
         ]
 
         bearish_strike_columns_250 = [
             *bearish_strike_columns_120,
-            "bear_strike_250",
+            ("bear_strike_250", "{}"),
         ]
 
         self.columns_20 = [
@@ -147,7 +156,7 @@ class MaLineFeatures:
             *line_params_20,
             *cross_columns_20,
             *bull_strike_columns_20,
-            *bearish_strike_columns_20
+            *bearish_strike_columns_20,
         ]
 
         self.columns_30 = [
@@ -155,7 +164,7 @@ class MaLineFeatures:
             *line_params_30,
             *cross_columns_30,
             *bull_strike_columns_30,
-            *bearish_strike_columns_30
+            *bearish_strike_columns_30,
         ]
 
         self.columns_60 = [
@@ -163,7 +172,7 @@ class MaLineFeatures:
             *line_params_60,
             *cross_columns_60,
             *bull_strike_columns_60,
-            *bearish_strike_columns_60
+            *bearish_strike_columns_60,
         ]
 
         self.columns_120 = [
@@ -171,7 +180,7 @@ class MaLineFeatures:
             *line_params_120,
             *cross_columns_120,
             *bull_strike_columns_120,
-            *bearish_strike_columns_120
+            *bearish_strike_columns_120,
         ]
 
         self.columns_250 = [
@@ -179,7 +188,7 @@ class MaLineFeatures:
             *line_params_250,
             *cross_columns_250,
             *bull_strike_columns_250,
-            *bearish_strike_columns_250
+            *bearish_strike_columns_250,
         ]
 
     def common_feature(self, bars, mas, line_params):
@@ -191,12 +200,23 @@ class MaLineFeatures:
         vector.extend((slope, i))
 
         # vec(2-5): 支撑线，压力线
-        close = bars["close"][-1]
-        vector.extend(self.support_and_supress(close, mas[:,-1]))
+        close = bars["close"]
+        vector.extend(self.support_and_supress(close[-1], mas[:, -1]))
 
         # vec(6): 均线全排列情况。正数表明存在多头排列，负数表明存在空头排列，0表示不存在
         # 绝对值表示排列的天数
         vector.append(parallel(mas))
+
+        # vec(7): 股价与5日均线之间的关系
+        vector.append(self.ma5_relation(close, mas[0]))
+
+        # 5日均线两日一阶导数
+        ma5 = mas[0][-3:]
+        vector.extend(ma5[1:] / ma5[:-1] - 1)
+
+        # 10日均线两日一阶导
+        ma10 = mas[1][-3:]
+        vector.extend(ma10[1:] / ma10[:-1] - 1)
 
         return vector
 
@@ -216,20 +236,20 @@ class MaLineFeatures:
         vector.extend(self.common_feature(bars, mas, line_params))
 
         # 以下部分为可变长。长度由均线个数决定
-        # vec(7-22): (a, b, pmae, vx) for 5, 10, 20, 30
+        # vec(8-23): (a, b, pmae, vx) for 5, 10, 20, 30
         vector.extend(np.asarray(line_params).flatten())
 
-        # vec(23~25): 5x10, 10x20, 20x30情况
+        # vec(24~26): 5x10, 10x20, 20x30情况
         for i in range(len(wins) - 1):
             flag, idx = cross(mas[i][-self.cw :], mas[i + 1][-self.cw :])
             idx = self.cw - idx
             vector.append(flag * idx)
 
-        # vec(26~29): 一阳穿多线[1,0,0,0]
-        vector.extend(self.bull_strike(close[-1], open_[-1], mas[:,-1]))
+        # vec(27~30): 一阳穿多线[1,0,0,0]
+        vector.extend(self.bull_strike(close[-1], open_[-1], mas[:, -1]))
 
-        # vec(30~33): 一阴穿多线[0,0,1,1]
-        vector.extend(self.bearish_strike(close[-1], open_[-1], mas[:,-1]))
+        # vec(31~34): 一阴穿多线[0,0,1,1]
+        vector.extend(self.bearish_strike(close[-1], open_[-1], mas[:, -1]))
 
         return vector
 
@@ -249,20 +269,20 @@ class MaLineFeatures:
         vector.extend(self.common_feature(bars, mas, line_params))
 
         # 以下部分为可变长。长度由均线个数决定
-        # vec(7-26): (a, b, pmae, vx) for 5, 10, 20, 30, 60
+        # vec(8-?): (a, b, pmae, vx) for 5, 10, 20, 30, 60
         vector.extend(np.asarray(line_params).flatten())
 
-        # vec(26-29): 5x10, 10x20, 20x30, 30x60情况
+        # vec(27-29): 5x10, 10x20, 20x30, 30x60情况
         for i in range(len(wins) - 1):
             flag, idx = cross(mas[i][-self.cw :], mas[i + 1][-self.cw :])
             idx = self.cw - idx
             vector.append(flag * idx)
 
         # vec(30-34): 一阳穿多线[1,0,0,0,1]
-        vector.extend(self.bull_strike(close[-1], open_[-1], mas[:,-1]))
+        vector.extend(self.bull_strike(close[-1], open_[-1], mas[:, -1]))
 
         # vec(35-39): 一阴穿多线[0,0,1,1,0]
-        vector.extend(self.bearish_strike(close[-1], open_[-1], mas[:,-1]))
+        vector.extend(self.bearish_strike(close[-1], open_[-1], mas[:, -1]))
 
         return vector
 
@@ -292,15 +312,15 @@ class MaLineFeatures:
             vector.append(flag * idx)
 
         # vec(35-40): 一阳穿多线[1,0,0,0,1,0]
-        vector.extend(self.bull_strike(close[-1], open_[-1], mas[:,-1]))
+        vector.extend(self.bull_strike(close[-1], open_[-1], mas[:, -1]))
 
         # vec(41-46): 一阴穿多线[0,0,1,1,0,0]
-        vector.extend(self.bearish_strike(close[-1], open_[-1], mas[:,-1]))
+        vector.extend(self.bearish_strike(close[-1], open_[-1], mas[:, -1]))
 
         return vector
 
     def feature_250(self, bars):
-        """ 提取[5, 10, 20, 30, 60, 120, 250]均线周期的特征"""
+        """提取[5, 10, 20, 30, 60, 120, 250]均线周期的特征"""
         close = bars["close"]
         open_ = bars["open"]
         wins = [5, 10, 20, 30, 60, 120, 250]
@@ -325,10 +345,10 @@ class MaLineFeatures:
             vector.append(flag * idx)
 
         # vec(39-44): 一阳穿多线[1,0,0,0,1,0,0]
-        vector.extend(self.bull_strike(close[-1], open_[-1], mas[:,-1]))
+        vector.extend(self.bull_strike(close[-1], open_[-1], mas[:, -1]))
 
         # vec(45-50): 一阴穿多线[0,0,1,1,0,0,0]
-        vector.extend(self.bearish_strike(close[-1], open_[-1], mas[:,-1]))
+        vector.extend(self.bearish_strike(close[-1], open_[-1], mas[:, -1]))
 
         return vector
 
@@ -341,6 +361,19 @@ class MaLineFeatures:
             vx = pl - (-1 * b) / (2 * a)
             line_params.append((a, b, pmae, vx))
         return line_params
+
+    def ma5_relation(self, close, ma5):
+        """
+        计算ma5与close的相互关系，返回最后最长的股价在均线之上（或者之下）比例
+        """
+        close = close[-self.cw :]
+        ma5 = ma5[-self.cw :]
+
+        flags, _, length = find_runs(close >= ma5)
+        if flags[-1]:
+            return length[-1] / len(close)
+        else:
+            return -1 * length[-1] / len(close)
 
     def bull_strike(self, close, open_, mas) -> np.array:
         """提取一阳穿多线
@@ -430,8 +463,7 @@ class MaLineFeatures:
 
         return np.asarray(mas)
 
-    def trend_line(
-        self, bars, mas, line_params, threshold=5e-3) -> Tuple[float, int]:
+    def trend_line(self, bars, mas, line_params, threshold=5e-3) -> Tuple[float, int]:
         """找出股价运行的趋势线。
 
         趋势线并不是支撑或者压力线，它是一条能大致代表股价运行方式的直线（均线）。我们从最短周期均线（5日均线）开始搜索，直到找到符合条件的均线，返回其斜率和均线序号。
@@ -459,11 +491,11 @@ class MaLineFeatures:
                 continue
 
             ma = mas[i][-self.cw :]
-            if b > 0: # 上升直线
+            if b > 0:  # 上升直线
                 # 不破均线
                 if np.all(close >= ma):
                     return b, i
-            else: # 下降
+            else:  # 下降
                 # 不破均线
                 if np.all(close <= ma):
                     return b, i
@@ -475,15 +507,22 @@ class MaLineFeatures:
 
     def explain(self, vec):
         """解释特征向量"""
-        if len(vec) == 27:
-            return {k:v for k,v in zip(self.columns_20, vec)}
-        elif len(vec) == 34:
-            return {k:v for k,v in zip(self.columns_30, vec)}
-        elif len(vec) == 41:
-            return {k:v for k,v in zip(self.columns_60, vec)}
-        elif len(vec) == 48:
-            return {k:v for k,v in zip(self.columns_120, vec)}
-        elif len(vec) == 55:
-            return {k:v for k,v in zip(self.columns_250, vec)}
+
+        if len(vec) == len(self.columns_20):
+            col_desc = self.columns_20
+        elif len(vec) == len(self.columns_30):
+            col_desc = self.columns_30
+        elif len(vec) == len(self.columns_60):
+            col_desc = self.columns_60, vec
+        elif len(vec) == len(self.columns_120):
+            col_desc = self.columns_120, vec
+        elif len(vec) == len(self.columns_250):
+            col_desc = self.columns_250, vec
         else:
             raise ValueError("unknown vec length")
+
+        desc = []
+        for (col, fmt), v in zip(col_desc, vec):
+            desc.append(f"{col}: {fmt.format(v)}")
+
+        return desc

@@ -1,9 +1,10 @@
+import datetime
 import unittest
 
 import numpy as np
 import omicron
 
-from alpha.features.volume import top_volume_direction
+from alpha.features.volume import moving_net_volume, top_volume_direction
 from alpha.notebook import get_bars
 from tests import data_dir, init_test_env
 
@@ -53,3 +54,49 @@ class TestVolumeFeatures(unittest.IsolatedAsyncioTestCase):
         bars = await get_bars("000058.XSHE", 60)
         vr = top_volume_direction(bars, n=10)
         print(vr)
+
+    def test_moving_on_balance_vol(self):
+        # 湖北宜化 2021-11-29
+        bars = np.array(
+            [
+                (22.88, 25.08, 1.15477672e08),
+                (25.22, 26.68, 1.24748921e08),
+                (25.2, 25.7, 1.29210841e08),
+                (26.51, 28.27, 1.17516162e08),
+                (28.880001, 27.400002, 1.68249240e08),
+                (28.01, 30.140001, 1.22655002e08),
+                (31.330002, 30.75, 1.28316425e08),
+                (30.719997, 33.83, 1.42766191e08),
+                (32.8, 32.0, 1.46588873e08),
+                (32.0, 32.96, 1.56908388e08),
+                (32.2, 32.99, 1.38304042e08),
+                (32.0, 29.69, 1.17378260e08),
+                (28.399998, 28.07, 1.25448403e08),
+                (28.82, 27.209997, 1.41923655e08),
+                (27.209997, 24.49, 1.56014040e08),
+                (24.39, 24.74, 1.05491984e08),
+                (24.11, 27.209997, 1.68621231e08),
+                (26.5, 28.240002, 1.78173708e08),
+                (28.11, 30.289999, 1.56004511e08),
+                (30.200003, 29.569998, 1.31267003e08),
+                (28.190002, 26.61, 5.62990270e07),
+                (23.95, 24.3, 1.47091039e08),
+                (24.81, 25.96, 1.21602780e08),
+                (25.55, 24.99, 1.22800646e08),
+                (25.25, 25.48, 1.08002399e08),
+                (25.38, 26.34, 1.16142894e08),
+                (26.22, 25.46, 1.01168718e08),
+                (25.0, 24.55, 8.54346660e07),
+                (24.84, 24.28, 6.49755080e07),
+                (23.9, 24.2, 7.79400290e07),
+            ],
+            dtype=[
+                ("open", "<f4"),
+                ("close", "<f4"),
+                ("volume", "<f8"),
+            ],
+        )
+
+        win = 10
+        nobv = moving_net_volume(bars, win)
+        self.assertEqual(len(bars) - win + 1, len(nobv))

@@ -431,7 +431,7 @@ class TestMalineFeatures(unittest.IsolatedAsyncioTestCase):
         )
         mf = MaLineFeatures()
         vec = mf.feature_30(bars)
-        print({k: v for k, v in zip(mf.columns_30, vec)})
+        print("\n".join(mf.explain(vec)))
 
     def test_feature_60(self):
         bars = load_bars_from_file("sh.30m.20111105.200")
@@ -580,3 +580,16 @@ class TestMalineFeatures(unittest.IsolatedAsyncioTestCase):
         close = 4.5
         result = mf.support_and_supress(close, mas)
         self.assertTupleEqual((2, 0.125, 3, -0.1), result)
+
+    def test_ma5_relation(self):
+        close = [0.01 * i * i - 0.2 * i for i in range(1, 20)]
+
+        mf = MaLineFeatures()
+        ma5 = moving_average(close, 5)
+        mar = mf.ma5_relation(close, ma5)
+        self.assertEqual(mar, 0.8)
+
+        close = [-0.01 * i * i + 0.2 * i for i in range(1, 15)]
+        ma5 = moving_average(close, 5)
+        mar = mf.ma5_relation(close, ma5)
+        self.assertEqual(mar, -0.3)
