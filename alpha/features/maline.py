@@ -526,3 +526,53 @@ class MaLineFeatures:
             desc.append(f"{col}: {fmt.format(v)}")
 
         return desc
+
+    def supress(self, bars, maline, torlerance=5e-3) -> bool:
+        """检测bars是否被maline压制
+
+        如果maline是下行（或水平）趋势线，且bars顺maline下行，返回True。即使收盘价高于均线，但只要是随均线下行，都认为是被压制。
+        """
+        # high代表了向上冲击maline
+        high = bars["high"] * (1 + torlerance)
+        low = bars["high"] * (1 - torlerance)
+
+        n = min(len(bars), len(maline))
+
+        bars = bars[-n:]
+        maline = maline[-n:]
+
+        half = n // 2
+        if np.mean(maline[-half:]) >= np.mean(maline[: -half + 1]):
+            # 均线非下行状态
+            return False
+
+        # 股价follows均线
+        flags = (high >= maline) & (low <= maline)
+        c0 = bars["close"][-1]
+
+        return np.count_nonzero(flags) >= n * 0.85 and c0 <= maline[-1]
+
+    def support(self, bars, maline, torlerance=5e-3) -> bool:
+        """检测bars是否受maline支撑
+
+        如果maline是上行（或水平）趋势线，且bars顺maline上行，返回True
+        """
+        # low代表了向下冲击maline
+        low = bars["low"] * (1 - torlerance)
+        high = bars["low"] * (1 + torlerance)
+
+        n = min(len(bars), len(maline))
+
+        bars = bars[-n:]
+        maline = maline[-n:]
+
+        half = n // 2
+        if np.mean(maline[-half:]) <= np.mean(maline[: -half + 1]):
+            # 均线非上行状态
+            return False
+
+        # 股价follows均线
+        flags = (low <= maline) & (high >= maline)
+        c0 = bars["close"][-1]
+
+        return np.count_nonzero(flags) >= n * 0.85 and c0 >= maline[-1]
