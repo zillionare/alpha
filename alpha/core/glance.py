@@ -71,9 +71,15 @@ class Glance:
         status["prsi"] = p
 
     @classmethod
-    def diagnose(cls,
-    code, bars, ft: FrameType, print_to_console=False, pmae_thres=3e-3, a5_thres=3e-3
-)->Tuple[bool, List, Dict]:
+    def diagnose(
+        cls,
+        code,
+        bars,
+        ft: FrameType,
+        print_to_console=False,
+        pmae_thres=3e-3,
+        a5_thres=3e-3,
+    ) -> Tuple[bool, List, Dict]:
         """诊断股票
 
         Args:
@@ -161,9 +167,9 @@ class Glance:
 
         # 单列
         # DOUBLE TOP/BOTTOM
-        if values["double_top"] > 0:
+        if values["double_top"] > 0 and altitude > 0.89:
             bear_single_col.append("双顶")
-        if values["double_bottom"] > 0:
+        if values["double_bottom"] > 0 and altitude < 0.11:
             bull_single_col.append("双底")
 
         # DARK CLOUD CORVER
@@ -219,9 +225,9 @@ class Glance:
         if trendline != -1:
             slope = values["trendline_slope"]
             if slope > 0:
-                bull.append((f"依托{wins[trendline]}上升", f"{slope:.1f}"))
+                bull.append((f"顺{wins[trendline]}上升", f"{slope:.1%}"))
             elif slope < 0:
-                bull.append((f"依托{wins[trendline]}下降", f"{slope:.1f}"))
+                bear.append((f"顺{wins[trendline]}下降", f"{slope:.1%}"))
 
         ## 支撑位、压力位
         support = values["support"]
@@ -243,10 +249,14 @@ class Glance:
 
         ## 5日均线伴随
         rel5 = values["ma5_relation"]
-        if rel5 > 0:
-            others.append(f"均线之上:{rel5:.1f}")
+        if rel5 >= 0.4:
+            bull.append(("均线之上", f"{rel5:.1%}"))
+        elif rel5 > 0:
+            others.append(f"均线之上 {rel5:.1%}")
+        elif rel5 <= -0.4:
+            bear.append(("均线之下", f"{rel5:.1%}"))
         elif rel5 < 0:
-            others.append(f"均线之下:{-rel5:.1f}")
+            others.append(f"均线之下 {-rel5:.1%}")
 
         ## 均线动量
         dma5_1 = values["dma5_1"]
@@ -333,6 +343,8 @@ class Glance:
         if print_to_console:
             print("\n".join(output))
 
-        return (len(bull) + len(bull_single_col) > len(bear) + len(bear_single_col),
-        output, values)
-
+        return (
+            len(bull) + len(bull_single_col) > len(bear) + len(bear_single_col),
+            output,
+            values,
+        )
