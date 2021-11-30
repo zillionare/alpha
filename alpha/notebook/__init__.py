@@ -239,7 +239,12 @@ async def scan(
     results = []
 
     end = arrow.get(tm) if tm else arrow.now()
-    codes = codes or Securities().choose(["stock"])
+
+    if codes is None:
+        codes = Securities().choose(["stock"])
+
+    if nstocks == -1:
+        nstocks = len(codes)
 
     nstocks = len(codes) if codes else nstocks
     t0 = time.time()
