@@ -862,6 +862,7 @@ def inverted_hammer(bars, shadow_length=0.03) -> Tuple:
     pos = np.argwhere((open_ < close) & (shadow > shadow_length)).flatten()
     return pos, shadow[pos]
 
+
 def divergency(indicator, price, check_win=40) -> int:
     """检测指标与价格之间的背离
 
@@ -921,27 +922,41 @@ def parallel(arrays) -> int:
     flags = np.repeat(True, len(arrays[0]))
     rows = len(arrays)
 
+    # 短均线大于长均线，多头
     for i in range(rows - 1):
-        flags &= arrays[i] >= arrays[i + 1]
+        flags &= arrays[i] > arrays[i + 1]
 
     flags, _, lengths = find_runs(flags)
     if flags[-1]:
-        return lengths[-1]
+        n = int(lengths[-1])
+        arr = arrays[-1][-n:]
+        # 只有当底部均线处于上行时，才认为是多头排列
+        if arr[-1] > arr[0]:
+            return n
+        else:
+            return 0
 
+    # 长均线高于短均线，空头
     flags = np.repeat(True, len(arrays[0]))
     for i in range(rows - 1, 0, -1):
-        flags &= arrays[i] >= arrays[i - 1]
+        flags &= arrays[i] > arrays[i - 1]
 
     flags, _, lengths = find_runs(flags)
     if flags[-1]:
-        return -lengths[-1]
+        n = int(lengths[-1])
+        arr = arrays[-1][-n:]
+        # 只有当底部均线处于下行时，才认为是空头排列
+        if arr[-1] < arr[0]:
+            return -n
+        else:
+            return 0
 
     return 0
 
 
 def altitude(bars: np.ndarray) -> float:
     """计算收盘价在序列中的高度，类似于wr指标
-
+        print(mf.explain(vec))
     返回值接近1时，表示收盘价越接近前高。当返回值为1时，意味着正在创新高。
     返回值接近0时，表示收盘价越接近前低。当返回值为0时，意味着正在创新低。
     """
@@ -1020,3 +1035,190 @@ def piercing_line(bars: np.ndarray) -> bool:
     high = max(close[0], open_[0])
 
     return open_[1] < low and close[1] > high
+
+
+def morph_patterns(bars, shadow_threshold=3e-2):
+    """检测形态特征"""
+    vector = []
+    up, down, body = shadow_features(bars[-1])
+    long_up_shadow = abs(up) > abs(body) and abs(up) >= shadow_threshold
+    long_down_shadow = abs(down) > abs(body) and abs(down) >= shadow_threshold
+
+    ## shadow
+    vector.extend((up, down, body))
+    vector.extend((long_up_shadow, long_down_shadow))
+
+    ## 双顶？双底
+    vector.append(double_top(bars))
+    vector.append(double_bottom(bars))
+
+    ## 乌云盖顶
+    vector.append(dark_cloud_cover(bars[-2:]))
+
+    ## 刺穿线
+    vector.append(piercing_line(bars[-2:]))
+
+    ## 三支乌鸦
+    vector.append(three_crows(bars))
+
+    ## 红三兵
+    vector.append(three_red_soldiers(bars))
+
+    return vector
+
+
+def magic_number(bars):
+    """当指数或者股份达到/穿过某些整数位时，容易发生震荡"""
+    close = bars["close"]
+    low = bars["low"]
+    high = bars["high"]
+
+    small_intergers = [
+        5,
+        10,
+        15,
+        20,
+        25,
+        30,
+        35,
+        40,
+        45,
+        50,
+        55,
+        60,
+        65,
+        70,
+        75,
+        80,
+        85,
+        90,
+        95,
+        100,
+        150,
+        200,
+        250,
+        300,
+        350,
+        400,
+        450,
+        500,
+        550,
+        600,
+        650,
+        700,
+        750,
+        800,
+        850,
+        900,
+        950,
+        1000,
+    ]
+
+    large_intergers = [
+        1100,
+        1200,
+        1300,
+        1400,
+        1500,
+        1600,
+        1700,
+        1800,
+        1900,
+        2000,
+        2100,
+        2200,
+        2300,
+        2400,
+        2500,
+        2600,
+        2700,
+        2800,
+        2900,
+        3000,
+        3100,
+        3200,
+        3300,
+        3400,
+        3500,
+        3600,
+        3700,
+        3800,
+        3900,
+        4000,
+        4100,
+        4200,
+        4300,
+        4400,
+        4500,
+        4600,
+        4700,
+        4800,
+        4900,
+        5000,
+        5100,
+        5200,
+        5300,
+        5400,
+        5500,
+        5600,
+        5700,
+        5800,
+        5900,
+        6000,
+        6100,
+        6200,
+        6300,
+        6400,
+        6500,
+        6600,
+        6700,
+        6800,
+        6900,
+        7000,
+        7100,
+        7200,
+        7300,
+        7400,
+        7500,
+        7600,
+        7700,
+        7800,
+        7900,
+        8000,
+        8100,
+        8200,
+        8300,
+        8400,
+        8500,
+        8600,
+        8700,
+        8800,
+        8900,
+        9000,
+        9100,
+        9200,
+        9300,
+        9400,
+        9500,
+        9600,
+        9700,
+        9800,
+        9900,
+        10000,
+    ]
+
+    # 如果收盘价接近某个整数位，则认为是震荡
+    if abs(round(close / 100) * 100 - close) < close * 0.005:
+        return True
+
+    if any(abs(close / c - 1) < 0.005 for c in small_intergers) or any(
+        abs(close / c - 1) < 0.005 for c in large_intergers
+    ):
+        return True
+
+    if any([(low < c and high > c) for c in small_intergers]) or any(
+        [(low < c and high > c) for c in large_intergers]
+    ):
+        return True
+
+    return False

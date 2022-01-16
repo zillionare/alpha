@@ -26,7 +26,7 @@ postgres:
 omega:
   urls:
     #quotes_server: http://172.17.0.1:3181
-    quotes_server: http://127.0.0.1:3181
+    quotes_server: http://127.0.0.1:3179
 alpha:
     data_home: ~/zillionare/alpha/data
     tts_server: http://127.0.0.1:5002/api/tts?

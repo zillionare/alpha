@@ -688,10 +688,28 @@ class TestFeatures(unittest.TestCase):
         )
 
         mas = []
+        for w in [5, 10, 20]:
+            mas.append(moving_average(close, w)[-10:])
+        mas = np.array(mas)
+
+        ll = parallel(mas[0:3,:])
+        self.assertEqual(5, ll)
+
+        # 大盘2021-11-05 15：00,假多头
+        close = np.array([3540.21, 3539.08, 3549.08, 3549.93, 3555.34, 3545.89, 3546.1 ,
+       3544.48, 3554.43, 3548.42, 3537.14, 3522.33, 3477.68, 3482.24,
+       3499.03, 3505.63, 3497.15, 3501.23, 3498.22, 3492.46, 3484.18,
+       3482.13, 3502.18, 3498.54, 3515.66, 3514.5 , 3523.32, 3521.07,
+       3526.13, 3520.53, 3524.83, 3526.87, 3518.77, 3522.16, 3514.98,
+       3518.57, 3506.63, 3506.4 , 3501.08, 3491.57])
+
+        mas = []
         for w in [5, 10, 20, 30]:
             mas.append(moving_average(close, w)[-10:])
-        ll = parallel(mas)
-        self.assertEqual(1, ll)
+        mas = np.array(mas)
+
+        ll = parallel(mas[1:,:])
+        self.assertEqual(0, ll)
 
     def test_short_parallel(self):
         close = np.array(

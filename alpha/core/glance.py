@@ -3,18 +3,44 @@
 from typing import Dict, List, Tuple
 from omicron.core.types import Frame, FrameType
 from omicron.models.security import Security
+from alpha.core.features import *
 from alpha.core.rsi_stats import RsiStats
 from omicron.core.triggers import FrameTrigger
 import arrow
 from omicron.core.timeframe import tf
-from alpha.core.features import relative_strength_index
 from alpha.features.maline import MaLineFeatures
-from alpha.ml.index_sh_pv import IndexShPeakValleys
 from alpha.core.rsi_stats import rsi30, rsiday
 import numpy as np
 
+from alpha.features.volume import moving_net_volume, top_volume_direction
+
 
 class Glance:
+    common_cols = [
+        ("roc", "{:.1%}"),
+        ("altitude", "{:.0%}"),
+        ("rsi_5", "{:.1f}"),
+        ("rsi_4", "{:.1f}"),
+        ("rsi_3", "{:.1f}"),
+        ("rsi_2", "{:.1f}"),
+        ("rsi_1", "{:.1f}"),
+        ("up", "{:.1%}"),
+        ("down", "{:.1%}"),
+        ("body", "{:.1%}"),
+        ("up_shadow", "{}"),
+        ("down_shadow", "{}"),
+        ("double_top", "{}"),
+        ("double_bottom", "{}"),
+        ("dark_cloud_cover", "{}"),
+        ("piercing_line", "{}"),
+        ("three_crows", "{}"),
+        ("three_red_soldiers", "{}"),
+        ("top1_vol", "{:.1f}"),
+        ("reverse_vol", "{:.1f}"),
+        ("net_vol", "{:.1f}"),
+        ("magic_number", "{}"),
+    ]
+
     def __init__(self):
         self.rsi_day = RsiStats("ris", Frame.DAY)
         self.rsi_30m = RsiStats("ris", Frame.MIN30)
@@ -92,15 +118,37 @@ class Glance:
 
         sec = Security(code)
         name = sec.display_name
+        close = bars["close"]
+        roc = close[-1] / close[-2] - 1
 
-        pv = IndexShPeakValleys(0)
-        vec = pv.features(bars)
+        vec = []
 
+        # roc
+        vec.append(roc)
+
+        # Altitude
+        vec.append(altitude(bars))
+
+        # VOLUME
+        vec.extend(top_volume_direction(bars))
+        vec.append(moving_net_volume(bars)[-1])
+
+        # rsi
+        rsi = relative_strength_index(close, 6)
+        vec.extend(rsi[-5:])
+
+        # 形态特征
+        vec.extend(morph_patterns(bars))
+
+        # 是否处于整数关口
+        vec.append(magic_number(bars[-1]))
+
+        # 均线特征
         mf = MaLineFeatures()
 
         values = {}
 
-        for i, (k, f) in enumerate([*pv.common_cols, *mf.columns_30]):
+        for i, (k, _) in enumerate([*cls.common_cols, *mf.columns_30]):
             values[k] = vec[i]
 
         bull = []

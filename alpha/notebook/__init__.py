@@ -19,7 +19,7 @@ from alpha.config import get_config_dir
 from alpha.core import Frame
 from alpha.core.features import *
 from alpha.core.morph import MorphFeatures
-from alpha.features.volume import top_volume_direction
+from alpha.features.volume import *
 from alpha.plotting import draw_trendline, draw_ma_lines
 from alpha.plotting.candlestick import Candlestick
 from pretty_html_table import build_table
@@ -161,6 +161,7 @@ async def get_bars(code: str, n: int, frame_type: str = "1d", end: Frame = None)
     if ft in tf.minute_level_frames:
         start = tf.shift(tf.floor(end, ft), -n + 1, ft)
     else:
+        end = tf.day_shift(end, 0)
         start = tf.shift(end, -n + 1, ft)
 
     sec = Security(code)
@@ -238,27 +239,28 @@ async def scan(
     """
     results = []
 
-    end = arrow.get(tm) if tm else arrow.now()
-
     if codes is None:
         codes = Securities().choose(["stock"])
 
     if nstocks == -1:
         nstocks = len(codes)
 
-    nstocks = len(codes) if codes else nstocks
     t0 = time.time()
     for i, code in enumerate(codes):
-        if i >= nstocks - 1:
+        if i > nstocks - 1:
             break
         if (i + 1) % 500 == 0:
             elapsed = int(time.time() - t0)
             eta = int((len(codes) - i) * elapsed / (i + 1))
-            print(f"progress: {i + 1}/{len(codes)}, elapsed: {elapsed}, ETA: {eta}")
+            print(
+                f"progress: {i + 1}/{len(codes)}, results: {len(results)}, elapsed: {elapsed}, ETA: {eta}"
+            )
         sec = Security(code)
         name = sec.display_name
         try:
-            bars = await get_bars(code, nbars, frame_type, end)
+            bars = await get_bars(code, nbars, frame_type, tm)
+            if i == 0:
+                print(bars[-1]["frame"])
             trigger(code, name, bars, results, frame_type)
         except Exception as e:
             if not silent:
@@ -323,7 +325,7 @@ async def scheduler(job, *args, **kwargs):
         await job(*args, **kwargs)
 
 
-def performance(bars, check_wins=[1, 3, 5, 8, 13, 21]):
+def performance(bars, check_wins=[1, 3, 5, 8, 10, 15], stop_loss=0.05):
     """股票买入后的表现
 
     使用固定时间平仓法，可用作快速检验策略的表现。买入价为bars[0]的开盘价
@@ -333,8 +335,40 @@ def performance(bars, check_wins=[1, 3, 5, 8, 13, 21]):
     results = []
     results.append(np.max(bars["close"]) / pstart - 1)
     results.append(np.min(bars["close"]) / pstart - 1)
+
+    istop = np.argwhere(bars["close"] / pstart < 1 - stop_loss).flatten()
+    if len(istop):
+        istop = istop[0]
+    else:
+        istop = len(bars)
+
     for n in check_wins:
-        close = bars["close"][n]
-        results.append(close / pstart - 1)
+        if n < istop:
+            close = bars["close"][n]
+            results.append(close / pstart - 1)
+        else:
+            sell = bars["close"][istop]
+            results.append(sell / pstart - 1)
 
     return results
+
+async def maline_features(code, tm, lines, frame_type='1d'):
+    """获取指定时间点的均线特征。
+
+    Args:
+        code ([type]): [description]
+        tm ([type]): [description]
+        lines ([type]): [description]
+        frame_type ([type], optional): [description]. Defaults to '1d'.
+
+    Returns:
+        [type]: [description]
+    """
+    wins = [5, 10, 20, 30, 60, 120, 250]
+    win = wins[lines- 1]
+
+    n = win + 20 # 预留提取特征空间，及停牌时间
+    bars = await get_bars(code, n, frame_type, tm)
+    mf = MaLineFeatures()
+    vec = mf.feature(bars, lines)
+    return mf.explain(vec)

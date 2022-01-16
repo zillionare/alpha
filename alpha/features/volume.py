@@ -51,10 +51,10 @@ def top_volume_direction(bars: np.array, n=10) -> Tuple[float, float]:
 def moving_net_volume(bars, win=5) -> np.array:
     """移动净余成交量
     args:
-        bars: 包含了OHLC和volume的行情数据，类型为numpy structured array, 长度应该大于`2 * n`
+        bars: 包含了OHLC和volume的行情数据，类型为numpy structured array
 
     return:
-        float: `win`周期内归一化的的移动和
+        np.array: `win`周期内归一化的的移动和
 
     """
     vol = bars["volume"]
@@ -67,3 +67,13 @@ def moving_net_volume(bars, win=5) -> np.array:
     signed_vol = vol * flags
 
     return rolling(signed_vol, win, np.sum)
+
+
+def net_buy_volume(bars) -> float:
+    """bars全部区间内的净买入量
+
+    如果k线为阳线，则为买入量；如果为阴线，则为卖出量
+    """
+    volume = bars["volume"]
+    volume = volume / volume[0]
+    return np.sum(volume * np.sign(bars["close"] - bars["open"]))
