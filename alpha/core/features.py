@@ -4,12 +4,14 @@ from typing import Any, List, Tuple, Union
 
 import numpy as np
 import pandas as pd
-import ta
+import talib as ta
+
 from numpy.lib.stride_tricks import sliding_window_view
 from numpy.typing import ArrayLike
-from omicron.core.numpy_extensions import find_runs
-from omicron.core.types import FrameType
-from omicron.models.security import Security
+from omicron.extensions.np import find_runs
+from coretypes import FrameType
+from omicron.models.stock import Stock
+from omicron.models.timeframe import TimeFrame
 from scipy.signal import argrelextrema
 
 argpos_permutations = {
@@ -137,6 +139,15 @@ def weighted_moving_average(ts: np.array, win: int) -> np.array:
     w = [2 * (i + 1) / (win * (win + 1)) for i in range(win)]
 
     return np.convolve(ts, w, "valid")
+
+
+def exp_moving_average(values, window):
+    """Numpy implementation of EMA"""
+    weights = np.exp(np.linspace(-1.0, 0.0, window))
+    weights /= weights.sum()
+    a = np.convolve(values, weights, mode="full")[: len(values)]
+    a[:window] = a[window]
+    return a
 
 
 def filterna(ts: np.array) -> np.array:
@@ -652,6 +663,7 @@ def ddv(ts, win) -> Tuple[np.array, np.array]:
 def max_drawdown(equitity) -> Tuple:
     """计算最大资产回撤
 
+    https://stackoverflow.com/a/22607546
     Args:
         equitity ([type]): [description]
 

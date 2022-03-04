@@ -10,10 +10,8 @@ import numpy as np
 import omicron
 import pandas as pd
 from IPython.display import clear_output
-from omicron.core.timeframe import tf
-from omicron.core.types import FrameType
-from omicron.models.securities import Securities
-from omicron.models.security import Security
+from omicron.models.stock import Stock
+from omicron.models.timeframe import TimeFrame as tf
 
 from alpha.config import get_config_dir
 from alpha.core import Frame
@@ -164,7 +162,7 @@ async def get_bars(code: str, n: int, frame_type: str = "1d", end: Frame = None)
         end = tf.day_shift(end, 0)
         start = tf.shift(end, -n + 1, ft)
 
-    sec = Security(code)
+    sec = Stock(code)
     try:
         bars = await sec.load_bars(start, end, ft)
         bars = bars[np.isfinite(bars["close"])]
@@ -240,7 +238,7 @@ async def scan(
     results = []
 
     if codes is None:
-        codes = Securities().choose(["stock"])
+        codes = Stock.choose(["stock"])
 
     if nstocks == -1:
         nstocks = len(codes)
@@ -255,7 +253,7 @@ async def scan(
             print(
                 f"progress: {i + 1}/{len(codes)}, results: {len(results)}, elapsed: {elapsed}, ETA: {eta}"
             )
-        sec = Security(code)
+        sec = Stock(code)
         name = sec.display_name
         try:
             bars = await get_bars(code, nbars, frame_type, tm)
@@ -282,8 +280,7 @@ def name_to_code(name):
     Returns:
         [type]: [description]
     """
-    secs = Securities()
-    return secs._secs[secs._secs["display_name"] == name]["code"][0]
+    return Stock._stocks[Stock._stocks["display_name"] == name]["code"][0]
 
 
 async def scheduler(job, *args, **kwargs):
@@ -352,7 +349,8 @@ def performance(bars, check_wins=[1, 3, 5, 8, 10, 15], stop_loss=0.05):
 
     return results
 
-async def maline_features(code, tm, lines, frame_type='1d'):
+
+async def maline_features(code, tm, lines, frame_type="1d"):
     """获取指定时间点的均线特征。
 
     Args:
@@ -365,9 +363,9 @@ async def maline_features(code, tm, lines, frame_type='1d'):
         [type]: [description]
     """
     wins = [5, 10, 20, 30, 60, 120, 250]
-    win = wins[lines- 1]
+    win = wins[lines - 1]
 
-    n = win + 20 # 预留提取特征空间，及停牌时间
+    n = win + 20  # 预留提取特征空间，及停牌时间
     bars = await get_bars(code, n, frame_type, tm)
     mf = MaLineFeatures()
     vec = mf.feature(bars, lines)

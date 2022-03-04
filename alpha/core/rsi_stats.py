@@ -1,12 +1,11 @@
 from alpha.core.features import relative_strength_index
-from omicron.core.types import FrameType
 import os
 import pickle
 from scipy.stats import rv_histogram
-from omicron.models.security import Security
-from omicron.models.securities import Securities
+from coretypes import FrameType
+from omicron.models.stock import Stock
+from omicron.models.timeframe import TimeFrame
 import arrow
-from omicron.core.timeframe import tf
 import numpy as np
 import logging
 
@@ -41,27 +40,26 @@ class RsiStats:
     async def calc(self, end=None):
         hist = {}
 
-        secs = Securities()
-        codes = secs.choose(["stock"])
+        codes = Stock.choose(["stock"])
         codes.extend(["000001.XSHG", "399001.XSHE", "399006.XSHE"])
 
         if end is None:
             end = arrow.now()
 
-        end = tf.floor(arrow.get(end), self.frame_type)
-        start = tf.shift(end, -1000 - 18 + 1, self.frame_type)
+        end = TimeFrame.floor(arrow.get(end), self.frame_type)
+        start = TimeFrame.shift(end, -1000 - 18 + 1, self.frame_type)
 
         # this allow the caller just pass `start` and `end` in date unit, for simplicity
-        if self.frame_type in tf.minute_level_frames:
-            start = tf.combine_time(start, hour=15)
-            end = tf.combine_time(end, hour=15)
+        if self.frame_type in TimeFrame.minute_level_frames:
+            start = TimeFrame.combine_time(start, hour=15)
+            end = TimeFrame.combine_time(end, hour=15)
 
-        nbars = tf.count_frames(start, end, self.frame_type)
+        nbars = TimeFrame.count_frames(start, end, self.frame_type)
         logger.info("calc rsi from latest %s nbars", nbars)
 
         for code in codes:
             try:
-                sec = Security(code)
+                sec = Stock(code)
                 bars = await sec.load_bars(start, end, self.frame_type)
                 bars = bars[np.isfinite(bars["close"])]
                 close = bars["close"]

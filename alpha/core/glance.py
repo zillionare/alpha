@@ -1,13 +1,13 @@
 """市场环境概览
 """
 from typing import Dict, List, Tuple
-from omicron.core.types import Frame, FrameType
-from omicron.models.security import Security
+from coretypes import FrameType
+from omicron.models.stock import Stock
+from omicron.models.timeframe import TimeFrame
 from alpha.core.features import *
 from alpha.core.rsi_stats import RsiStats
 from omicron.core.triggers import FrameTrigger
 import arrow
-from omicron.core.timeframe import tf
 from alpha.features.maline import MaLineFeatures
 from alpha.core.rsi_stats import rsi30, rsiday
 import numpy as np
@@ -42,37 +42,37 @@ class Glance:
     ]
 
     def __init__(self):
-        self.rsi_day = RsiStats("ris", Frame.DAY)
-        self.rsi_30m = RsiStats("ris", Frame.MIN30)
+        self.rsi_day = RsiStats("ris", FrameType.DAY)
+        self.rsi_30m = RsiStats("ris", FrameType.MIN30)
 
         self.rsi_day.load()
         self.rsi_30m.load()
 
-        self.xshg = Security("000001.XSHG")
+        self.xshg = Stock("000001.XSHG")
         self.glance = []
 
     def register_backend_jobs(self, scheduler):
-        trigger = FrameTrigger(Frame.MIN30, "1s")
-        scheduler.add_job(self.update_stats, trigger, args=(Frame.MIN30,))
+        trigger = FrameTrigger(FrameType.MIN30, "1s")
+        scheduler.add_job(self.update_stats, trigger, args=(FrameType.MIN30,))
 
-        trigger = FrameTrigger(Frame.DAY, "1h")
-        scheduler.add_job(self.update_stats, trigger, args=(Frame.DAY,))
+        trigger = FrameTrigger(FrameType.DAY, "1h")
+        scheduler.add_job(self.update_stats, trigger, args=(FrameType.DAY,))
 
     async def update_stats(self, frame_type):
-        if frame_type == Frame.MIN30:
+        if frame_type == FrameType.MIN30:
             # always calc for 1000 frames
-            end = tf.floor(arrow.now(), frame_type)
-            start = tf.shift(end, -1000, frame_type)
+            end = TimeFrame.floor(arrow.now(), frame_type)
+            start = TimeFrame.shift(end, -1000, frame_type)
 
             if not (
                 start == self.rsi_30m.time_range[0]
                 and end == self.rsi_30m.time_range[1]
             ):
                 await self.rsi_30m.calc(frame_type)
-        elif frame_type == Frame.DAY:
+        elif frame_type == FrameType.DAY:
             # always calc for 1000 frames
-            end = tf.floor(arrow.now(), frame_type)
-            start = tf.shift(end, -1000, frame_type)
+            end = TimeFrame.floor(arrow.now(), frame_type)
+            start = TimeFrame.shift(end, -1000, frame_type)
 
             if not (
                 start == self.rsi_day.time_range[0]
@@ -85,8 +85,8 @@ class Glance:
         status = {}
 
         # to check if reach RSI top/bottom
-        end = tf.floor(arrow.now(), Frame.MIN30)
-        start = tf.shift(end, -40, Frame.MIN30)
+        end = TimeFrame.floor(arrow.now(), FrameType.MIN30)
+        start = TimeFrame.shift(end, -40, FrameType.MIN30)
 
         shbars = await self.xshg.load_bars(start, end, FrameType.MIN30)
         close = shbars["close"]
@@ -116,7 +116,7 @@ class Glance:
             a5_thres ([type], optional): [description]. Defaults to 3e-3.
         """
 
-        sec = Security(code)
+        sec = Stock(code)
         name = sec.display_name
         close = bars["close"]
         roc = close[-1] / close[-2] - 1

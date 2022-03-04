@@ -2,8 +2,10 @@ from types import FrameType
 from typing import List, Tuple
 
 import numpy as np
-from omicron.core.numpy_extensions import find_runs
-from omicron.core.talib import cross
+from coretypes import FrameType
+from omicron.models.stock import Stock
+from omicron.models.timeframe import TimeFrame
+from omicron.extensions.np import cross, find_runs
 
 from alpha.core.features import moving_average, parallel, polyfit
 

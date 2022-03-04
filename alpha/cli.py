@@ -14,11 +14,12 @@ import cfg4py
 import fire
 import numpy as np
 import omicron
-import psutil
 from aioproc import aioprocess
 from omicron import cache
-from omicron.core.types import FrameType
-from omicron.models.securities import Securities
+from coretypes import FrameType
+from omicron.models.stock import Stock
+from omicron.models.timeframe import TimeFrame
+import psutil
 
 from alpha.utils.data import even_distributed_dataset, load_data
 
@@ -60,7 +61,7 @@ def help():
 async def backtest(strategy: str, code: str = None, frame_type: str = "1d"):
     cpus = psutil.get_cpus()
 
-    secs = Securities.choose(["stock"])
+    secs = Stock.choose(["stock"])
     await cache.sys.lpush(f"backtest.scope.{strategy}.{frame_type.value}", secs)
     for i in range(cpus):
         await asyncio.create_subprocess_exec(
@@ -175,7 +176,7 @@ async def make_even_distributed_dataset(
 async def mpscan(strategy: str, *args, **kwargs):
     t0 = time.time()
     # init tasks and result set
-    secs = Securities().choose(["stock"])
+    secs = Stock.choose(["stock"])
     await cache.sys.delete(f"scan.scope.{strategy.lower()}")
     await cache.sys.delete(f"scan.result.{strategy.lower()}")
     await cache.sys.lpush(f"scan.scope.{strategy.lower()}", *secs)
