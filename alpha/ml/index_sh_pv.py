@@ -23,7 +23,7 @@ import os
 import random
 import arrow
 import numpy as np
-from omicron.core.types import FrameType
+from coretypes import FrameType
 
 from xgboost import XGBClassifier
 from sklearn.model_selection import RandomizedSearchCV

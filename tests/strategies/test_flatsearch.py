@@ -3,9 +3,9 @@
 # import arrow
 # import cfg4py
 # import omicron
-# from omicron.core.timeframe import tf
-# from omicron.core.types import FrameType
-# from omicron.models.security import Security
+# from omicron.models.timeframe import TimeFrame as tf
+# from coretypes import FrameType
+# from omicron.models.stock import Stock
 
 # from alpha.config import get_config_dir
 # from alpha.strategies.flatsearch import FlatSearchStrategy

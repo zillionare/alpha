@@ -21,7 +21,7 @@ from alpha.features.volume import *
 from alpha.plotting import draw_trendline, draw_ma_lines
 from alpha.plotting.candlestick import Candlestick
 from pretty_html_table import build_table
-from alpha.core.notify import send_html_email, say, nb_say
+from alpha.core.notify import send_html_email
 from alpha.core.rsi_stats import RsiStats
 import os
 from jqdatasdk import *
@@ -370,3 +370,15 @@ async def maline_features(code, tm, lines, frame_type="1d"):
     mf = MaLineFeatures()
     vec = mf.feature(bars, lines)
     return mf.explain(vec)
+
+def show_support_resist_lines(ts):
+    show_peaks_valleys(ts)
+
+    support, resist = support_resist_lines(ts)
+    x = np.arange(len(ts) + 1)
+
+    yresist = resist(x)
+    ysupport = support(x)
+
+    plt.plot(x, yresist, 'g')
+    plt.plot(x, ysupport, 'r')

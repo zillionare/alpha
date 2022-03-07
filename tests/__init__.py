@@ -12,7 +12,7 @@ import numpy as np
 import aiohttp
 import cfg4py
 import pandas as pd
-from omicron.models.security import Security
+from omicron.models.stock import Stock
 
 cfg = cfg4py.get_instance()
 logger = logging.getLogger()

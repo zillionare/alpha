@@ -7,11 +7,10 @@ from typing import Callable, List, NewType, Tuple
 
 import arrow
 import numpy as np
+from coretypes import FrameType
 from omicron import cache
-from omicron.core.timeframe import tf
-from omicron.core.types import FrameType
-from omicron.models.securities import Securities
-from omicron.models.security import Security
+from omicron.models.stock import Stock
+from omicron.models.timeframe import TimeFrame as tf
 from sklearn.inspection import permutation_importance
 
 from alpha.core.errors import NoFeaturesError, NoTargetError
@@ -41,7 +40,6 @@ def dataset_scope(
     Returns:
         A list of (frame, code)
     """
-    secs = Securities()
 
     if frame_type in tf.minute_level_frames:
         convertor = tf.int2time
@@ -52,7 +50,7 @@ def dataset_scope(
 
     if has_register_ipo:
         if codes is None:
-            codes = secs.choose(_types=["stock"], exclude_st=True)
+            codes = Stock.choose(_types=["stock"], exclude_st=True)
 
         frames = [convertor(x) for x in tf.get_frames(start, end, frame_type)]
 
@@ -61,8 +59,8 @@ def dataset_scope(
 
         return itertools.product(frames, codes)
 
-    codes_before_july = secs.choose(_types=["stock"], exclude_st=True, exclude_688=True)
-    codes_after_july = secs.choose(
+    codes_before_july = Stock.choose(_types=["stock"], exclude_st=True, exclude_688=True)
+    codes_after_july = Stock.choose(
         _types=["stock"], exclude_st=True, exclude_688=True, exclude_300=True
     )
 
@@ -154,7 +152,7 @@ async def make_dataset(
     assert main_transformer is not None, "main_transformer is None"
 
     for i, (tail, code) in enumerate(permutations):
-        sec = Security(code)
+        sec = Stock(code)
 
         head = tf.shift(tail, -main_bars_len + 1, main_frame)
 
@@ -287,7 +285,7 @@ async def even_distributed_dataset(
 
     for i, (tail, code) in enumerate(dataset_scope(start, end, frame_type=frame_type)):
         try:
-            sec = Security(code)
+            sec = Stock(code)
             head = tf.shift(tail, -bars_len + 1, frame_type)
 
             _head, _tail = await cache.get_bars_range(code, frame_type)

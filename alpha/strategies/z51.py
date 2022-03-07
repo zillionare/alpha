@@ -1,11 +1,11 @@
 from typing import List
 from alpha.strategies.z05 import Z05
 from alpha.core import Frame
-from omicron.core.timeframe import tf
+from omicron.models.timeframe import TimeFrame as tf
 from omicron.models.securities import Securities
-from omicron.models.security import Security
+from omicron.models.stock import Stock
 import arrow
-from omicron.core.types import FrameType
+from coretypes import FrameType
 import numpy as np
 from alpha.utils import first_mdd_less_than_threshold
 from alpha.core.features import (

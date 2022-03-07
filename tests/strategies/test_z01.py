@@ -6,8 +6,8 @@ import cfg4py
 import omicron
 import pandas as pd
 from backtesting.backtesting import Backtest
-from omicron.core.types import FrameType
-from omicron.models.security import Security
+from coretypes import FrameType
+from omicron.models.stock import Stock
 
 from alpha.config import get_config_dir
 from alpha.strategies.z01 import Z01Strategy
@@ -33,7 +33,7 @@ class TestZ01(unittest.IsolatedAsyncioTestCase):
         start = arrow.get("2019-1-3 15:00", tzinfo="Asia/Shanghai").datetime
         stop = arrow.now(tz="Asia/Shanghai").datetime
 
-        bars = await Security("000001.XSHE").load_bars(start, stop, FrameType.MIN30)
+        bars = await Stock("000001.XSHE").load_bars(start, stop, FrameType.MIN30)
         df = to_dataframe(bars)
         bt = Backtest(df, Z01Strategy)
         output = bt.run()
@@ -46,7 +46,7 @@ class TestZ01(unittest.IsolatedAsyncioTestCase):
         start = arrow.get("2019-1-3 15:00", tzinfo="Asia/Shanghai").datetime
         stop = arrow.now(tz="Asia/Shanghai").datetime
 
-        bars = await Security("000001.XSHE").load_bars(start, stop, FrameType.MIN30)
+        bars = await Stock("000001.XSHE").load_bars(start, stop, FrameType.MIN30)
         df = to_dataframe(bars)
         bt = Backtest(df, Z01Strategy)
 

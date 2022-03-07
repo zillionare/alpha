@@ -2,15 +2,15 @@ import datetime
 from arrow import Arrow
 import arrow
 import numpy as np
-from omicron.core.timeframe import tf
+from omicron.models.timeframe import TimeFrame as tf
 from typing import List, NewType
 from alpha.core.features import fillna, moving_average
 from omicron.models.securities import Securities
-from omicron.models.security import Security
+from omicron.models.stock import Stock
 from sklearn.metrics.pairwise import paired_euclidean_distances
 import pandas as pd
 
-from omicron.core.types import FrameType, SecurityType
+from coretypes import FrameType, SecurityType
 
 Frame = NewType("Frame", (str, datetime.date, datetime.datetime, Arrow))
 

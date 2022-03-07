@@ -5,9 +5,9 @@ import numpy as np
 from coretypes import FrameType
 from omicron.models.stock import Stock
 from omicron.models.timeframe import TimeFrame
-from omicron.extensions.np import cross, find_runs
-
-from alpha.core.features import moving_average, parallel, polyfit
+from omicron.talib import cross, moving_average, polyfit
+from omicron.extensions.np import find_runs
+from alpha.core.features import parallel
 
 
 class MaLineFeatures:

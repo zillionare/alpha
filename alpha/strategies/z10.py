@@ -7,10 +7,10 @@ from xml.sax.handler import feature_string_interning
 import arrow
 import cfg4py
 import numpy as np
-from omicron.core.timeframe import tf
-from omicron.core.types import FrameType
+from omicron.models.timeframe import TimeFrame as tf
+from coretypes import FrameType
 from omicron.models.securities import Securities
-from omicron.models.security import Security
+from omicron.models.stock import Stock
 from sklearn.metrics import make_scorer, max_error, mean_absolute_error
 
 from alpha import utils

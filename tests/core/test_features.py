@@ -3,6 +3,7 @@ import itertools
 import os
 import pickle
 import unittest
+from omicron.talib import moving_average
 
 import numpy as np
 
@@ -13,30 +14,6 @@ from tests import data_dir, load_bars_from_file
 class TestFeatures(unittest.TestCase):
     def setUp(self) -> None:
         return super().setUp()
-
-    def test_fillna(self):
-        arr = np.arange(10) / 3.0
-        arr[0:2] = np.nan
-
-        actual = fillna(arr)
-        exp = arr.copy()
-        exp[0:2] = 2 / 3.0
-
-        np.testing.assert_array_almost_equal(exp, actual, 3)
-
-        arr = np.arange(10) / 3.0
-        arr[2:5] = np.nan
-
-        actual = fillna(arr)
-        exp = arr.copy()
-        exp[2:5] = 1 / 3.0
-        np.testing.assert_array_almost_equal(exp, actual, 3)
-
-        arr = np.array([np.nan] * 5)
-        try:
-            fillna(arr)
-        except ValueError:
-            self.assertTrue(True)
 
     def test_ma_permutation(self):
         ts = np.arange(30)
@@ -211,12 +188,6 @@ class TestFeatures(unittest.TestCase):
         features = relation_with_prev_high(close[:-5], 20)
         self.assertEqual(-1, features[0])
 
-    def test_weighted_moving_average(self):
-        data = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
-        wma = weighted_moving_average(data, 5)
-        print(wma)
-        ma = moving_average(data, 5)
-        print(ma)
 
     def test_replace_zero(self):
         arr = np.array([0, 1, 2, 3, 4])
@@ -235,116 +206,6 @@ class TestFeatures(unittest.TestCase):
         arr = np.array([1, 2, 0, 4, 5])
         self.assertListEqual([1, 2, 0.001, 4, 5], replace_zero(arr, 0.001).tolist())
 
-    def test_peaks_and_valleys(self):
-        ts = np.array(
-            [
-                3589.86,
-                3586.2,
-                3587.35,
-                3587.0,
-                3590.6,
-                3593.53,
-                3602.47,
-                3603.62,
-                3595.87,
-                3582.53,
-                3587.56,
-                3594.78,
-                3596.02,
-                3591.88,
-                3586.08,
-                3598.18,
-                3593.5,
-                3587.3,
-                3584.57,
-                3582.6,
-                3588.16,
-                3586.72,
-                3592.24,
-                3596.06,
-                3593.38,
-                3597.39,
-                3603.25,
-                3609.86,
-                3610.58,
-                3618.01,
-                3615.55,
-                3612.88,
-                3603.94,
-                3597.5,
-                3599.46,
-                3597.64,
-                3575.2,
-                3565.64,
-                3559.96,
-                3564.71,
-                3561.38,
-                3559.98,
-                3555.47,
-                3562.31,
-                3535.2,
-                3528.66,
-                3532.11,
-                3529.0,
-                3524.13,
-                3523.6,
-                3520.83,
-                3518.42,
-                3505.15,
-                3515.32,
-                3525.08,
-                3523.94,
-                3531.4,
-                3540.49,
-                3544.02,
-                3547.34,
-                3540.21,
-                3539.08,
-                3549.08,
-                3549.93,
-                3555.34,
-                3545.89,
-                3546.1,
-                3544.48,
-                3554.43,
-                3548.42,
-                3537.14,
-                3522.33,
-                3477.68,
-                3482.24,
-                3499.03,
-                3505.63,
-                3497.15,
-                3501.23,
-                3498.22,
-                3492.46,
-                3484.18,
-                3482.13,
-                3502.18,
-                3498.54,
-                3515.66,
-                3514.5,
-                3523.32,
-                3521.07,
-                3526.13,
-                3520.53,
-                3524.83,
-                3526.87,
-                3518.77,
-                3522.16,
-                3514.98,
-                3518.57,
-                3506.63,
-                3506.4,
-                3501.08,
-                3491.57,
-            ],
-            dtype=np.float32,
-        )
-
-        peaks, valleys = peaks_and_valleys(ts)
-        self.assertListEqual([8, 15, 31, 43, 68, 78, 91], peaks.tolist())
-        self.assertListEqual([13, 21, 53, 67, 81], valleys.tolist())
 
     def test_double_bottom(self):
         bars = np.array(
@@ -565,21 +426,6 @@ class TestFeatures(unittest.TestCase):
 
         flag, sl = inverted_hammer(bars)
         self.assertListEqual([0], flag.tolist())
-
-    def test_reversal_features(self):
-        bars = load_bars_from_file("sh.30m.20111105.200")
-
-        features, columns = reversal_features("000001.XSHG", bars, FrameType.MIN30)
-        print(dict(zip(features, columns)))
-
-    def test_peaks_and_valleys(self):
-        bars = load_bars_from_file("sh.30m.20111105.200")
-
-        close = bars["close"]
-        peaks, valleys = peaks_and_valleys(close[60:])
-
-        self.assertListEqual([4, 15, 31], peaks)
-        self.assertListEqual([7, 12, 21], valleys)
 
     def test_shadow_features(self):
         bars = np.array(

@@ -9,9 +9,9 @@ import time
 import arrow
 import cfg4py
 import numpy as np
-from omicron.core.timeframe import tf
-from omicron.core.types import FrameType
-from omicron.models.security import Security
+from omicron.models.timeframe import TimeFrame as tf
+from coretypes import FrameType
+from omicron.models.stock import Stock
 from omicron.models.securities import Securities
 from alpha.core.rsi_stats import rsi30, rsiday
 from alpha.utils import buy_limit_price, equal_price, first_mdd_less_than_threshold

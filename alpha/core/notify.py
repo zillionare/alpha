@@ -4,7 +4,6 @@ from email.message import EmailMessage
 import aiohttp
 import cfg4py
 from alpha.config import get_config_dir
-import pyttsx3
 import tempfile
 from IPython.display import Audio
 from IPython.display import display
@@ -51,21 +50,23 @@ def send_mail(subject: str, content: str, from_addrs: str = None, to_addrs: str 
         server.send_message(msg)
 
 
-def init_tts():
-    _tts = pyttsx3.init()
+# def init_tts():
+#     import pyttsx3
 
-    if "macOS" in platform.platform():
-        voices = _tts.setProperty("voice", "com.apple.speech.synthesis.voice.mei-jia")
-    else:
-        _tts.setProperty("voice", "zh")
+#     _tts = pyttsx3.init()
 
-    return _tts
+#     if "macOS" in platform.platform():
+#         voices = _tts.setProperty("voice", "com.apple.speech.synthesis.voice.mei-jia")
+#     else:
+#         _tts.setProperty("voice", "zh")
+
+#     return _tts
 
 
-def say(text):
-    global _tts
-    _tts.say(text)
-    _tts.runAndWait()
+# def say(text):
+#     global _tts
+#     _tts.say(text)
+#     _tts.runAndWait()
 
 
 async def text_to_speech(text):
@@ -100,7 +101,7 @@ class _InvisibleAudio(Audio):
         return f'<div style="display:none">{audio}</div>'
 
 
-_tts = init_tts()
+
 
 if __name__ == "__main__":
     send_html_email(

@@ -17,10 +17,10 @@ import numpy as np
 import omicron
 import pandas as pd
 from arrow import Arrow
-from omicron.core.timeframe import tf
-from omicron.core.types import FrameType
+from omicron.models.timeframe import TimeFrame as tf
+from coretypes import FrameType
 from omicron.models.securities import Securities
-from omicron.models.security import Security
+from omicron.models.stock import Stock
 
 from alpha.core.features import (
     fillna,

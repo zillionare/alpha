@@ -1,7 +1,7 @@
 from unittest import IsolatedAsyncioTestCase
 from tests import init_test_env
 from alpha.core.rsi_stats import RsiStats
-from omicron.core.types import FrameType
+from coretypes import FrameType
 import omicron
 
 

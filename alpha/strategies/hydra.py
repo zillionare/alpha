@@ -13,9 +13,9 @@ import omicron
 import pandas as pd
 from numpy.typing import ArrayLike
 from omicron import cache
-from omicron.core.timeframe import tf
+from omicron.models.timeframe import TimeFrame as tf
 from omicron.core.types import Frame, FrameType
-from omicron.models.security import Security
+from omicron.models.stock import Stock
 from scipy.stats import randint, uniform
 from sklearn.metrics import classification_report
 from sklearn.model_selection import RandomizedSearchCV

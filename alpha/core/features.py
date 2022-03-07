@@ -5,25 +5,19 @@ from typing import Any, List, Tuple, Union
 import numpy as np
 import pandas as pd
 import talib as ta
+from omicron.extensions.np import polyfit
+from omicron.talib import moving_average
 
-from numpy.lib.stride_tricks import sliding_window_view
 from numpy.typing import ArrayLike
-from omicron.extensions.np import find_runs
+from omicron.extensions.np import find_runs, remove_nan, top_n_argpos
 from coretypes import FrameType
 from omicron.models.stock import Stock
 from omicron.models.timeframe import TimeFrame
-from scipy.signal import argrelextrema
+
 
 argpos_permutations = {
     n: list(itertools.permutations(range(n))) for n in (2, 3, 4, 5, 6, 7)
 }
-
-
-def polyfit(ts: np.array, degree: int = 2) -> tuple:
-    """fit ts with np.polyfit, return coeff and pmae"""
-    coeff = np.polyfit(np.arange(len(ts)), ts, degree)
-    pmae = np.abs(np.polyval(coeff, np.arange(len(ts))) - ts).mean() / np.mean(ts)
-    return coeff.tolist(), pmae
 
 
 def reverse_moving_average(ma: ArrayLike, i: int, win: int) -> float:
@@ -110,76 +104,6 @@ def parabolic_flip(ts, rng=7, ma_win=5, calc_ma=True):
 
     flag = 1 if y_[-1] > y_[-2] else -1
     return flag, rng - vx, round(a, 4), round(pmae, 5)
-
-
-def moving_average(ts: np.array, win: int):
-    """计算时间序列ts在win窗口内的移动平均
-
-    Example:
-
-        >>> ts = np.arange(7)
-        >>> moving_average(ts, 5)
-        >>> array([2.0000, 3.0000, 4.0000])
-
-    """
-
-    return np.convolve(ts, np.ones(win) / win, "valid")
-
-
-def weighted_moving_average(ts: np.array, win: int) -> np.array:
-    """计算加权移动平均
-
-    Args:
-        ts (np.array): [description]
-        win (int): [description]
-
-    Returns:
-        np.array: [description]
-    """
-    w = [2 * (i + 1) / (win * (win + 1)) for i in range(win)]
-
-    return np.convolve(ts, w, "valid")
-
-
-def exp_moving_average(values, window):
-    """Numpy implementation of EMA"""
-    weights = np.exp(np.linspace(-1.0, 0.0, window))
-    weights /= weights.sum()
-    a = np.convolve(values, weights, mode="full")[: len(values)]
-    a[:window] = a[window]
-    return a
-
-
-def filterna(ts: np.array) -> np.array:
-    """从`ts`中去除NaN
-
-    Args:
-        ts (np.array): [description]
-
-    Returns:
-        np.array: [description]
-    """
-    return ts[~np.isnan(ts)]
-
-
-def fillna(ts: np.array):
-    """将ts中的NaN替换为其前值
-
-    Args:
-        ts (np.array): [description]
-    """
-    if np.all(np.isnan(ts)):
-        raise ValueError("all of ts are NaN")
-
-    if ts[0] is None or math.isnan(ts[0]):
-        idx = np.argwhere(~np.isnan(ts))[0]
-        ts[0] = ts[idx]
-
-    mask = np.isnan(ts)
-    idx = np.where(~mask, np.arange(mask.size), 0)
-    np.maximum.accumulate(idx, out=idx)
-    return ts[idx]
-
 
 def replace_zero(ts: np.array, replacement=None) -> np.array:
     """将ts中的0替换为前值, 处理volume数据时常用用到
@@ -280,24 +204,8 @@ def transform_y_by_change_pct(ts: np.array, watermarks: List[float], ref: Any):
 
 
 def transform_to_change_pct(ts: np.array) -> np.array:
-    ts = fillna(ts)
     return ts[1:] / ts[:-1] - 1
 
-
-def top_n_argpos(ts: np.array, n: int) -> np.array:
-    """get top n (max->min) elements and return argpos which its value ordered in descent
-
-    Example:
-        >>> top_n_argpos([4, 3, 9, 8, 5, 2, 1, 0, 6, 7], 2)
-        array([2, 3])
-    Args:
-        ts (np.array): [description]
-        n (int): [description]
-
-    Returns:
-        np.array: [description]
-    """
-    return np.argsort(ts)[-n:][::-1]
 
 
 def relative_strength_index(prices, period=6):
@@ -675,15 +583,6 @@ def max_drawdown(equitity) -> Tuple:
 
     return (equitity[i] - equitity[j]) / equitity[j], i, j
 
-
-def rolling(x, win, func):
-    results = []
-    for subarray in sliding_window_view(x, window_shape=win):
-        results.append(func(subarray))
-
-    return np.array(results)
-
-
 def reversing(close):
     """股价向上/向下反转
 
@@ -774,38 +673,6 @@ def double_top(bars, win=10, gap=3e-3):
     return 0
 
 
-def peaks_and_valleys(ts, min_altitude_ratio=5e-3, width=4) -> Tuple:
-    """求一维数组`ts`表示的的峰值和谷底，本函数可以辅助用以确定局部顶和底。
-
-    考虑到本函数在量化中的用途，我们仅使用当前点与其右侧的`width`个点进行比较，如果右侧的`width`个点中，存在最大值大于当前点 * (1+min_altitude_ratio)，则认为当前点为底部；反之，如果存在极小值小于当前点 * （1 - min_altitude_ratio)，则认为当前点为顶部。
-
-    args:
-        ts: 一维数组，表示任意时间序列
-        min_altitude_ratio: 当前点与其右侧的`width`个点中，存在最大值大于当前点 * (1+min_altitude_ratio)，则认为当前点为底部；反之，如果存在极小值小于当前点 * （1 - min_altitude_ratio)，则认为当前点为顶部。
-        width: 与右侧的`width`个点进行比较。
-
-    """
-    local_ma = argrelextrema(ts, np.greater, order=width)[0]
-    local_mi = argrelextrema(ts, np.less, order=width)[0]
-
-    peaks = set()
-    # the peaks are calced by ma, so we need to adjust
-    for ppeak in local_ma:
-        right = min(ppeak + width + 1, len(ts))
-        mn = np.min(ts[ppeak + 1 : right])
-        if ts[ppeak] / mn - 1 >= min_altitude_ratio:
-            peaks.add(ppeak)
-
-    valleys = set()
-    for pvalley in local_mi:
-        right = min(pvalley + width + 1, len(ts))
-        mx = np.max(ts[pvalley + 1 : right])
-        if ts[pvalley] / mx - 1 <= -min_altitude_ratio:
-            valleys.add(pvalley)
-
-    return sorted(peaks), sorted(valleys)
-
-
 def dark_cloud_cover(bars) -> bool:
     """乌云盖顶，今日高开走低，吞没前一日实体
 
@@ -885,8 +752,8 @@ def divergency(indicator, price, check_win=40) -> int:
     Returns:
         tuple: 背离次数（正负号表示方向），背离时指标位置
     """
-    indicator = filterna(indicator)
-    price = filterna(price)
+    indicator = remove_nan(indicator)
+    price = remove_nan(price)
 
     cw = check_win
     min_len = min(len(indicator), len(price), cw)

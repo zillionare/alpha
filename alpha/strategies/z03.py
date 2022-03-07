@@ -8,10 +8,10 @@ import random
 
 import arrow
 import numpy as np
-from omicron.core.timeframe import tf
-from omicron.core.types import FrameType
+from omicron.models.timeframe import TimeFrame as tf
+from coretypes import FrameType
 from omicron.models.securities import Securities
-from omicron.models.security import Security
+from omicron.models.stock import Stock
 from scipy.stats import randint, uniform
 from sklearn.metrics import mean_squared_error as MSE
 from sklearn.model_selection import RandomizedSearchCV

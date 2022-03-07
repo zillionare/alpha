@@ -2,7 +2,7 @@ import unittest
 from re import T
 
 import numpy as np
-from omicron.core.types import FrameType
+from coretypes import FrameType
 
 from alpha.core.morph import MorphFeatures
 

@@ -15,10 +15,10 @@ from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
 from matplotlib.collections import LineCollection, PatchCollection
 from matplotlib.lines import Line2D
 from matplotlib.patches import Rectangle
-from omicron.core.talib import moving_average
-from omicron.core.timeframe import tf
-from omicron.core.types import FrameType
-from omicron.models.security import Security
+from alpha.core.features import moving_average
+from omicron.models.timeframe import TimeFrame as tf
+from coretypes import FrameType
+from omicron.models.stock import Stock
 from matplotlib.gridspec import GridSpec
 import logging
 
@@ -134,7 +134,7 @@ class Candlestick:
     ):
         # self.init_fig()
 
-        sec = Security(code)
+        sec = Stock(code)
         end = arrow.get(end)
 
         plt.subplots_adjust(hspace=0)
