@@ -59,7 +59,9 @@ def dataset_scope(
 
         return itertools.product(frames, codes)
 
-    codes_before_july = Stock.choose(_types=["stock"], exclude_st=True, exclude_688=True)
+    codes_before_july = Stock.choose(
+        _types=["stock"], exclude_st=True, exclude_688=True
+    )
     codes_after_july = Stock.choose(
         _types=["stock"], exclude_st=True, exclude_688=True, exclude_300=True
     )

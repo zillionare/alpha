@@ -1,10 +1,23 @@
 import unittest
-from alpha.strategies.wildgoose import WildGooseStrategy, OperateMode, AssetType, InvestStyle
+from alpha.strategies.wildgoose import (
+    WildGooseStrategy,
+    OperateMode,
+    AssetType,
+    InvestStyle,
+)
+
 
 class WildGoose(unittest.IsolatedAsyncioTestCase):
     async def test_choose(self):
         s = WildGooseStrategy()
-        codes = s.choose(modes = [OperateMode.CF, OperateMode.OF, OperateMode.LOF, OperateMode.ETF], styles = [InvestStyle.STOCK_FIRST, InvestStyle.STOCK_INDEX, InvestStyle.STOCK_ONLY])
+        codes = s.choose(
+            modes=[OperateMode.CF, OperateMode.OF, OperateMode.LOF, OperateMode.ETF],
+            styles=[
+                InvestStyle.STOCK_FIRST,
+                InvestStyle.STOCK_INDEX,
+                InvestStyle.STOCK_ONLY,
+            ],
+        )
 
         print(len(codes))
         for code in codes:

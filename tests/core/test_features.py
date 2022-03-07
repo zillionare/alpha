@@ -188,7 +188,6 @@ class TestFeatures(unittest.TestCase):
         features = relation_with_prev_high(close[:-5], 20)
         self.assertEqual(-1, features[0])
 
-
     def test_replace_zero(self):
         arr = np.array([0, 1, 2, 3, 4])
         actual = replace_zero(arr)
@@ -205,7 +204,6 @@ class TestFeatures(unittest.TestCase):
 
         arr = np.array([1, 2, 0, 4, 5])
         self.assertListEqual([1, 2, 0.001, 4, 5], replace_zero(arr, 0.001).tolist())
-
 
     def test_double_bottom(self):
         bars = np.array(

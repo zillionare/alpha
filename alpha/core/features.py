@@ -105,6 +105,7 @@ def parabolic_flip(ts, rng=7, ma_win=5, calc_ma=True):
     flag = 1 if y_[-1] > y_[-2] else -1
     return flag, rng - vx, round(a, 4), round(pmae, 5)
 
+
 def replace_zero(ts: np.array, replacement=None) -> np.array:
     """将ts中的0替换为前值, 处理volume数据时常用用到
 
@@ -205,7 +206,6 @@ def transform_y_by_change_pct(ts: np.array, watermarks: List[float], ref: Any):
 
 def transform_to_change_pct(ts: np.array) -> np.array:
     return ts[1:] / ts[:-1] - 1
-
 
 
 def relative_strength_index(prices, period=6):
@@ -582,6 +582,7 @@ def max_drawdown(equitity) -> Tuple:
     j = np.argmax(equitity[:i])
 
     return (equitity[i] - equitity[j]) / equitity[j], i, j
+
 
 def reversing(close):
     """股价向上/向下反转

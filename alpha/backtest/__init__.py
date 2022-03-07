@@ -55,7 +55,7 @@ itself find their way back to the community.
 try:
     from ._version import version as __version__  # noqa: F401
 except ImportError:
-    __version__ = '?.?.?'  # Package not installed
+    __version__ = "?.?.?"  # Package not installed
 
 from .backtesting import Backtest, Strategy  # noqa: F401
 from . import lib  # noqa: F401

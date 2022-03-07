@@ -12,6 +12,7 @@ import pandas as pd
 from IPython.display import clear_output
 from omicron.models.stock import Stock
 from omicron.models.timeframe import TimeFrame as tf
+from alpha.plotting.patterns import *
 
 from alpha.config import get_config_dir
 from alpha.core import Frame
@@ -370,15 +371,3 @@ async def maline_features(code, tm, lines, frame_type="1d"):
     mf = MaLineFeatures()
     vec = mf.feature(bars, lines)
     return mf.explain(vec)
-
-def show_support_resist_lines(ts):
-    show_peaks_valleys(ts)
-
-    support, resist = support_resist_lines(ts)
-    x = np.arange(len(ts) + 1)
-
-    yresist = resist(x)
-    ysupport = support(x)
-
-    plt.plot(x, yresist, 'g')
-    plt.plot(x, ysupport, 'r')

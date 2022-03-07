@@ -101,8 +101,6 @@ class _InvisibleAudio(Audio):
         return f'<div style="display:none">{audio}</div>'
 
 
-
-
 if __name__ == "__main__":
     send_html_email(
         "this is a test",

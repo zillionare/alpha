@@ -4,14 +4,19 @@ import datetime
 import os
 from enum import Enum, IntEnum
 from typing import List
+from coretypes import FrameType
+import h5py
 
 import jqdatasdk as jq
 import numpy as np
 import pandas as pd
 from jqdatasdk import finance, query
+from omicron.models.timeframe import TimeFrame as tf
+from omicron.talib.metrics import max_drawdown
+from omicron.talib.morph import polyfit
+import logging
 
-from alpha.core.features import exp_moving_average, max_drawdown, polyfit
-
+logger = logging.getLogger(__name__)
 
 class OperateMode(IntEnum):
     OF = 401001
@@ -310,7 +315,48 @@ class WildGooseStrategy:
         )
         plt.show()
 
+    def sync_data(
+        self, start: datetime.date, end: datetime.date, file: str, ft: FrameType, _type:str="LOF"
+    ):
+        """下载[start, end]之间的行情数据并存盘
+
+        Args:
+            start : _description_
+            end : _description_
+            type : _description_.
+        """
+        _type = _type.tolower()
+
+        h5 = h5py.File(file, "a")
+
+        group_key = f"{_type}/{ft.value}"
+        if group_key not in h5:
+            h5.create_group(group_key)
+
+        fields = ["date", "open", "high", "low", "close", "volume", "amount", "factor"]
+        for dt in tf.get_frames(start, end, ft):
+            secs = jq.get_all_securities([_type], date=dt)
+            logger.info("%s: found %s %s", dt, len(secs), _type)
+
+            codes = secs.index.tolist()[0]
+            bars = jq.get_bars(codes, 1, ft.value, fields, include_now=True, end_dt = dt, df = True)
+
+            for code, bar in bars.items():
+                if code not in h5[group_key]:
+                    h5[group_key].create_dataset(code, data=bar)
+                else:
+                    h5[group_key][code].resize(h5[group_key][code].shape[0] + 1, axis=0)
+                    h5[group_key][code][-1] = bar
+
 
 if __name__ == "__main__":
+    account = os.environ.get("JQ_ACCOUNT")
+    password = os.environ.get("JQ_PASSWORD")
+    jq.auth(account, password)
     s = WildGooseStrategy()
-    print(s.rank_funds(Target.ALL_DOMESTIC, 20, 50))
+    #print(s.rank_funds(Target.ALL_DOMESTIC, 20, 50))
+    start = datetime.date(2018, 1, 1)
+    end = datetime.date(2020, 1, 1)
+    file = "/tmp/data.h5"
+    ft = FrameType.DAY
+    s.sync_data(start, end, file, ft)
