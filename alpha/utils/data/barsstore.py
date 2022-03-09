@@ -222,6 +222,8 @@ class BarsStore:
             )
 
             for code, bars in data.items():
+                if len(bars) == 0:
+                    continue
                 # jqdata有可能返回前一日的数据，如果当日停牌的话
                 if self.ft == FrameType.DAY:
                     if bars[0]["date"] != end.date():
@@ -255,8 +257,11 @@ if __name__ == "__main__":
 
     asyncio.run(omicron.init())
 
-    account = os.environ.get("JQ_ACCOUNT")
-    password = os.environ.get("JQ_PASSWORD")
+    # account = os.environ.get("JQ_ACCOUNT")
+    # password = os.environ.get("JQ_PASSWORD")
+
+    account = "18694978299"
+    password = "87Ai2y3LzPOe"
 
     jq.auth(account, password)
 
