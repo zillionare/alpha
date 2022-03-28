@@ -1,8 +1,10 @@
 from unittest import IsolatedAsyncioTestCase
-from tests import init_test_env
-from alpha.core.rsi_stats import RsiStats
-from coretypes import FrameType
+
 import omicron
+from coretypes import FrameType
+
+from alpha.core.rsi_stats import RsiStats
+from tests import init_test_env
 
 
 class TestRSIStats(IsolatedAsyncioTestCase):

@@ -14,12 +14,12 @@ import cfg4py
 import fire
 import numpy as np
 import omicron
+import psutil
 from aioproc import aioprocess
-from omicron import cache
 from coretypes import FrameType
+from omicron import cache
 from omicron.models.stock import Stock
 from omicron.models.timeframe import TimeFrame
-import psutil
 
 from alpha.utils.data import even_distributed_dataset, load_data
 

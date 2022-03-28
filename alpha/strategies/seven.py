@@ -4,9 +4,9 @@ import os
 import arrow
 import cfg4py
 import numpy as np
-from omicron.models.timeframe import TimeFrame as tf
 from coretypes import FrameType
 from omicron.models.stock import Stock
+from omicron.models.timeframe import TimeFrame as tf
 from sklearn.metrics import mean_absolute_error
 
 from alpha.core.features import (
@@ -177,7 +177,7 @@ class Seven(BaseXGBoostStrategy):
             250: "y",
         }
 
-        sec = Security(code)
+        sec = Stock(code)
         xend = tf.shift(arrow.get(xend), 0, ft)
         start = tf.shift(xend, -n, ft)
         yend = tf.shift(xend, 5, ft)

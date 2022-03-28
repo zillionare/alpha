@@ -1,9 +1,10 @@
 import unittest
+
 from alpha.strategies.wildgoose import (
-    WildGooseStrategy,
-    OperateMode,
     AssetType,
     InvestStyle,
+    OperateMode,
+    WildGooseStrategy,
 )
 
 

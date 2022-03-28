@@ -20,22 +20,19 @@ logging:
     level: INFO
 redis:
   #dsn: redis://172.17.0.1:6379
-  dsn: redis://127.0.0.1:6379
+  dsn: redis://192.168.100.101:56379
+influxdb:
+  url: http://192.168.100.101:58086
+  token: hwxHycJfp_t6bCOYe2MhEDW4QBOO4FDtgeBWnPR6bGZJGEZ_41m_OHtTJFZKyD2HsbVqkZM8rJNkMvjyoXCG6Q==
+  org: zillonare
+  bucket_name: zillonare
+  enable_compress: true
 postgres:
+  dsn: postgres://zillionare:123456@localhost:5432/zillionare
   enabled: false
-omega:
-  urls:
-    #quotes_server: http://172.17.0.1:3181
-    quotes_server: http://127.0.0.1:3179
 alpha:
     data_home: ~/zillionare/alpha/data
     tts_server: http://127.0.0.1:5002/api/tts?
-milvus:
-  host: "milvus-standalone"
-  #host: "172.17.22.1"
-  port: 19530
-mongo:
-  dsn: 'mongodb://admin:123456@mongo.hirecode'
 notify:
   mail_from: aaron_yang@jieyu.ai
   mail_to: aaron_yang@jieyu.ai

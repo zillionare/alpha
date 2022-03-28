@@ -7,10 +7,10 @@ import socket
 import subprocess
 import sys
 from contextlib import closing
-import numpy as np
 
 import aiohttp
 import cfg4py
+import numpy as np
 import pandas as pd
 from omicron.models.stock import Stock
 

@@ -163,7 +163,7 @@ async def make_dataset(
         if _head is None or _tail is None or _head >= head or _tail <= tail:
             continue
 
-        bars = await sec.load_bars(head, tail, main_frame)
+        bars = await Stock.get_bars(code, head, tail, main_frame)
 
         if len(bars) != main_bars_len:
             continue
@@ -206,8 +206,8 @@ async def make_dataset(
 
                 side_bar_tail = tf.combine_time(xend, hour=15)
                 side_bar_head = tf.shift(side_bar_tail, -side_bars_len, frame_type)
-                side_bars = await sec.load_bars(
-                    side_bar_head, side_bar_tail, frame_type
+                side_bars = await Stock.get_bars_in_range(
+                    code, side_bar_head, side_bar_tail, frame_type
                 )
 
                 if (
@@ -294,7 +294,7 @@ async def even_distributed_dataset(
             if _head is None or _tail is None or _head >= head or _tail <= tail:
                 continue
 
-            bars = await sec.load_bars(head, tail, frame_type)
+            bars = await Stock.get_bars_in_range(code, head, tail, frame_type)
             if len(bars) != bars_len:
                 continue
 

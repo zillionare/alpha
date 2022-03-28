@@ -1,6 +1,7 @@
 # noinspection PyUnresolvedReferences
 
 import datetime
+import logging
 import os
 from io import BytesIO
 from typing import List, NewType, Optional, Union
@@ -11,16 +12,16 @@ import arrow
 # matplotlib.use("TkAgg")
 import matplotlib.pyplot as plt
 import numpy as np
+from coretypes import FrameType
 from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
 from matplotlib.collections import LineCollection, PatchCollection
+from matplotlib.gridspec import GridSpec
 from matplotlib.lines import Line2D
 from matplotlib.patches import Rectangle
-from alpha.core.features import moving_average
-from omicron.models.timeframe import TimeFrame as tf
-from coretypes import FrameType
 from omicron.models.stock import Stock
-from matplotlib.gridspec import GridSpec
-import logging
+from omicron.models.timeframe import TimeFrame as tf
+
+from alpha.core.features import moving_average
 
 Frame = NewType("Frame", (datetime.date, datetime.datetime, arrow.Arrow, str))
 

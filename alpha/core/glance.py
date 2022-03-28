@@ -1,17 +1,17 @@
 """市场环境概览
 """
 from typing import Dict, List, Tuple
+
+import arrow
+import numpy as np
 from coretypes import FrameType
+from omicron.core.triggers import FrameTrigger
 from omicron.models.stock import Stock
 from omicron.models.timeframe import TimeFrame
-from alpha.core.features import *
-from alpha.core.rsi_stats import RsiStats
-from omicron.core.triggers import FrameTrigger
-import arrow
-from alpha.features.maline import MaLineFeatures
-from alpha.core.rsi_stats import rsi30, rsiday
-import numpy as np
 
+from alpha.core.features import *
+from alpha.core.rsi_stats import RsiStats, rsi30, rsiday
+from alpha.features.maline import MaLineFeatures
 from alpha.features.volume import moving_net_volume, top_volume_direction
 
 
@@ -88,7 +88,7 @@ class Glance:
         end = TimeFrame.floor(arrow.now(), FrameType.MIN30)
         start = TimeFrame.shift(end, -40, FrameType.MIN30)
 
-        shbars = await self.xshg.load_bars(start, end, FrameType.MIN30)
+        shbars = await Stock.get_bars(self.xshg.code, 40, FrameType.MIN30, end)
         close = shbars["close"]
         rsi = relative_strength_index(close, 6)
         p = self.rsi_30m.get_proba(self.xshg.code, rsi)
@@ -126,9 +126,6 @@ class Glance:
         # roc
         vec.append(roc)
 
-        # Altitude
-        vec.append(altitude(bars))
-
         # VOLUME
         vec.extend(top_volume_direction(bars))
         vec.append(moving_net_volume(bars)[-1])
@@ -165,15 +162,6 @@ class Glance:
             bull.append(("上涨中", f"{roc:.2%}"))
         elif roc < 0:
             bear.append(("下跌中", f"{roc:.2%}"))
-
-        # ALTITUDE
-        altitude = values["altitude"]
-        if altitude >= 0.89:
-            others.append("阶段高位")
-        elif altitude <= 0.11:
-            others.append("阶段低位")
-        else:
-            others.append(f"海拔[{altitude:.1f}]")
 
         # RSI
         stats = rsi30 if ft == FrameType.MIN30 else rsiday

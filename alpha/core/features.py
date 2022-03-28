@@ -5,15 +5,14 @@ from typing import Any, List, Tuple, Union
 import numpy as np
 import pandas as pd
 import talib as ta
-from omicron.extensions.np import polyfit
-from omicron.talib import moving_average
-
-from numpy.typing import ArrayLike
-from omicron.extensions.np import find_runs, remove_nan, top_n_argpos
 from coretypes import FrameType
+from numpy.typing import ArrayLike
+from omicron.extensions.np import remove_nan
+from omicron.talib.common import find_runs, top_n_argpos
 from omicron.models.stock import Stock
 from omicron.models.timeframe import TimeFrame
-
+from omicron.talib import moving_average
+from omicron.talib.morph import polyfit
 
 argpos_permutations = {
     n: list(itertools.permutations(range(n))) for n in (2, 3, 4, 5, 6, 7)

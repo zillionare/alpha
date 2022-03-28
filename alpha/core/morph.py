@@ -19,19 +19,15 @@ import datetime
 import os
 import pickle
 from typing import List, NewType, Union
-
-import arrow
-
-# define new types
-Frame = NewType("Frame", (str, datetime.date, datetime.datetime))
+from coretypes import Frame
 
 import logging
 
 import numpy as np
 from coretypes import FrameType
 
-from alpha.core.features import weighted_moving_average
 from alpha.core.smvecstore import SmallSizeVectorStore
+from omicron.talib.indicators import weighted_moving_average
 
 logger = logging.getLogger(__name__)
 

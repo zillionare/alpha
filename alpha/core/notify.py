@@ -1,15 +1,16 @@
-import os
-import smtplib
-from email.message import EmailMessage
-import aiohttp
-import cfg4py
-from alpha.config import get_config_dir
-import tempfile
-from IPython.display import Audio
-from IPython.display import display
 import asyncio
 import logging
+import os
 import platform
+import smtplib
+import tempfile
+from email.message import EmailMessage
+
+import aiohttp
+import cfg4py
+from IPython.display import Audio, display
+
+from alpha.config import get_config_dir
 
 cfg = cfg4py.init(get_config_dir())
 logger = logging.getLogger(__name__)

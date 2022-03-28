@@ -3,9 +3,9 @@ import itertools
 import os
 import pickle
 import unittest
-from omicron.talib import moving_average
 
 import numpy as np
+from omicron.talib import moving_average
 
 from alpha.core.features import *
 from tests import data_dir, load_bars_from_file

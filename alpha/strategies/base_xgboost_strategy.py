@@ -9,10 +9,10 @@ from typing import Callable, List, NewType, Tuple, Union
 
 import numpy as np
 import xgboost
-from numpy.typing import ArrayLike
-from omicron.models.timeframe import TimeFrame as tf
 from coretypes import FrameType
-from omicron.models.securities import Securities
+from numpy.typing import ArrayLike
+from omicron.models.stock import Stock
+from omicron.models.timeframe import TimeFrame as tf
 from ruamel.yaml import YAML
 from scipy.stats import randint, uniform
 from sklearn.metrics import (

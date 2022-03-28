@@ -1,7 +1,8 @@
 from typing import Tuple
+
 import numpy as np
 
-from alpha.core.features import fillna, replace_zero, rolling, top_n_argpos
+from omicron.extensions.np import rolling
 
 
 def top_volume_direction(bars: np.array, n=10) -> Tuple[float, float]:

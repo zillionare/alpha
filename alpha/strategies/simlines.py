@@ -1,16 +1,17 @@
 import datetime
-from arrow import Arrow
+from typing import List, NewType
+
 import arrow
 import numpy as np
-from omicron.models.timeframe import TimeFrame as tf
-from typing import List, NewType
-from alpha.core.features import fillna, moving_average
-from omicron.models.securities import Securities
-from omicron.models.stock import Stock
-from sklearn.metrics.pairwise import paired_euclidean_distances
 import pandas as pd
+from arrow import Arrow
+from coretypes import FrameType
+from omicron.models.stock import Stock
+from omicron.models.timeframe import TimeFrame as tf
+from sklearn.metrics.pairwise import paired_euclidean_distances
 
-from coretypes import FrameType, SecurityType
+
+from alpha.core.features import moving_average
 
 Frame = NewType("Frame", (str, datetime.date, datetime.datetime, Arrow))
 
@@ -33,7 +34,9 @@ class SimLines:
         end = arrow.get(self.sample_end)
         start = tf.day_shift(end, -n + 1)
 
-        bars = await Security(self.sample_code).load_bars(start, end, self.frame_type)
+        bars = await Stock.get_bars_in_range(
+            self.sample_code, self.frame_type, start, end
+        )
         self.features = self.extract_features(bars)
 
     def extract_features(self, bars: np.ndarray):
@@ -43,7 +46,6 @@ class SimLines:
         if np.count_nonzero(np.isfinite(close)) < len(bars) * 0.9:
             raise Exception("Close contains too many nan.")
 
-        close = fillna(close.copy())
         for win in self.ma_groups:
             ma = moving_average(close, win)[-self.feat_len :]
             ma /= ma[0]
@@ -63,9 +65,9 @@ class SimLines:
         self._results = []
         end = arrow.get(end)
         start = tf.shift(end, -n + 1, self.frame_type)
-        for code in Securities().choose(["stock"]):
+        for code in Stock.choose(["stock"]):
             try:
-                sec = Security(code)
+                sec = Stock(code)
                 bars = await sec.load_bars(start, end, self.frame_type)
                 features = self.extract_features(bars)
 

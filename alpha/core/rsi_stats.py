@@ -1,13 +1,15 @@
-from alpha.core.features import relative_strength_index
+import logging
 import os
 import pickle
-from scipy.stats import rv_histogram
+
+import arrow
+import numpy as np
 from coretypes import FrameType
 from omicron.models.stock import Stock
 from omicron.models.timeframe import TimeFrame
-import arrow
-import numpy as np
-import logging
+from scipy.stats import rv_histogram
+
+from alpha.core.features import relative_strength_index
 
 logger = logging.getLogger(__name__)
 
@@ -59,9 +61,7 @@ class RsiStats:
 
         for code in codes:
             try:
-                sec = Stock(code)
-                bars = await sec.load_bars(start, end, self.frame_type)
-                bars = bars[np.isfinite(bars["close"])]
+                bars = await Stock.get_bars(code, nbars, self.frame_type, end)
                 close = bars["close"]
                 if len(bars) < nbars * 0.75:
                     logger.warning(

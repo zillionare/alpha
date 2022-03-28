@@ -1,9 +1,18 @@
 """大盘30分钟顶底预测
 """
+import os
 import pickle
-import psutil
+import random
 
+import arrow
+import numpy as np
+import psutil
+from coretypes import FrameType
+from scipy.stats import randint, uniform
 from sklearn.metrics import classification_report
+from sklearn.model_selection import RandomizedSearchCV
+from xgboost import XGBClassifier
+
 from alpha.core.features import (
     altitude,
     dark_cloud_cover,
@@ -19,15 +28,6 @@ from alpha.core.features import (
 from alpha.features.maline import MaLineFeatures
 from alpha.features.volume import moving_net_volume, top_volume_direction
 from alpha.notebook import get_bars
-import os
-import random
-import arrow
-import numpy as np
-from coretypes import FrameType
-
-from xgboost import XGBClassifier
-from sklearn.model_selection import RandomizedSearchCV
-from scipy.stats import randint, uniform
 
 
 class IndexShPeakValleys:
@@ -319,9 +319,11 @@ class IndexShPeakValleys:
 
 if __name__ == "__main__":
     import asyncio
-    import omicron
-    from alpha.config import get_config_dir
+
     import cfg4py
+    import omicron
+
+    from alpha.config import get_config_dir
 
     cfg4py.init(get_config_dir())
 

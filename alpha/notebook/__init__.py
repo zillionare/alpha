@@ -1,37 +1,37 @@
-from typing import Union
-import datetime
-import time
 import asyncio
+import datetime
+import logging
+import os
+import time
+from typing import Union
 
 import arrow
 import cfg4py
+import jqdatasdk as jq
 import matplotlib.pyplot as plt
 import numpy as np
 import omicron
 import pandas as pd
+from arrow import Arrow
 from IPython.display import clear_output
+from jqdatasdk import *
 from omicron.models.stock import Stock
 from omicron.models.timeframe import TimeFrame as tf
-from alpha.plotting.patterns import *
+from pretty_html_table import build_table
 
 from alpha.config import get_config_dir
 from alpha.core import Frame
 from alpha.core.features import *
+from alpha.core.glance import Glance
 from alpha.core.morph import MorphFeatures
-from alpha.features.volume import *
-from alpha.plotting import draw_trendline, draw_ma_lines
-from alpha.plotting.candlestick import Candlestick
-from pretty_html_table import build_table
 from alpha.core.notify import send_html_email
 from alpha.core.rsi_stats import RsiStats
-import os
-from jqdatasdk import *
-import jqdatasdk as jq
-from arrow import Arrow
-from alpha.utils import *
 from alpha.features.maline import MaLineFeatures
-import logging
-from alpha.core.glance import Glance
+from alpha.features.volume import *
+from alpha.plotting import draw_ma_lines, draw_trendline
+from alpha.plotting.candlestick import Candlestick
+from alpha.plotting.patterns import *
+from alpha.utils import *
 
 g = {}
 logger = logging.getLogger(__name__)
@@ -163,11 +163,10 @@ async def get_bars(code: str, n: int, frame_type: str = "1d", end: Frame = None)
         end = tf.day_shift(end, 0)
         start = tf.shift(end, -n + 1, ft)
 
-    sec = Stock(code)
     try:
-        bars = await sec.load_bars(start, end, ft)
+        bars = await Stock.get_bars_in_range(code, start, end, ft)
         bars = bars[np.isfinite(bars["close"])]
-    except Exception as e:
+    except Exception:
         return None
 
     return bars
