@@ -1,12 +1,11 @@
 import datetime
 import logging
 import os
-import pickle
 from typing import List
 
 import arrow
 import fire
-import h5py
+import zarr
 import jqdatasdk as jq
 import numpy as np
 import pandas as pd
@@ -130,7 +129,7 @@ class Query:
 
 class Securities:
     def __init__(self, path: str = None):
-        self.store_path = path or "/data/securities.h5"
+        self.store_path = path or "/data/securities.zarr"
         self.store = self.load()
         self._synced = [arrow.get(x).date() for x in self.store.attrs.get("synced", [])]
 
@@ -172,14 +171,13 @@ class Securities:
                     ["stock", "index", "etf", "lof", "fja", "fjb"], date=day
                 )
 
-                h5str = h5py.string_dtype(encoding="utf-8")
                 dtype = [
-                    ("code", h5str),
-                    ("display_name", h5str),
-                    ("name", h5str),
+                    ("code", "U11"),
+                    ("display_name", "U32"),
+                    ("name", "U4"),
                     ("ipo", "<i8"),
                     ("end", "<i8"),
-                    ("type", h5str),
+                    ("type", "U8"),
                 ]
 
                 secs = np.empty((len(df),), dtype=dtype)
@@ -190,23 +188,24 @@ class Securities:
                 secs["end"] = [tf.date2int(x.to_pydatetime()) for x in df.end_date]
                 secs["type"] = df.type.values
 
-                self.store.create_dataset(day, data=secs)
+                self.store[day] = secs
                 synced.append(day)
                 self._synced.append(arrow.get(day).date())
         except Exception as e:
             logger.exception(e)
+            logger.warning("failed sync for %s", day)
+            logger.warning("the dataframe is:%s", df)
         finally:
             self.store.attrs["synced"] = synced
-            self.store.flush()
 
             jq.logout()
 
     def load(self):
         try:
-            return h5py.File(self.store_path, "a")
+            return zarr.open(self.store_path, mode = "a")
         except Exception:
             logger.warning("faield to open %s, store is re-created.", self.store_path)
-            return h5py.File(self.store_path, "w")
+            return None
 
     def close(self):
         self.store.close()
@@ -234,10 +233,10 @@ class Securities:
 
         df = pd.DataFrame([], secs.dtype.names)
 
-        df.index = secs["code"].astype(str)
-        df["display_name"] = [x.decode("utf-8") for x in secs["display_name"]]
-        df["name"] = [x.decode("utf-8") for x in secs["name"]]
-        df["type"] = [x.decode("utf-8") for x in secs["type"]]
+        df.index = secs["code"]
+        df["display_name"] = secs["display_name"]
+        df["name"] = secs["name"]
+        df["type"] = secs["type"]
 
         df["ipo"] = [tf.int2date(x) for x in secs["ipo"]]
         df["end"] = [tf.int2date(x) for x in secs["end"]]
@@ -251,7 +250,7 @@ if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO, filename="/var/log/alpha/alpha.log")
 
     tf.service_degrade()
-    secs.query(datetime.date(2022, 3, 15)).types(["stock"]).name_like("银行").exclude_exit(datetime.date(2020, 3, 1)).codes
+    # secs.query(datetime.date(2022, 3, 15)).types(["stock"]).name_like("银行").exclude_exit(datetime.date(2020, 3, 1)).codes
 
-    #secs.sync("2022-03-01", "2022-03-18")
-    # fire.Fire({"sync": secs.save_securities})
+    #secs.sync("2022-03-01", "2022-03-10")
+    fire.Fire({"sync": secs.sync})
