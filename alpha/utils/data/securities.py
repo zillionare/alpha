@@ -1,26 +1,38 @@
 import datetime
+import logging
 import os
 import pickle
+from typing import List
 
 import arrow
-import pandas as pd
 import fire
+import h5py
 import jqdatasdk as jq
+import numpy as np
+import pandas as pd
 from coretypes import FrameType
 from omicron import tf
-import logging
-from typing import List
 
 logger = logging.getLogger(__name__)
 
 # todo: 将代码融合到omicron 2.1中
 
+
 def init_jq():
     jq.auth(os.environ["JQ_ACCOUNT"], os.environ["JQ_PASSWORD"])
 
+
 class Query:
-    def __init__(self, df: pd.DataFrame):
-        self.recs = df
+    """
+    ["code", "display_name", "name", "ipo", "end", "type"]
+    """
+
+    def __init__(self, df: pd.DataFrame, now: datetime.date = None):
+        now = now or datetime.date.today()
+        if df is None:
+            self.recs = None
+        else:
+            self.recs = df[df.ipo < now]
 
     @property
     def codes(self):
@@ -29,7 +41,7 @@ class Query:
         else:
             return []
 
-    def types(self, types: List[str])->'Query':
+    def types(self, types: List[str]) -> "Query":
         """按类型过滤
 
         Args:
@@ -37,95 +49,169 @@ class Query:
         """
         r = self.recs
 
+        if r is None:
+            return self
+
         self.recs = r[r.type.isin(types)]
 
         return self
 
-    def only_cyb(self)->'Query':
+    def only_cyb(self) -> "Query":
         r = self.recs
+
+        if r is None:
+            return self
 
         self.recs = r[r.index.str.startswith("300")]
         return self
 
-    def only_st(self)->'Query':
+    def only_st(self) -> "Query":
         r = self.recs
+
+        if r is None:
+            return self
 
         self.recs = r[r.display_name.str.contains("ST")]
         return self
 
-    def only_kcb(self)->'Query':
+    def only_kcb(self) -> "Query":
         r = self.recs
+
+        if r is None:
+            return self
 
         self.recs = r[r.index.str.startswith("688")]
         return self
 
-    def exclude_st(self)->'Query':
+    def exclude_st(self) -> "Query":
+        if self.recs is None:
+            return self
+
         self.recs = self.recs[~self.recs.display_name.str.contains("ST")]
 
         return self
 
-    def exclude_cyb(self)->'Query':
+    def exclude_cyb(self) -> "Query":
         r = self.recs
+
+        if r is None:
+            return self
 
         self.recs = r[~r.index.str.startswith("300")]
         return self
 
-    def exclude_kcb(self)->'Query':
+    def exclude_kcb(self) -> "Query":
         r = self.recs
 
+        if r is None:
+            return self
+
         self.recs = r[~r.index.str.startswith("688")]
+        return self
+
+    def exclude_exit(self, now: datetime.date) -> "Query":
+        r = self.recs
+
+        if r is None:
+            return self
+
+        self.recs = r[~(r.end <= now)]
         return self
 
     def name_like(self, name: str):
         r = self.recs
 
+        if r is None:
+            return self
         self.recs = r[r.display_name.str.contains(name)]
 
         return self
 
+
 class Securities:
-    def __init__(self, path: str=None):
-        self.store_path = path or "/data/securities.pkl"
+    def __init__(self, path: str = None):
+        self.store_path = path or "/data/securities.h5"
         self.store = self.load()
+        self._synced = [arrow.get(x).date() for x in self.store.attrs.get("synced", [])]
 
-    def save_securities(self, start: str, end: str):
-        init_jq()
-
-        tf.service_degrade()
-
+    def sync(self, start: str, end: str):
         start = arrow.get(start).date()
         end = arrow.get(end).date()
-        
-        days = set([tf.int2date(x) for x in tf.get_frames(start, end, FrameType.DAY)])
 
-        if os.path.exists(self.store_path):
-            with open(self.store_path, "rb") as f:
-                d = pickle.load(f)
+        days = set(
+            [
+                tf.int2date(x).strftime("%Y-%m-%d")
+                for x in tf.get_frames(start, end, FrameType.DAY)
+            ]
+        )
+
+        # synced days which represented in str type
+        synced = sorted(self.store.attrs.get("synced", []))
+
+        if len(synced) > 0:
+            logger.info(
+                "the store contains recs from %s to %s",
+                synced[0],
+                synced[-1],
+            )
+
+        days = days - set(synced)
+
+        if len(days) == 0:
+            logger.info("nothing to update")
+            return
         else:
-            d = {}
+            logger.info("updating %d days", len(days))
 
-        days = days - set(d.keys())
+        init_jq()
 
         try:
             for day in days:
                 logger.info("sync day: %s", day)
-                secs = jq.get_all_securities(["stock", "index", "etf", "lof", "fja", "fjb", "futures"], date=day)
+                df = jq.get_all_securities(
+                    ["stock", "index", "etf", "lof", "fja", "fjb"], date=day
+                )
 
-                d[day] = secs
+                h5str = h5py.string_dtype(encoding="utf-8")
+                dtype = [
+                    ("code", h5str),
+                    ("display_name", h5str),
+                    ("name", h5str),
+                    ("ipo", "<i8"),
+                    ("end", "<i8"),
+                    ("type", h5str),
+                ]
+
+                secs = np.empty((len(df),), dtype=dtype)
+                secs["code"] = df.index.values
+                secs["display_name"] = df.display_name.values
+                secs["name"] = df.name.values
+                secs["ipo"] = [tf.date2int(x.to_pydatetime()) for x in df.start_date]
+                secs["end"] = [tf.date2int(x.to_pydatetime()) for x in df.end_date]
+                secs["type"] = df.type.values
+
+                self.store.create_dataset(day, data=secs)
+                synced.append(day)
+                self._synced.append(arrow.get(day).date())
         except Exception as e:
             logger.exception(e)
         finally:
-            with open(self.store_path, "wb") as f:
-                pickle.dump(d, f)
+            self.store.attrs["synced"] = synced
+            self.store.flush()
 
             jq.logout()
 
-
     def load(self):
-        with open(self.store_path, "rb") as f:
-            return pickle.load(f)
-    
-    def query(self, date: datetime.date)->Query:
+        try:
+            return h5py.File(self.store_path, "a")
+        except Exception:
+            logger.warning("faield to open %s, store is re-created.", self.store_path)
+            return h5py.File(self.store_path, "w")
+
+    def close(self):
+        self.store.close()
+
+    def query(self, date: datetime.date) -> Query:
         """构建查询对象
 
         Args:
@@ -134,11 +220,38 @@ class Securities:
         Returns:
             Query: 查询对象
         """
-        return Query(self.store.get(date))
+        if len(self._synced) == 0:
+            return Query(None)
+
+        synced = np.array(sorted(self._synced))
+        last_day = synced[synced <= date]
+        if len(last_day) == 0:
+            return Query(None)
+
+        key = last_day[-1].strftime("%Y-%m-%d")
+
+        secs = self.store[key]
+
+        df = pd.DataFrame([], secs.dtype.names)
+
+        df.index = secs["code"].astype(str)
+        df["display_name"] = [x.decode("utf-8") for x in secs["display_name"]]
+        df["name"] = [x.decode("utf-8") for x in secs["name"]]
+        df["type"] = [x.decode("utf-8") for x in secs["type"]]
+
+        df["ipo"] = [tf.int2date(x) for x in secs["ipo"]]
+        df["end"] = [tf.int2date(x) for x in secs["end"]]
+
+        return Query(df, date)
+
 
 secs = Securities()
 
 if __name__ == "__main__":
-    fire.Fire({
-        "sync": secs.save_securities
-    })
+    logging.basicConfig(level=logging.INFO, filename="/var/log/alpha/alpha.log")
+
+    tf.service_degrade()
+    secs.query(datetime.date(2022, 3, 15)).types(["stock"]).name_like("银行").exclude_exit(datetime.date(2020, 3, 1)).codes
+
+    #secs.sync("2022-03-01", "2022-03-18")
+    # fire.Fire({"sync": secs.save_securities})

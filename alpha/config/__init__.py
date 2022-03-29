@@ -1,4 +1,5 @@
 import os
+import cfg4py
 
 
 def get_config_dir():
