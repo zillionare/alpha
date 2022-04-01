@@ -2,6 +2,8 @@ import numpy as np
 from typing import List
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
+import talib
+from omicron import moving_average
 
 class Candlestick:
     RED = '#FF4136'
@@ -54,21 +56,30 @@ class Candlestick:
             
     def add_indicator(self, indicator:str):
         if indicator == "volume":
-            colors = np.repeat(self.RED, len(bars))
-            colors[bars["close"] <= bars["open"]] = self.GREEN
+            colors = np.repeat(self.RED, len(self.bars))
+            colors[self.bars["close"] <= self.bars["open"]] = self.GREEN
 
             trace = go.Bar(x=self.ticks, y = self.bars["volume"], showlegend=False, marker={'color':colors})
-            self.ind_traces[indicator] = trace
+        elif indicator == "rsi":
+            rsi = talib.RSI(self.bars["close"].astype(np.float64))
+            trace = go.Scatter(x=self.ticks, y = rsi, showlegend=False)
+        else:
+            raise ValueError(f"{indicator} not supported")
+        
+        self.ind_traces[indicator] = trace
             
     def plot(self):
         rows = len(self.ind_traces) + 1
+        specs = [[{"secondary_y": False}]] * rows
+        specs[0][0]["secondary_y"] = True
         
+        row_heights = [0.7, *([0.2] * (rows-1))]
         cols = 1
         
         # todo: adjust row_heights
         fig = make_subplots(rows=rows, cols=cols, shared_xaxes=True, 
-           vertical_spacing=0.03, subplot_titles=(self.title, *self.ind_traces.keys()), 
-           row_width=[0.2, 0.7], specs=[[{"secondary_y": True}],[{"secondary_y": False}]])
+           vertical_spacing=0.05, subplot_titles=(self.title, *self.ind_traces.keys()), 
+           row_heights=row_heights, specs=specs)
 
         for name, trace in self.main_traces.items():
             fig.add_trace(trace, row=1, col=1)
@@ -82,7 +93,7 @@ class Candlestick:
         fig.update_xaxes(type='category', tickangle=45, nticks=len(self.ticks)//3)
         
         fig.show()
-
+                
 def plot_candlestick(bars: np.ndarray, ma_groups: List[int], title:str=None, **kwargs):
     cs = Candlestick(bars, ma_groups, title=title)
     cs.plot()
