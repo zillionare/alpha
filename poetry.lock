@@ -345,6 +345,18 @@ optional = false
 python-versions = "*"
 
 [[package]]
+name = "ckwrap"
+version = "0.1.9"
+description = "Python wrapper for Ckmeans.1d.dp, 4.3.3."
+category = "main"
+optional = false
+python-versions = "*"
+
+[package.dependencies]
+Cython = "*"
+numpy = "*"
+
+[[package]]
 name = "click"
 version = "8.0.4"
 description = "Composable command line interface toolkit"
@@ -1861,7 +1873,7 @@ test = ["pytest", "black", "isort", "flake8", "flake8-docstrings", "pytest-cov"]
 [metadata]
 lock-version = "1.1"
 python-versions = ">3.8,<3.9"
-content-hash = "22a3f94e18aa662be987bdd96c0212e3715e227c94f9779aa35cd62cbd5b9985"
+content-hash = "0a6b9686fbc303984edcba8b9f7341afd29b6f2a445eaa98c0c881f2e520d589"
 
 [metadata.files]
 aiohttp = [
@@ -2136,6 +2148,44 @@ charset-normalizer = [
 ]
 ciso8601 = [
     {file = "ciso8601-2.2.0.tar.gz", hash = "sha256:14ad817ed31a698372d42afa81b0173d71cd1d0b48b7499a2da2a01dcc8695e6"},
+]
+ckwrap = [
+    {file = "ckwrap-0.1.9-cp310-cp310-macosx_10_9_x86_64.whl", hash = "sha256:97088c36e4a0d2903ce234a5d8b3ae6786335d961c7a5cb74ac734faeb911f03"},
+    {file = "ckwrap-0.1.9-cp310-cp310-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:355edeb03af1075465a9da9978435ef2bbcacb4f5c9398da6848edd6b46a7bc2"},
+    {file = "ckwrap-0.1.9-cp310-cp310-manylinux_2_5_i686.manylinux1_i686.manylinux_2_17_i686.manylinux2014_i686.whl", hash = "sha256:5071f6a3aa7ed15ae075659dae36574c4b2605481aa708fc2f6388d8fcc4ed94"},
+    {file = "ckwrap-0.1.9-cp310-cp310-musllinux_1_1_i686.whl", hash = "sha256:b6aa3b244d00188cfd83cd70364575c47ac95808d59013f455dc77a7020c9d95"},
+    {file = "ckwrap-0.1.9-cp310-cp310-musllinux_1_1_x86_64.whl", hash = "sha256:42007c3bea2a541ddd8cf4575d65d51f5c66155629405486e527261465f14645"},
+    {file = "ckwrap-0.1.9-cp310-cp310-win32.whl", hash = "sha256:d944d1ba1cee91011fd03b080f69724eb81b342033fa3c9647aabd30c262b921"},
+    {file = "ckwrap-0.1.9-cp310-cp310-win_amd64.whl", hash = "sha256:4a858bf4e1100a49abebd3f58cd7864b841af7d55da7e19fd91fc7d3148b09d1"},
+    {file = "ckwrap-0.1.9-cp36-cp36m-macosx_10_9_x86_64.whl", hash = "sha256:8260f97336fd6c5da445cd74a25a645fd8fe2a9b03c5daecc48f0876397939dc"},
+    {file = "ckwrap-0.1.9-cp36-cp36m-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:e735a1cb8dd33340a607ae24f4dfd7439c5d2bd84b4d888c4e78f72869858f0b"},
+    {file = "ckwrap-0.1.9-cp36-cp36m-manylinux_2_5_i686.manylinux1_i686.manylinux_2_17_i686.manylinux2014_i686.whl", hash = "sha256:2a8ef5119fc98812d6595357f7fa081d52d8323904aa64b396d58688311e1e4f"},
+    {file = "ckwrap-0.1.9-cp36-cp36m-musllinux_1_1_i686.whl", hash = "sha256:acdbee37a867a21bdacd7c96940b253f93c83cb9c01094c9505fb54bfbfd8a75"},
+    {file = "ckwrap-0.1.9-cp36-cp36m-musllinux_1_1_x86_64.whl", hash = "sha256:2f67c20d6bd2f2c5686a559767de34729c8fc2b1e0e16ec6028f15be110fd082"},
+    {file = "ckwrap-0.1.9-cp36-cp36m-win32.whl", hash = "sha256:56b4288115badb7b65df0f8bc9e322511c72b37064e1bfa7ee5af94224f57a84"},
+    {file = "ckwrap-0.1.9-cp36-cp36m-win_amd64.whl", hash = "sha256:32288cc59a403aafb33ccbc830c9636b1276abe4d9119e0f17cef99fb714175e"},
+    {file = "ckwrap-0.1.9-cp37-cp37m-macosx_10_9_x86_64.whl", hash = "sha256:3f2ecd9686d0c7ca748d0a0118a87f970f8d212c7ebd8a73367b0e62fe8f699f"},
+    {file = "ckwrap-0.1.9-cp37-cp37m-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:c59b41a9dc8628823dc5d9690bbd34353aa91c1375321f9e993547be377d1b4f"},
+    {file = "ckwrap-0.1.9-cp37-cp37m-manylinux_2_5_i686.manylinux1_i686.manylinux_2_17_i686.manylinux2014_i686.whl", hash = "sha256:47cf71da973d3adb68eb75dc1ddf2c51b23aace889b9c0aff9c637e0ddae0a03"},
+    {file = "ckwrap-0.1.9-cp37-cp37m-musllinux_1_1_i686.whl", hash = "sha256:b7cb2d646eaf448bf2a21b63e01137d92ae4721c82134df7d89229bf8bb4ed67"},
+    {file = "ckwrap-0.1.9-cp37-cp37m-musllinux_1_1_x86_64.whl", hash = "sha256:3a1c30932f7343e8b04b2b7be09708f9c9051b114fe194251f7d70a6f9628adb"},
+    {file = "ckwrap-0.1.9-cp37-cp37m-win32.whl", hash = "sha256:e417d711cc2196ff369a314a2dbbed97cb0452775b13b60e9aa2f8d21cf3c261"},
+    {file = "ckwrap-0.1.9-cp37-cp37m-win_amd64.whl", hash = "sha256:901cb1f93033ef44134127f1eacea51e00ebc5f1b48f0692a6daee770ac0ae84"},
+    {file = "ckwrap-0.1.9-cp38-cp38-macosx_10_9_x86_64.whl", hash = "sha256:b75b26dbcc7e9a1550a21fc398b482f3f9f1bdf7fdfe231ede4fa0fcd655cdad"},
+    {file = "ckwrap-0.1.9-cp38-cp38-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:0d4a6513ff6d5def7b14b7e5e593240429cb02ec42e9d04bba0416805e707836"},
+    {file = "ckwrap-0.1.9-cp38-cp38-manylinux_2_5_i686.manylinux1_i686.manylinux_2_17_i686.manylinux2014_i686.whl", hash = "sha256:f564cadffa9e44f3ca57630de44fff6144260d8b473df829b4cf3f87cd2ef5db"},
+    {file = "ckwrap-0.1.9-cp38-cp38-musllinux_1_1_i686.whl", hash = "sha256:d6532776c61c1f0ecc8b9cd132d1176e9a8a81c4bf081aa5fda77f1fb780b185"},
+    {file = "ckwrap-0.1.9-cp38-cp38-musllinux_1_1_x86_64.whl", hash = "sha256:5d29c9402d09b3ae1e7380190b75b2e11d4c0a5b8093d330bc4836714ba570d2"},
+    {file = "ckwrap-0.1.9-cp38-cp38-win32.whl", hash = "sha256:ad391b5f7b56d007267511f3b7cb0c36005f2998697079033d595d910ac62aaf"},
+    {file = "ckwrap-0.1.9-cp38-cp38-win_amd64.whl", hash = "sha256:fc5eb3eb103e7e6db0f9aa996aa09986f2b301149a0f192e256322e998a7c306"},
+    {file = "ckwrap-0.1.9-cp39-cp39-macosx_10_9_x86_64.whl", hash = "sha256:48fd507008a49ef2f5ca8fb2b6f08c4bc41c81d49fa3b1986d0d8b821ab03b72"},
+    {file = "ckwrap-0.1.9-cp39-cp39-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:7a2a1d8533d4b050fade713527efe3a18b5e3bd478aa1b0809097f9a93ec1ec4"},
+    {file = "ckwrap-0.1.9-cp39-cp39-manylinux_2_5_i686.manylinux1_i686.manylinux_2_17_i686.manylinux2014_i686.whl", hash = "sha256:4c9b5b6c57606f419d6ea9ce4f7f41bd1608dc2b3b84f459a6c6f5ec78926d5d"},
+    {file = "ckwrap-0.1.9-cp39-cp39-musllinux_1_1_i686.whl", hash = "sha256:2594e4cc4a5c31fe5ab461bc25ac69a29275a017036d8cb2e710dc7152dd78a3"},
+    {file = "ckwrap-0.1.9-cp39-cp39-musllinux_1_1_x86_64.whl", hash = "sha256:f6b1d2ad83d85de3af68dc5f8e45b17219d65dcc9d4008de0b1eff4fae88baa2"},
+    {file = "ckwrap-0.1.9-cp39-cp39-win32.whl", hash = "sha256:7b9b8fee5ca1615a3fd3b35b6873415a860cb2b7b535f24ebe20ccc769aa151f"},
+    {file = "ckwrap-0.1.9-cp39-cp39-win_amd64.whl", hash = "sha256:6d9b811aa4c43eddd61b7b17be85a97f5e0dfb522b5f9360950518c9220334f0"},
+    {file = "ckwrap-0.1.9.tar.gz", hash = "sha256:54c633ba9da2cfcad2642df1874a86d3ef1cddff067965002094becf1fff044c"},
 ]
 click = [
     {file = "click-8.0.4-py3-none-any.whl", hash = "sha256:6a7a62563bbfabfda3a38f3023a1db4a35978c0abd76f6c9605ecd6554d6d9b1"},

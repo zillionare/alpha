@@ -60,6 +60,7 @@ zillionare-omicron = {version = "2.0.0a20", allow-prereleases = true}
 zarr = "^2.11.1"
 jqdatasdk = "^1.8.10"
 plotly = "^5.6.0"
+ckwrap = "^0.1.9"
 
 
 [tool.poetry.extras]
