@@ -4,6 +4,7 @@ from alpha.utils.data.securities import Securities
 from omicron import tf
 import datetime
 
+
 class SecuritiesTest(unittest.TestCase):
     def test_sync(self):
         try:
@@ -12,10 +13,36 @@ class SecuritiesTest(unittest.TestCase):
             tf.service_degrade()
             secs.sync("2022-03-10", "2022-03-18")
 
-            self.assertSetEqual(set(secs.store.attrs.get("synced")), set(["2022-03-10", "2022-03-11", "2022-03-14", "2022-03-15", "2022-03-16", "2022-03-17", "2022-03-18"]))
+            self.assertSetEqual(
+                set(secs.store.attrs.get("synced")),
+                set(
+                    [
+                        "2022-03-10",
+                        "2022-03-11",
+                        "2022-03-14",
+                        "2022-03-15",
+                        "2022-03-16",
+                        "2022-03-17",
+                        "2022-03-18",
+                    ]
+                ),
+            )
 
             secs.sync("2022-03-10", "2022-03-21")
-            self.assertSetEqual(set(secs.store.attrs.get("synced"))), set(["2022-03-10", "2022-03-11", "2022-03-14", "2022-03-15", "2022-03-16", "2022-03-17", "2022-03-18", "2022-03-19", "2022-03-20", "2022-03-21"])
+            self.assertSetEqual(set(secs.store.attrs.get("synced"))), set(
+                [
+                    "2022-03-10",
+                    "2022-03-11",
+                    "2022-03-14",
+                    "2022-03-15",
+                    "2022-03-16",
+                    "2022-03-17",
+                    "2022-03-18",
+                    "2022-03-19",
+                    "2022-03-20",
+                    "2022-03-21",
+                ]
+            )
         finally:
             secs.close()
 
@@ -35,7 +62,16 @@ class SecuritiesTest(unittest.TestCase):
         self.assertTrue(len(codes) > 500)
         self.assertIn("000001.XSHG", codes)
 
-        codes = secs.query(now).types(["stock"]).exclude_cyb().exclude_exit(now).exclude_kcb().exclude_st().name_like("银行").codes
+        codes = (
+            secs.query(now)
+            .types(["stock"])
+            .exclude_cyb()
+            .exclude_exit(now)
+            .exclude_kcb()
+            .exclude_st()
+            .name_like("银行")
+            .codes
+        )
 
         self.assertIn("002807.XSHE", codes)
 
@@ -49,5 +85,3 @@ class SecuritiesTest(unittest.TestCase):
         now = datetime.date(2022, 3, 28)
         codes = secs.query(now).types(["stock"]).only_cyb().codes
         self.assertTrue(len(codes) > 300)
-
-

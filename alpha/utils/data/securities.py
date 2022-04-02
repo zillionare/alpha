@@ -128,10 +128,19 @@ class Query:
 
 
 class Securities:
+    _obj = None
+
     def __init__(self, path: str = None):
         self.store_path = path or "/data/securities.zarr"
         self.store = self.load()
         self._synced = [arrow.get(x).date() for x in self.store.attrs.get("synced", [])]
+
+    @classmethod
+    def get_instance(cls):
+        if cls._obj is None:
+            cls._obj = Securities()
+
+        return cls._obj
 
     def sync(self, start: str, end: str):
         start = arrow.get(start).date()
@@ -202,7 +211,7 @@ class Securities:
 
     def load(self):
         try:
-            return zarr.open(self.store_path, mode = "a")
+            return zarr.open(self.store_path, mode="a")
         except Exception:
             logger.warning("faield to open %s, store is re-created.", self.store_path)
             return None
@@ -244,13 +253,11 @@ class Securities:
         return Query(df, date)
 
 
-secs = Securities()
-
 if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO, filename="/var/log/alpha/alpha.log")
 
     tf.service_degrade()
     # secs.query(datetime.date(2022, 3, 15)).types(["stock"]).name_like("银行").exclude_exit(datetime.date(2020, 3, 1)).codes
 
-    #secs.sync("2022-03-01", "2022-03-10")
-    fire.Fire({"sync": secs.sync})
+    # secs.sync("2022-03-01", "2022-03-10")
+    fire.Fire({"sync": all_secs.sync})
