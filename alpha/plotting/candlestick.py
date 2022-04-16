@@ -1,9 +1,13 @@
+from alpha.core.commons import plateaus
 import numpy as np
 from typing import List, Tuple
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
+import arrow
 import talib
 from omicron import moving_average, peaks_and_valleys
+from coretypes import Frame
+from collections import defaultdict
 
 
 class Candlestick:
@@ -30,7 +34,7 @@ class Candlestick:
         # traces for indicator area
         self.ind_traces = {}
 
-        self.ticks = np.array([f"{x.month:02}-{x.day:02}" for x in bars["frame"]])
+        self.ticks = np.array([self._format_tick(x) for x in bars["frame"]])
 
         # for every candlestick, it must contain a candlestick plot
         cs = go.Candlestick(
@@ -67,14 +71,87 @@ class Candlestick:
             line = go.Scatter(y=ma, x=self.ticks[-n:], name=name, line=dict(width=1))
             self.main_traces[name] = line
 
+    def _format_tick(self, tm: Frame) -> str:
+        return f"{tm.year:02}-{tm.month:02}-{tm.day:02}"
+
     def add_main_trace(self, trace_name: str, **kwargs):
         """add trace to main plot"""
         if trace_name == "peaks":
             self.mark_peaks_and_valleys(
                 kwargs.get("up_thres", 0.03), kwargs.get("down_thres", -0.03)
             )
+
+        # 标注矩形框
         if trace_name == "bbox":
             self.mark_bounding_box(kwargs.get("boxes"))
+
+        # 回测结果
+        if trace_name == "bt":
+            self.mark_backtest_result(kwargs.get("bt"))
+
+    def mark_backtest_result(self, result: dict):
+        """标记买卖点和回测数据
+
+        Args:
+            result: 回测结果，包含trades和每日assets,其中：
+                - trades: 交易记录列表，每个元素是一个dict，包含以下字段：
+                    - time: 交易日期
+                    - price: 交易价格
+                    - volume: 交易数量
+                    - order_side: 交易方向，买入或卖出
+                    - security: 股票代码
+                - assets: 每日资产，字典，key为日期，value为资产
+        """
+        trades = result.get("trades")
+        assets = result.get("assets")
+
+        x, y, labels = [], [], []
+        hover = []
+        labels_color = defaultdict(list)
+
+        for trade in trades:
+            trade_date = arrow.get(trade["time"]).date()
+            asset = assets.get(trade_date)
+
+            security = trade["security"]
+            price = trade["price"]
+            volume = trade["volume"]
+
+            side = trade["order_side"]
+
+            x.append(self._format_tick(trade_date))
+
+            bar = self.bars[self.bars["frame"] == trade_date]
+            if side == "买入":
+                hover.append(
+                    f"总资产:{asset}<br><br>{side}:{security}<br>买入价:{price}<br>股数:{volume}"
+                )
+
+                y.append(bar["high"][0] * 1.1)
+                labels.append("B")
+                labels_color["color"].append(self.RED)
+
+            else:
+                y.append(bar["low"][0] * 0.99)
+
+                hover.append(
+                    f"总资产:{asset}<hr><br>{side}:{security}<br>卖出价:{price}<br>股数:{volume}"
+                )
+
+                labels.append("S")
+                labels_color["color"].append(self.GREEN)
+
+        trace = go.Scatter(
+            x=x,
+            y=y,
+            mode="text",
+            text=labels,
+            name="backtest",
+            hovertext=hover,
+            textfont=labels_color,
+        )
+
+        self.main_traces["bs"] = trace
 
     def mark_peaks_and_valleys(self, up_thres: float = 0.03, down_thres: float = -0.03):
         bars = self.bars
@@ -165,7 +242,7 @@ class Candlestick:
             specs=specs,
         )
 
-        for name, trace in self.main_traces.items():
+        for _, trace in self.main_traces.items():
             fig.add_trace(trace, row=1, col=1)
 
         for i, (_, trace) in enumerate(self.ind_traces.items()):
