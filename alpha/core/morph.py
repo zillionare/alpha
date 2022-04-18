@@ -39,12 +39,7 @@ class MorphFeatures:
         self.frame_type = frame_type
         self.wins = wins or [5, 10, 20, 60]
         self.flen = flen
-        self.thresholds = thresholds or {
-            5: 1e-2,
-            10: 7e-3,
-            20: 5e-3,
-            60: 3e-3,
-        }
+        self.thresholds = thresholds or {5: 1e-2, 10: 7e-3, 20: 5e-3, 60: 3e-3}
 
         self.default_threshold = 1e-3
 

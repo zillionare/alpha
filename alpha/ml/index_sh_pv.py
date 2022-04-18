@@ -302,14 +302,7 @@ class IndexShPeakValleys:
     def predict(self, bars: np.ndarray):
         features, _ = reversal_features(self.code, bars, FrameType.MIN30)
         label = self.model.predict(np.array([features]))[0]
-        return (
-            label,
-            {
-                0: "顶部反转",
-                1: "底部反转",
-                2: "趋势延续",
-            }.get(label),
-        )
+        return (label, {0: "顶部反转", 1: "底部反转", 2: "趋势延续"}.get(label))
 
     async def watch(self):
         """监控模型"""

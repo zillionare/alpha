@@ -90,55 +90,28 @@ class MaLineFeatures:
             ("vx250", "{:.1f}"),
         ]
 
-        cross_columns_20 = [
-            ("cross_5x10", "{:.0f}"),
-            ("cross_10x20", "{:.0f}"),
-        ]
+        cross_columns_20 = [("cross_5x10", "{:.0f}"), ("cross_10x20", "{:.0f}")]
 
-        cross_columns_30 = [
-            *cross_columns_20,
-            ("cross_20x30", "{:.0f}"),
-        ]
+        cross_columns_30 = [*cross_columns_20, ("cross_20x30", "{:.0f}")]
 
-        cross_columns_60 = [
-            *cross_columns_30,
-            ("cross_30x60", "{:.0f}"),
-        ]
+        cross_columns_60 = [*cross_columns_30, ("cross_30x60", "{:.0f}")]
 
-        cross_columns_120 = [
-            *cross_columns_60,
-            ("cross_60x120", "{:.0f}"),
-        ]
+        cross_columns_120 = [*cross_columns_60, ("cross_60x120", "{:.0f}")]
 
-        cross_columns_250 = [
-            *cross_columns_120,
-            ("cross_120x250", "{:.0f}"),
-        ]
+        cross_columns_250 = [*cross_columns_120, ("cross_120x250", "{:.0f}")]
 
         bull_strike_columns_20 = [
             ("bull_strike_5", "{}"),
             ("bull_strike_10", "{}"),
             ("bull_strike_20", "{}"),
         ]
-        bull_strike_columns_30 = [
-            *bull_strike_columns_20,
-            ("bull_strike_30", "{}"),
-        ]
+        bull_strike_columns_30 = [*bull_strike_columns_20, ("bull_strike_30", "{}")]
 
-        bull_strike_columns_60 = [
-            *bull_strike_columns_30,
-            ("bull_strike_60", "{}"),
-        ]
+        bull_strike_columns_60 = [*bull_strike_columns_30, ("bull_strike_60", "{}")]
 
-        bull_strike_columns_120 = [
-            *bull_strike_columns_60,
-            ("bull_strike_120", "{}"),
-        ]
+        bull_strike_columns_120 = [*bull_strike_columns_60, ("bull_strike_120", "{}")]
 
-        bull_strike_columns_250 = [
-            *bull_strike_columns_120,
-            ("bull_strike_250", "{}"),
-        ]
+        bull_strike_columns_250 = [*bull_strike_columns_120, ("bull_strike_250", "{}")]
 
         bearish_strike_columns_20 = [
             ("bear_strike_5", "{}"),

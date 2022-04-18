@@ -157,11 +157,7 @@ class Securities:
         synced = sorted(self.store.attrs.get("synced", []))
 
         if len(synced) > 0:
-            logger.info(
-                "the store contains recs from %s to %s",
-                synced[0],
-                synced[-1],
-            )
+            logger.info("the store contains recs from %s to %s", synced[0], synced[-1])
 
         days = days - set(synced)
 

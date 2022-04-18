@@ -8,7 +8,6 @@ from typing import Union
 import arrow
 import cfg4py
 import jqdatasdk as jq
-import matplotlib.pyplot as plt
 import numpy as np
 import omicron
 import pandas as pd
@@ -29,7 +28,6 @@ from alpha.core.rsi_stats import RsiStats
 from alpha.features.maline import MaLineFeatures
 from alpha.features.volume import *
 from alpha.plotting import draw_ma_lines, draw_trendline
-from alpha.plotting.candlestick import Candlestick
 from alpha.plotting.patterns import *
 from alpha.utils import *
 
@@ -38,7 +36,7 @@ logger = logging.getLogger(__name__)
 
 
 async def init_notebook(adaptor="omicron"):
-    cfg4py.init(get_config_dir())
+    cfg4py.init("~/zillionare/alpha/config")
     if adaptor in ["omicron", "both"]:
         await omicron.init()
     if adaptor in ["jq", "both"]:
