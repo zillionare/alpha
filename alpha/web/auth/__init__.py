@@ -1,2 +1,1 @@
-from .models import *
-from .view import layout
+from .models import get_current_user

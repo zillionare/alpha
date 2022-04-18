@@ -1,5 +1,6 @@
-import flask
 import uuid
+
+import flask
 
 user_pwd = {
     "dash": "123",
@@ -37,7 +38,8 @@ def login_user(response, username, password):
     return False
 
 
-def get_current_user():
+def get_current_user() -> str:
+    """获取当前用户名"""
     global user_sessions
     cookie = flask.request.cookies.get("zillionare-auth-session")
 

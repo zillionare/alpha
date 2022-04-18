@@ -1,5 +1,5 @@
 from .models import get_current_user, remove_current_user
-from .view import layout
+from .view import render
 from alpha.web import routing
 
 
@@ -11,7 +11,7 @@ def logout():
     if get_current_user():
         remove_current_user()
 
-    return layout
+    return render()
 
 
 @routing.on("/login")
@@ -19,4 +19,4 @@ def login():
     """
     login function.
     """
-    return layout
+    return render()

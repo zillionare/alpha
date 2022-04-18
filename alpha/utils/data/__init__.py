@@ -8,10 +8,8 @@ from typing import Callable, List, NewType, Tuple
 import arrow
 import numpy as np
 from coretypes import FrameType
-from omicron import cache
+from omicron import tf
 from omicron.models.stock import Stock
-from omicron.models.timeframe import TimeFrame as tf
-from sklearn.inspection import permutation_importance
 
 from alpha.core.errors import NoFeaturesError, NoTargetError
 from alpha.utils.data.databunch import DataBunch
@@ -321,12 +319,7 @@ async def even_distributed_dataset(
             logger.exception(e)
             continue
 
-    meta.update(
-        {
-            "capacity": capacity,
-            "has_register_ipo": has_register_ipo,
-        }
-    )
+    meta.update({"capacity": capacity, "has_register_ipo": has_register_ipo})
 
     with open(save_to, "wb") as f:
         logger.info("save dataset to %s", save_to)

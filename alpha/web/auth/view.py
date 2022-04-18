@@ -1,5 +1,3 @@
-from cProfile import label
-
 import dash
 import dash_bootstrap_components as dbc
 from dash import callback, dcc, html
@@ -9,24 +7,26 @@ from .models import get_current_user, login_user
 
 form = dbc.Card(
     [
-        dbc.CardHeader(html.H2("Alpha分析系统")),
+        dbc.CardHeader(html.H3("Welcome to Alpha!")),
         dbc.CardBody(
             [
-                dbc.Label("用户名", size="sm"),
-                dbc.Input(
-                    id="usernameBox",
-                    placeholder="用户名为手机号、邮箱",
-                    type="text",
-                    size="md",
-                    className="mb-3",
+                dbc.InputGroup(
+                    [
+                        dbc.InputGroupText("用户："),
+                        dbc.Input(
+                            placeholder="Username", type="text", id="usernameBox"
+                        ),
+                    ],
+                    class_name="sm-3",
+                    style={"padding-top": "1rem", "padding-bottom": "1rem"},
                 ),
-                dbc.Label("密码", size="sm"),
-                dbc.Input(
-                    id="passwordBox",
-                    placeholder="密码",
-                    type="password",
-                    size="md",
-                    className="mb-3",
+                dbc.InputGroup(
+                    [
+                        dbc.InputGroupText("密码："),
+                        dbc.Input(type="password", id="passwordBox"),
+                    ],
+                    class_name="sm-3",
+                    style={"padding-top": "1rem", "padding-bottom": "1rem"},
                 ),
             ]
         ),
@@ -36,21 +36,26 @@ form = dbc.Card(
         ),
     ]
 )
-layout = dbc.Container(
-    dbc.Row(
-        [
-            dcc.Location(id="urlLogin", pathname="/login", refresh=True),
-            dbc.Row(
-                [
-                    dbc.Col(width=4),
-                    dbc.Col(form, width=4, align="center"),
-                    dbc.Col(width=4),
-                ]
-            ),
-        ],
-        style={"height": "100vh"},
+
+
+def render():
+    layout = dbc.Container(
+        dbc.Row(
+            [
+                dcc.Location(id="urlLogin", pathname="/login", refresh=True),
+                dbc.Row(
+                    [
+                        dbc.Col(width=4),
+                        dbc.Col(form, width=4, align="center"),
+                        dbc.Col(width=4),
+                    ]
+                ),
+            ],
+            style={"height": "100vh"},
+        )
     )
-)
+
+    return layout
 
 
 @callback(
@@ -78,7 +83,11 @@ def on_login(n_clicks, username, password):
     [State("usernameBox", "value"), State("passwordBox", "value")],
 )
 def update_output(n_clicks, usernameSubmit, passwordSubmit, username, password):
-    if (n_clicks and n_clicks > 0) or (usernameSubmit and usernameSubmit > 0) or (passwordSubmit and passwordSubmit > 0):
+    if (
+        (n_clicks and n_clicks > 0)
+        or (usernameSubmit and usernameSubmit > 0)
+        or (passwordSubmit and passwordSubmit > 0)
+    ):
         if get_current_user() is None:
             response = dash.callback_context.response
             if login_user(response, username, password):
