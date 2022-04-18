@@ -4,9 +4,10 @@ import arrow
 import dash
 import dash_bootstrap_components as dbc
 from asgiref.sync import AsyncToSync, async_to_sync
-from coretypes import Frame, FrameType
+from coretypes import Frame, FrameType, SecurityType
 from dash import Input, Output, State, callback, dcc, html
 from omicron.models.stock import Stock
+from collections import OrderedDict
 from alpha.web.utils import get_triggerred_controls
 from dateutil import parser
 
@@ -38,7 +39,7 @@ def toolbar():
                 html_size="8",
                 size="sm",
                 n_submit=0,
-                style={"margin-right": "1rem", "width": "8rem", "height": "2rem"},
+                style={"margin-right": "1rem", "width": "10rem", "height": "2rem"},
             ),
             html.Datalist(id="stock-hints"),
             dbc.InputGroup(
@@ -55,19 +56,40 @@ def toolbar():
             dbc.ButtonGroup(
                 [
                     dbc.Button(
-                        "向前",
+                        html.I(className="fas fa-backward"),
                         color="secondary",
                         size="sm",
-                        style={"width": "4rem"},
-                        title="向前一个月",
+                        style={"width": "2rem", "backgroundColor": "transparent"},
+                        title="向前一月",
                     ),
                     dbc.Button(
-                        "向后",
+                        html.I(className="fas fa-caret-left"),
                         color="secondary",
                         size="sm",
-                        style={"width": "4rem"},
-                        title="向后一个月",
+                        style={"width": "2rem"},
+                        title="向前一天",
                     ),
+                    dbc.Button(
+                        html.I(className="fas fa-caret-right"),
+                        color="secondary",
+                        size="sm",
+                        style={"width": "2rem"},
+                        title="向后一天",
+                    ),
+                    dbc.Button(
+                        html.I(className="fas fa-forward"),
+                        color="secondary",
+                        size="sm",
+                        style={"width": "2rem"},
+                        title="向后一月",
+                    ),
+                    dbc.Button(
+                        html.I(className="fas fa-gear"),
+                        color="secondary",
+                        size="sm",
+                        style={"width": "2rem"},
+                        title="设置",
+                    )
                 ]
             ),
         ],
@@ -94,7 +116,7 @@ def update_datalist(value):
         for v in matched.values():
             code = v[0].split(".")[0]
             options.append(html.Option(v[0], label=f"{code} {v[1]}"))
-    elif re.match(r'\[a-z]+', value.lower()):
+    elif re.match(r'[a-z]+', value.lower()):
         for v in matched.values():
             options.append(html.Option(v[0], label=f"{v[2]} {v[1]}"))
     else:
@@ -103,6 +125,19 @@ def update_datalist(value):
 
     return options
 
+def _update_toolbar(**kwargs):
+    response = OrderedDict({
+        "figure": dash.no_update,
+        "stock_value": dash.no_update,
+        "stock_n_submit": dash.no_update,
+        "stock_invalid": dash.no_update,
+        "date_invalid": dash.no_update,
+        "alert": dash.no_update
+    })
+
+    response.update(kwargs)
+
+    return list(response.values())
 
 @callback(
     Output("main-fig", "figure"),
@@ -115,12 +150,15 @@ def update_datalist(value):
     Input("stock-input", "n_submit"),
     Input("date-input", "value")
 )
-def change_candlestick(code, n_stock_submit, date):
+def on_toolbar_update(code, n_stock_submit, date):
+    if code is None:
+        return _update_toolbar()
+
     controls = get_triggerred_controls()
 
     if "stock-input" in controls and (code is None or n_stock_submit == 0):
         # 用户没有提交查询，只进行模糊匹配
-        return dash.no_update, dash.no_update, n_stock_submit, dash.no_update, dash.no_update, dash.no_update
+        return _update_toolbar()
 
     try:
         now = arrow.now().date() if date is None else parser.parse(date).date()
@@ -128,29 +166,42 @@ def change_candlestick(code, n_stock_submit, date):
         logger.exception(e)
         logger.info("Invalid date: %s", date)
 
-        return dash.no_update, dash.no_update, 0, dash.no_update, True, dash.no_update
+        return _update_toolbar(stock_n_submit=0, date_invalid=True)
 
     try:
+        if not re.match(r"\d+", code):
+            code = list(Stock.fuzzy_match(code).values())[0][0]
+
         stock = Stock(code)
     except Exception as e:
         logger.exception(e)
         logger.info("Invalid stock: %s", code)
 
-        return dash.no_update, dash.no_update, 0, True, dash.no_update, dash.no_update
+        return _update_toolbar(stock_n_submit=0, stock_invalid=True)
 
     try:
         stock = Stock(code)
         name = stock.display_name
         
         bars = get_bars(stock.code, now, 120, FrameType.DAY)
-        cs = Candlestick(bars, title=name)
+        cs = Candlestick(bars, title=name, show_peaks=True)
+        cs.mark_bbox(20)
+
+        upthres = 0.03
+        downthres = -0.03
+
+        if stock.security_type == SecurityType.INDEX:
+            upthres = 0.01
+            downthres = -0.01
+
+        cs.mark_support_resist_lines(upthres, downthres)
 
         # clear invalid state
-        return cs.figure, code, 0, False, False, dash.no_update
+        return _update_toolbar(figure=cs.figure, stock_value=code, stock_n_submit=0, stock_invalid=False, date_invalid=False)
     except Exception as e:
         logger.exception(e)
         logger.info("input: %s, %s", code, date)
-        return dash.no_update, dash.no_update, 0, False, dash.no_update, str(e)
+        return _update_toolbar(stock_n_submit=0, stock_invalid=True, alert=str(e))
 
 
 @async_to_sync
@@ -169,7 +220,7 @@ def render_research_page(code: str = "000001.XSHG"):
 
     # build figure
     cs = Candlestick(bars, title=name)
-    cs.mark_bounding_box()
+    cs.mark_bbox()
     cs.mark_peaks_and_valleys()
 
     content = dbc.Container(
