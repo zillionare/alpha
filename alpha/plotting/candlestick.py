@@ -75,6 +75,8 @@ class Candlestick:
 
     @property
     def figure(self):
+        """返回一个figure对象
+        """
         rows = len(self.ind_traces) + 1
         specs = [[{"secondary_y": False}]] * rows
         specs[0][0]["secondary_y"] = True
@@ -109,7 +111,14 @@ class Candlestick:
         return f"{tm.year:02}-{tm.month:02}-{tm.day:02}"
 
     def add_main_trace(self, trace_name: str, **kwargs):
-        """add trace to main plot"""
+        """add trace to main plot
+
+        支持的图例类别有peaks, bbox（bounding-box), bt(回测), support_line, resist_line
+        Args:
+            trace_name : 图例名称
+            **kwargs : 其他参数
+        
+        """
         if trace_name == "peaks":
             self.mark_peaks_and_valleys(
                 kwargs.get("up_thres", 0.03), kwargs.get("down_thres", -0.03)
@@ -125,36 +134,63 @@ class Candlestick:
             
         # 增加直线
         elif trace_name == "support_line":
-            self.add_line(trace_name, kwargs.get("x"), kwargs.get("y"))
+            self.add_line("支撑线", kwargs.get("x"), kwargs.get("y"))
             
         elif trace_name == "resist_line":
-            self.add_line(trace_name, kwargs.get("x"), kwargs.get("y"))
+            self.add_line("压力线", kwargs.get("x"), kwargs.get("y"))
             
-    def add_line(self, trace_name: str, x, y):
+    def add_line(self, trace_name: str, x: List[int], y: List[float]):
+        """在k线图上增加以`x`,`y`表示的一条直线
+
+        Args:
+            trace_name : 图例名称
+            x : x轴坐标，所有的x值都必须属于[0, len(self.bars)]
+            y : y值
+        """
         line = go.Scatter(x=self.ticks[x], y=y,
                     mode='lines',
                     name=trace_name)
         
         self.main_traces[trace_name] = line
         
-    def mark_support_resist_lines(self, upthres: float = 0.03, downthres: float=0.03, use_close=True):
+    def mark_support_resist_lines(self, upthres: float = 0.03, downthres: float=0.03, use_close=True, win=60):
+        """在K线图上标注支撑线和压力线
+
+        在`win`个k线内，找出所有的局部峰谷点，并以最高的两个峰连线生成压力线，以最低的两个谷连线生成支撑线。
+
+        Args:
+            upthres : 用来检测峰谷时使用的阈值，参见`omicron.talib.patterns.peaks_and_valleys`
+            downthres : 用来检测峰谷时使用的阈值，参见`omicron.talib.patterns.peaks_and_valleys`.
+            use_close : 是否使用收盘价来进行检测。如果为False，则使用high来检测压力线，使用low来检测支撑线.
+            win : 检测局部高低点的窗口.
+        """
+        bars = self.bars[-win:]
+        clipped = len(self.bars) - win
+
         if use_close:
-            support, resist, x_start = support_resist_lines(self.bars["close"], upthres, downthres)
-            x = np.arange(len(self.bars))[x_start:]
+            support, resist, x_start = support_resist_lines(bars["close"], upthres, downthres)
+            x = np.arange(len(bars))[x_start:]
             
-            self.add_main_trace("support_line", x = x, y = support(x))
-            self.add_main_trace("resist_line", x = x, y = resist(x))
+            self.add_main_trace("support_line", x = x + clipped, y = support(x))
+            self.add_main_trace("resist_line", x = x + clipped, y = resist(x))
             
         else: # 使用"high"和"low"
-            support, _, x_start = support_resist_lines(self.bars["low"], upthres, downthres)
-            x = np.arange(len(self.bars))[x_start:]
-            self.add_main_trace("support_line", x = x, y = support(x))
+            bars = self.bars[-win:]
+            support, _, x_start = support_resist_lines(bars["low"], upthres, downthres)
+            x = np.arange(len(bars))[x_start:]
+            self.add_main_trace("support_line", x = x + clipped, y = support(x))
             
-            _, resist, x_start = support_resist_lines(self.bars["high"], upthres, downthres)
-            x = np.arange(len(self.bars))[x_start:]
-            self.add_main_trace("resist_line", x = x, y = resist(x))
+            _, resist, x_start = support_resist_lines(bars["high"], upthres, downthres)
+            x = np.arange(len(bars))[x_start:]
+            self.add_main_trace("resist_line", x = x + clipped, y = resist(x))
             
     def mark_bbox(self, min_size:int=20):
+        """在k线图上检测并标注矩形框
+
+        Args:
+            min_size : 矩形框的最小长度
+
+        """
         boxes = plateaus(self.bars["close"], min_size)
         self.add_main_trace("bbox", boxes=boxes)
 
@@ -219,6 +255,13 @@ class Candlestick:
         self.main_traces["bs"] = trace
 
     def mark_peaks_and_valleys(self, up_thres: float = 0.03, down_thres: float = -0.03):
+        """在K线图上标注峰谷点
+        
+        Args:
+            up_thres : 用来检测峰谷时使用的阈值，参见`omicron.talib.patterns.peaks_and_valleys`
+            down_thres : 用来检测峰谷时使用的阈值，参见`omicron.talib.patterns.peaks_and_valleys`.
+
+        """
         bars = self.bars
 
         flags = peaks_and_valleys(
@@ -235,7 +278,7 @@ class Candlestick:
             x=ticks_up,
             y=y_up,
             marker_symbol="triangle-down",
-            name="peak",
+            name="峰",
         )
         self.main_traces["peaks"] = trace
 
@@ -244,7 +287,7 @@ class Candlestick:
             x=ticks_down,
             y=y_down,
             marker_symbol="triangle-up",
-            name="valley",
+            name="谷",
         )
         self.main_traces["valleys"] = trace
 
@@ -252,7 +295,7 @@ class Candlestick:
         """bbox是标记在k线图上某个区间内的矩形框，它以该区间最高价和最低价为上下边。
 
         Args:
-            boxes : 各个bbox的起点和宽度。
+            boxes : 每个元素(start, width)表示各个bbox的起点和宽度。
         """
         x, y = [], []
         for box in boxes:
@@ -263,11 +306,11 @@ class Candlestick:
 
             h = max(self.bars["high"][i : i + width])
             l = min(self.bars["low"][i : i + width])
-            x.extend(self.ticks[[i, i + width, i + width, i, i]])
+            x.extend(self.ticks[[i, i + width - 1, i + width - 1, i, i]])
             y.extend((h, h, l, l, h))
 
             hover = f"宽度: {width}<br> 振幅: {(h - l) / l:.2%}"
-            trace = go.Scatter(x=x, y=y, fill="toself", name="bbox", text=hover)
+            trace = go.Scatter(x=x, y=y, fill="toself", name="平台整理", text=hover)
             self.main_traces["bbox"] = trace
 
     def add_indicator(self, indicator: str):
@@ -291,6 +334,7 @@ class Candlestick:
         self.ind_traces[indicator] = trace
 
     def plot(self):
+        """绘制图表"""
         fig = self.figure
 
         fig.show()
