@@ -1,13 +1,16 @@
-from alpha.core.commons import plateaus
-import numpy as np
-from typing import List, Tuple
-import plotly.graph_objects as go
-from plotly.subplots import make_subplots
-import arrow
-import talib
-from omicron import moving_average, peaks_and_valleys
-from coretypes import Frame
 from collections import defaultdict
+from typing import List, Tuple
+
+import arrow
+import numpy as np
+import plotly.graph_objects as go
+import talib
+from coretypes import Frame
+from omicron import moving_average, peaks_and_valleys
+from plotly.subplots import make_subplots
+
+from alpha.core.commons import plateaus
+from omicron import support_resist_lines
 
 
 class Candlestick:
@@ -60,7 +63,6 @@ class Candlestick:
             self.add_indicator("volume")
 
         if show_peaks:
-            print("add peaks")
             self.add_main_trace("peaks")
 
         # 增加均线
@@ -70,6 +72,38 @@ class Candlestick:
             n = len(ma)
             line = go.Scatter(y=ma, x=self.ticks[-n:], name=name, line=dict(width=1))
             self.main_traces[name] = line
+
+    @property
+    def figure(self):
+        rows = len(self.ind_traces) + 1
+        specs = [[{"secondary_y": False}]] * rows
+        specs[0][0]["secondary_y"] = True
+
+        row_heights = [0.7, *([0.2] * (rows - 1))]
+        cols = 1
+
+        fig = make_subplots(
+            rows=rows,
+            cols=cols,
+            shared_xaxes=True,
+            vertical_spacing=0.05,
+            subplot_titles=(self.title, *self.ind_traces.keys()),
+            row_heights=row_heights,
+            specs=specs,
+        )
+
+        for name, trace in self.main_traces.items():
+            fig.add_trace(trace, row=1, col=1)
+
+        for i, (_, trace) in enumerate(self.ind_traces.items()):
+            fig.add_trace(trace, row=i + 2, col=1)
+
+        fig.update(layout_xaxis_rangeslider_visible=False)
+        fig.update_yaxes(showgrid=True, gridcolor=self.LIGHT_GRAY)
+        fig.update_layout(plot_bgcolor=self.TRANSPARENT)
+        fig.update_xaxes(type="category", tickangle=45, nticks=len(self.ticks) // 3)
+
+        return fig
 
     def _format_tick(self, tm: Frame) -> str:
         return f"{tm.year:02}-{tm.month:02}-{tm.day:02}"
@@ -82,25 +116,53 @@ class Candlestick:
             )
 
         # 标注矩形框
-        if trace_name == "bbox":
-            self.mark_bounding_box(kwargs.get("boxes"))
+        elif trace_name == "bbox":
+            self.add_bounding_box(kwargs.get("boxes"))
 
         # 回测结果
-        if trace_name == "bt":
-            self.mark_backtest_result(kwargs.get("bt"))
+        elif trace_name == "bt":
+            self.add_backtest_result(kwargs.get("bt"))
+            
+        # 增加直线
+        elif trace_name == "support_line":
+            self.add_line(trace_name, kwargs.get("x"), kwargs.get("y"))
+            
+        elif trace_name == "resist_line":
+            self.add_line(trace_name, kwargs.get("x"), kwargs.get("y"))
+            
+    def add_line(self, trace_name: str, x, y):
+        line = go.Scatter(x=self.ticks[x], y=y,
+                    mode='lines',
+                    name=trace_name)
+        
+        self.main_traces[trace_name] = line
+        
+    def mark_support_resist_lines(self, upthres: float = 0.03, downthres: float=0.03, use_close=True):
+        if use_close:
+            support, resist, x_start = support_resist_lines(self.bars["close"], upthres, downthres)
+            x = np.arange(len(self.bars))[x_start:]
+            
+            self.add_main_trace("support_line", x = x, y = support(x))
+            self.add_main_trace("resist_line", x = x, y = resist(x))
+            
+        else: # 使用"high"和"low"
+            support, _, x_start = support_resist_lines(self.bars["low"], upthres, downthres)
+            x = np.arange(len(self.bars))[x_start:]
+            self.add_main_trace("support_line", x = x, y = support(x))
+            
+            _, resist, x_start = support_resist_lines(self.bars["high"], upthres, downthres)
+            x = np.arange(len(self.bars))[x_start:]
+            self.add_main_trace("resist_line", x = x, y = resist(x))
+            
+    def mark_bbox(self, min_size:int=20):
+        boxes = plateaus(self.bars["close"], min_size)
+        self.add_main_trace("bbox", boxes=boxes)
 
     def mark_backtest_result(self, result: dict):
         """标记买卖点和回测数据
 
         Args:
-            result: 回测结果，包含trades和每日assets,其中：
-                - trades: 交易记录列表，每个元素是一个dict，包含以下字段：
-                    - time: 交易日期
-                    - price: 交易价格
-                    - volume: 交易数量
-                    - order_side: 交易方向，买入或卖出
-                    - security: 股票代码
-                - assets: 每日资产，字典，key为日期，value为资产
+            points : 买卖点的坐标。
         """
         trades = result.get("trades")
         assets = result.get("assets")
@@ -141,6 +203,9 @@ class Candlestick:
                 labels.append("S")
                 labels_color["color"].append(self.GREEN)
 
+                labels_color.append(self.GREEN)
+                # txt.append(f'{side}:{security}<br>卖出价:{price}<br>股数:{volume}')
+
         trace = go.Scatter(
             x=x,
             y=y,
@@ -159,11 +224,11 @@ class Candlestick:
         flags = peaks_and_valleys(
             bars["close"].astype(np.float64), up_thres, down_thres
         )
-        ticks_up = self.ticks[:-1][flags == 1]
-        y_up = bars["high"][flags == 1] * 1.005
+        ticks_up = self.ticks[flags == 1]
+        y_up = bars["high"][flags == 1] * 1.03
 
-        ticks_down = self.ticks[:-1][flags == -1]
-        y_down = bars["low"][flags == -1] * 0.995
+        ticks_down = self.ticks[flags == -1]
+        y_down = bars["low"][flags == -1] * 0.97
 
         trace = go.Scatter(
             mode="markers",
@@ -183,7 +248,7 @@ class Candlestick:
         )
         self.main_traces["valleys"] = trace
 
-    def mark_bounding_box(self, boxes: List[Tuple]):
+    def add_bounding_box(self, boxes: List[Tuple]):
         """bbox是标记在k线图上某个区间内的矩形框，它以该区间最高价和最低价为上下边。
 
         Args:
@@ -201,7 +266,8 @@ class Candlestick:
             x.extend(self.ticks[[i, i + width, i + width, i, i]])
             y.extend((h, h, l, l, h))
 
-            trace = go.Scatter(x=x, y=y, fill="toself", name="bbox")
+            hover = f"宽度: {width}<br> 振幅: {(h - l) / l:.2%}"
+            trace = go.Scatter(x=x, y=y, fill="toself", name="bbox", text=hover)
             self.main_traces["bbox"] = trace
 
     def add_indicator(self, indicator: str):
@@ -225,33 +291,7 @@ class Candlestick:
         self.ind_traces[indicator] = trace
 
     def plot(self):
-        rows = len(self.ind_traces) + 1
-        specs = [[{"secondary_y": False}]] * rows
-        specs[0][0]["secondary_y"] = True
-
-        row_heights = [0.7, *([0.2] * (rows - 1))]
-        cols = 1
-
-        fig = make_subplots(
-            rows=rows,
-            cols=cols,
-            shared_xaxes=True,
-            vertical_spacing=0.05,
-            subplot_titles=(self.title, *self.ind_traces.keys()),
-            row_heights=row_heights,
-            specs=specs,
-        )
-
-        for _, trace in self.main_traces.items():
-            fig.add_trace(trace, row=1, col=1)
-
-        for i, (_, trace) in enumerate(self.ind_traces.items()):
-            fig.add_trace(trace, row=i + 2, col=1)
-
-        fig.update(layout_xaxis_rangeslider_visible=False)
-        fig.update_yaxes(showgrid=True, gridcolor=self.LIGHT_GRAY)
-        fig.update_layout(plot_bgcolor=self.TRANSPARENT)
-        fig.update_xaxes(type="category", tickangle=45, nticks=len(self.ticks) // 3)
+        fig = self.figure
 
         fig.show()
 
