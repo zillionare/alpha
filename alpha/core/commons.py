@@ -1,7 +1,7 @@
-import numpy as np
-from typing import List
-from typing import Tuple
+from typing import List, Tuple
+
 import ckwrap
+import numpy as np
 
 
 def clustering(numbers: np.ndarray, n: int) -> List[Tuple[int, int]]:
@@ -21,7 +21,9 @@ def clustering(numbers: np.ndarray, n: int) -> List[Tuple[int, int]]:
     return clusters
 
 
-def plateaus(numbers: np.ndarray, min_size: int, fall_in_range_ratio: float = 0.97):
+def plateaus(
+    numbers: np.ndarray, min_size: int, fall_in_range_ratio: float = 0.97
+) -> List[Tuple]:
     """求数组`numbers`中的平台。
 
     如果一个数组中的多数元素（超过`fall_in_range_ratio`）都落在3个标准差以内，则认为该处有一个平台。
@@ -30,23 +32,31 @@ def plateaus(numbers: np.ndarray, min_size: int, fall_in_range_ratio: float = 0.
         numbers: 输入数组
         min_size: 平台的最小长度
         fall_in_range_ratio: 平台的最小长度
+
+    Returns:
+        平台的起始位置和长度
     """
-    clusters = clustering(numbers, len(numbers) // min_size)
+    if numbers.size <= min_size:
+        n = 1
+    else:
+        n = numbers.size // min_size
+
+    clusters = clustering(numbers, n)
 
     plats = []
-    for (start, width) in clusters:
-        if width < min_size:
+    for (start, length) in clusters:
+        if length < min_size:
             continue
 
-        y = numbers[start : start + width]
+        y = numbers[start : start + length]
         mean = np.mean(y)
 
         delta = np.std(y)
 
-        inrange = len(y[(y <= (mean + 3 * delta)) & (y >= mean - 3 * delta)])
-        ratio = inrange / len(y)
+        inrange = len(y[abs(y - mean) <= 3 * delta])
+        ratio = inrange / length
 
         if ratio >= fall_in_range_ratio:
-            plats.append((start, width))
+            plats.append((start, length))
 
     return plats
