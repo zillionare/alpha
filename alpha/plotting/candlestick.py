@@ -75,8 +75,7 @@ class Candlestick:
 
     @property
     def figure(self):
-        """返回一个figure对象
-        """
+        """返回一个figure对象"""
         rows = len(self.ind_traces) + 1
         specs = [[{"secondary_y": False}]] * rows
         specs[0][0]["secondary_y"] = True
@@ -117,7 +116,7 @@ class Candlestick:
         Args:
             trace_name : 图例名称
             **kwargs : 其他参数
-        
+
         """
         if trace_name == "peaks":
             self.mark_peaks_and_valleys(
@@ -131,14 +130,14 @@ class Candlestick:
         # 回测结果
         elif trace_name == "bt":
             self.add_backtest_result(kwargs.get("bt"))
-            
+
         # 增加直线
         elif trace_name == "support_line":
             self.add_line("支撑线", kwargs.get("x"), kwargs.get("y"))
-            
+
         elif trace_name == "resist_line":
             self.add_line("压力线", kwargs.get("x"), kwargs.get("y"))
-            
+
     def add_line(self, trace_name: str, x: List[int], y: List[float]):
         """在k线图上增加以`x`,`y`表示的一条直线
 
@@ -147,13 +146,13 @@ class Candlestick:
             x : x轴坐标，所有的x值都必须属于[0, len(self.bars)]
             y : y值
         """
-        line = go.Scatter(x=self.ticks[x], y=y,
-                    mode='lines',
-                    name=trace_name)
-        
+        line = go.Scatter(x=self.ticks[x], y=y, mode="lines", name=trace_name)
+
         self.main_traces[trace_name] = line
-        
-    def mark_support_resist_lines(self, upthres: float = 0.03, downthres: float=0.03, use_close=True, win=60):
+
+    def mark_support_resist_lines(
+        self, upthres: float = 0.03, downthres: float = -0.03, use_close=True, win=60
+    ):
         """在K线图上标注支撑线和压力线
 
         在`win`个k线内，找出所有的局部峰谷点，并以最高的两个峰连线生成压力线，以最低的两个谷连线生成支撑线。
@@ -168,23 +167,25 @@ class Candlestick:
         clipped = len(self.bars) - win
 
         if use_close:
-            support, resist, x_start = support_resist_lines(bars["close"], upthres, downthres)
+            support, resist, x_start = support_resist_lines(
+                bars["close"], upthres, downthres
+            )
             x = np.arange(len(bars))[x_start:]
-            
-            self.add_main_trace("support_line", x = x + clipped, y = support(x))
-            self.add_main_trace("resist_line", x = x + clipped, y = resist(x))
-            
-        else: # 使用"high"和"low"
+
+            self.add_main_trace("support_line", x=x + clipped, y=support(x))
+            self.add_main_trace("resist_line", x=x + clipped, y=resist(x))
+
+        else:  # 使用"high"和"low"
             bars = self.bars[-win:]
             support, _, x_start = support_resist_lines(bars["low"], upthres, downthres)
             x = np.arange(len(bars))[x_start:]
-            self.add_main_trace("support_line", x = x + clipped, y = support(x))
-            
+            self.add_main_trace("support_line", x=x + clipped, y=support(x))
+
             _, resist, x_start = support_resist_lines(bars["high"], upthres, downthres)
             x = np.arange(len(bars))[x_start:]
-            self.add_main_trace("resist_line", x = x + clipped, y = resist(x))
-            
-    def mark_bbox(self, min_size:int=20):
+            self.add_main_trace("resist_line", x=x + clipped, y=resist(x))
+
+    def mark_bbox(self, min_size: int = 20):
         """在k线图上检测并标注矩形框
 
         Args:
@@ -256,7 +257,7 @@ class Candlestick:
 
     def mark_peaks_and_valleys(self, up_thres: float = 0.03, down_thres: float = -0.03):
         """在K线图上标注峰谷点
-        
+
         Args:
             up_thres : 用来检测峰谷时使用的阈值，参见`omicron.talib.patterns.peaks_and_valleys`
             down_thres : 用来检测峰谷时使用的阈值，参见`omicron.talib.patterns.peaks_and_valleys`.

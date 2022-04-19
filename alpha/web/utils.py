@@ -5,10 +5,9 @@ import logging
 
 logger = logging.getLogger(__name__)
 
-def get_triggerred_controls()->List[str]:
-    """获取触发的控件id，只能在dash回调函数中使用
-    
-    """
+
+def get_triggerred_controls() -> List[str]:
+    """获取触发的控件id，只能在dash回调函数中使用"""
     controls = []
     for control in dash.callback_context.triggered:
         try:
