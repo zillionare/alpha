@@ -1,14 +1,14 @@
 import dash_bootstrap_components as dbc
 from dash import Input, Output, State, callback, dcc, html
-from alpha.web.components.layout import make_page
+from alpha.web.components.scaffold import render_with_scaffold
 from alpha.web.auth import get_current_user
 
 location = dcc.Location(id="homepage", pathname="/research", refresh=False)
 
 
-def render_home_page():
+def render_home_page(sid: str):
     global location, content
-    return make_page(location)
+    return render_with_scaffold(location)
 
 
 # add callback for toggling the collapse on small screens

@@ -6,7 +6,9 @@ from typing import Union
 from dash.development.base_component import Component
 
 
-def make_page(location: dcc.Location, content: Union[str, Component] = "") -> Component:
+def render_with_scaffold(
+    location: dcc.Location, content: Union[str, Component] = ""
+) -> Component:
     """构建页面。
 
     组装一个带header, sidebar和main_content的页面。该页面上有一个location控件。

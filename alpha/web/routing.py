@@ -32,7 +32,7 @@ def layout():
 
     return html.Div(
         [
-            dcc.Store(data=session_id, id="session_id", storage_type="session"),
+            dcc.Store(data=session_id, id="session-id", storage_type="session"),
             router,
             html.Div(id="page-content", style=full_hw_style),
         ],
@@ -57,7 +57,7 @@ def on(pathname: str):
 
 @callback(
     Output("page-content", "children"),
-    [Input("router", "pathname"), Input("session_id", "data")],
+    [Input("router", "pathname"), Input("session-id", "data")],
 )
 def _routing(pathname: str, sid: str):
     # ensure auth
