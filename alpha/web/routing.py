@@ -13,6 +13,7 @@ from dash import callback, dcc, html
 from dash.dependencies import Input, Output
 from alpha.web.homepage.view import render_home_page
 import logging
+import uuid
 
 logger = logging.getLogger(__name__)
 
@@ -22,6 +23,7 @@ routes = {}
 
 def layout():
     router = dcc.Location(id="router", refresh=False)
+    session_id = uuid.uuid4().hex
 
     full_hw_style = {
         "height": "100vh",
@@ -30,6 +32,7 @@ def layout():
 
     return html.Div(
         [
+            dcc.Store(data=session_id, id="session_id", storage_type="session"),
             router,
             html.Div(id="page-content", style=full_hw_style),
         ],
@@ -52,18 +55,20 @@ def on(pathname: str):
     return decorator
 
 
-@callback(Output("page-content", "children"), [Input("router", "pathname")])
-def _routing(pathname):
+@callback(
+    Output("page-content", "children"),
+    [Input("router", "pathname"), Input("session_id", "data")],
+)
+def _routing(pathname: str, sid: str):
     # ensure auth
     # from alpha.web import auth
     # if not auth.get_current_user():
     #     return auth.view.render()
+    handler = routes.get(pathname, None)
+    if handler is None:
+        return render_home_page(sid)
 
-    page_render = routes.get(pathname, None)
-    if page_render is None:
-        return render_home_page()
-
-    return page_render()
+    return handler(sid)
 
 
 def build_blueprints():

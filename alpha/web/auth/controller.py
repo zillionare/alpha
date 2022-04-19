@@ -4,7 +4,7 @@ from alpha.web import routing
 
 
 @routing.on("/logout")
-def logout():
+def logout(sid: str):
     """
     logout function.
     """
@@ -15,7 +15,7 @@ def logout():
 
 
 @routing.on("/login")
-def login():
+def login(sid: str):
     """
     login function.
     """
