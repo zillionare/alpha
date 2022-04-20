@@ -1931,7 +1931,7 @@ doc = ["mkdocs (>=1.1.2,<2.0.0)", "mkdocs-include-markdown-plugin (>=1.0.0,<2.0.
 
 [[package]]
 name = "zillionare-omicron"
-version = "2.0.0a20"
+version = "2.0.0a27"
 description = "Core Library for Zillionare"
 category = "main"
 optional = false
@@ -2003,7 +2003,7 @@ test = ["pytest", "black", "isort", "flake8", "flake8-docstrings", "pytest-cov"]
 [metadata]
 lock-version = "1.1"
 python-versions = ">3.8,<3.9"
-content-hash = "e5ce12003caf9707db27884d415a3e1bb3e0f4f716c768233943838b25907aaf"
+content-hash = "36da3ef3622500a2ca8a903555143f4321c475629ebbfaeac4c740c63075eaee"
 
 [metadata.files]
 aiohttp = [
@@ -3768,8 +3768,8 @@ zillionare-core-types = [
     {file = "zillionare_core_types-0.4.1.tar.gz", hash = "sha256:096eb62669ac5853f2b6b5753f420c07e506fe5d0aa64af8c3647fc3cf163555"},
 ]
 zillionare-omicron = [
-    {file = "zillionare-omicron-2.0.0a20.tar.gz", hash = "sha256:0863d0a134310761e68bdf6ccad64e38b0d2011ef312094a16cede8330a91ceb"},
-    {file = "zillionare_omicron-2.0.0a20-py3-none-any.whl", hash = "sha256:5fd01f29fe8900b4172769d2040e8c79d52b75eeab0ee9aa050f96c9ab68de0d"},
+    {file = "zillionare-omicron-2.0.0a27.tar.gz", hash = "sha256:9784e9df78a9c3a5ff2b2a5913541ff9c6c0247dc40a14f31e8043b2e3d70b56"},
+    {file = "zillionare_omicron-2.0.0a27-py3-none-any.whl", hash = "sha256:8d1f6b8a7e7770fbf5e4868782d60e2a0e09f82be819c7f3c886fc527047f1ec"},
 ]
 zillionare-trader-client = [
     {file = "zillionare-trader-client-0.3.1.tar.gz", hash = "sha256:399bb8fb00777be967d145d8eeb7bb880ad9fc944c9bc72454ede10d5a14f425"},

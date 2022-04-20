@@ -93,7 +93,7 @@ class Candlestick:
             specs=specs,
         )
 
-        for name, trace in self.main_traces.items():
+        for _, trace in self.main_traces.items():
             fig.add_trace(trace, row=1, col=1)
 
         for i, (_, trace) in enumerate(self.ind_traces.items()):
