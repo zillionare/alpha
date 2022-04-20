@@ -1,4 +1,5 @@
-from typing import List, Any
+from typing import Any, List
+
 import dash_bootstrap_components as dbc
 from dash import html
 
@@ -45,7 +46,7 @@ def make_form(
             "tel",
             "url",
             "search",
-            "checkbox"
+            "checkbox",
         ], "不支持的控件类型: {}".format(_type)
 
         if _type == "checkbox":

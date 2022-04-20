@@ -1,7 +1,8 @@
 import dash_bootstrap_components as dbc
 from dash import Input, Output, State, callback, dcc
-from alpha.web.components.scaffold import render_with_scaffold
+
 from alpha.web.auth import get_user
+from alpha.web.components.scaffold import render_with_scaffold
 
 location = dcc.Location(id="homepage", pathname="/research", refresh=False)
 

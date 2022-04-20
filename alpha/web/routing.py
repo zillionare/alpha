@@ -6,13 +6,14 @@ routing module mimic the routing for the dash web servers.
 
 import glob
 import importlib
+import logging
 import os
 
 import dash_bootstrap_components as dbc
 from dash import callback, dcc, html
 from dash.dependencies import Input, Output
+
 from alpha.web.homepage.view import render_home_page
-import logging
 
 logger = logging.getLogger(__name__)
 

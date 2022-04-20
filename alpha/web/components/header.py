@@ -1,6 +1,6 @@
 import dash_bootstrap_components as dbc
-from dash import Input, Output, callback
-from dash import html
+from dash import Input, Output, callback, html
+
 from alpha.web.auth.models import get_user
 
 # account/logout dropdown menu in the navbar
@@ -56,7 +56,11 @@ header = dbc.Navbar(
 )
 
 
-@callback(Output("account-menu-header", "children"), Output("accountMenu", "label"), Input("router", "pathname"))
+@callback(
+    Output("account-menu-header", "children"),
+    Output("accountMenu", "label"),
+    Input("router", "pathname"),
+)
 def update_user(nclicks):
     user = get_user() or "未登录"
     return user, user

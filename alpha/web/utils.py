@@ -1,7 +1,8 @@
+import logging
 from re import L
 from typing import List
+
 import dash
-import logging
 
 logger = logging.getLogger(__name__)
 

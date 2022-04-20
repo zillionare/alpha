@@ -27,7 +27,6 @@ from dash_bootstrap_components import (
 from dateutil import parser
 from omicron import tf
 from omicron.models.stock import Stock
-from coretypes import FrameType
 
 from alpha.plotting.candlestick import Candlestick
 from alpha.web import routing
@@ -38,7 +37,16 @@ from alpha.web.utils import get_triggerred_controls
 
 logger = logging.getLogger(__name__)
 
-_state_keys = ("code", "dt", "nbars", "bbox_size", "use_close", "sr_win", "error", "frame_type")
+_state_keys = (
+    "code",
+    "dt",
+    "nbars",
+    "bbox_size",
+    "use_close",
+    "sr_win",
+    "error",
+    "frame_type",
+)
 
 
 def _key(sub: str) -> str:
@@ -87,9 +95,20 @@ def toolbar():
             ),
             dbc.ButtonGroup(
                 [
-                    dbc.Button(html.I("30", className="fas auto"), size="sm", id="frametype-30"),
-                    dbc.Button(html.I("日", className="fas auto"), size="sm", active=True, id="frametype-day"),
-                    dbc.Button(html.I("周", className="fas auto"), size="sm", id="frametype-week"),
+                    dbc.Button(
+                        html.I("30", className="fas auto"), size="sm", id="frametype-30"
+                    ),
+                    dbc.Button(
+                        html.I("日", className="fas auto"),
+                        size="sm",
+                        active=True,
+                        id="frametype-day",
+                    ),
+                    dbc.Button(
+                        html.I("周", className="fas auto"),
+                        size="sm",
+                        id="frametype-week",
+                    ),
                     dbc.Button(
                         html.I(className="fas fa-backward"),
                         color="secondary",
@@ -312,7 +331,7 @@ def load_params(**kwargs) -> dict:
         "bbox_size": 20,
         "use_close": True,
         "sr_win": 60,  # support_resist_lines win
-        "frame_type": FrameType.DAY
+        "frame_type": FrameType.DAY,
     }
 
     for field in _state_keys:
@@ -346,6 +365,7 @@ def make_main_figure(**kwargs):
     logger.info("draw candlestick for %s at %s", code, params["dt"])
     # build figure
     cs = Candlestick(bars, title=f"{name} - {frame_desc}")
+
     cs.mark_bbox(min_size=params["bbox_size"])
 
     if stock.security_type == SecurityType.INDEX:
@@ -356,6 +376,7 @@ def make_main_figure(**kwargs):
         down_thres = -0.03
 
     cs.mark_peaks_and_valleys()
+
     cs.mark_support_resist_lines(
         up_thres, down_thres, use_close=params["use_close"], win=params["sr_win"]
     )

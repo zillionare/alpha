@@ -1,9 +1,11 @@
-from .header import header
-from .sidebar import sidebar
+from typing import Union
+
 import dash_bootstrap_components as dbc
 from dash import dcc
-from typing import Union
 from dash.development.base_component import Component
+
+from .header import header
+from .sidebar import sidebar
 
 
 def render_with_scaffold(
