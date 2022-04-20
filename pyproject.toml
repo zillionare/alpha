@@ -64,6 +64,7 @@ ckwrap = "^0.1.9"
 dash = "^2.3.1"
 dash-bootstrap-components = "^1.1.0"
 asgiref = "^3.5.0"
+APScheduler = "^3.9.1"
 
 
 [tool.poetry.extras]

@@ -1,12 +1,15 @@
+import asyncio
 import os
 
-import dash_bootstrap_components as dbc
-from dash import Dash
-import omicron
 import cfg4py
-from alpha.config import get_config_dir
+import dash_bootstrap_components as dbc
+import omicron
+from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from asgiref.sync import AsyncToSync
+from dash import Dash
 
+from alpha.config import get_config_dir
+from alpha.jobs import start_background_tasks
 from alpha.web import routing
 
 app = Dash(
@@ -28,6 +31,7 @@ def start(port: int = 8050, host="0.0.0.0"):
     app.layout = routing.layout()
     app.title = "Alpha策略分析师"
 
+    start_background_tasks()
     # dev_tools_hot_reload=True
     app.run_server(
         host, port, dev_tools_hot_reload=True, dev_tools_hot_reload_interval=5
