@@ -1,3 +1,4 @@
+import datetime
 import logging
 from typing import List, Union
 from dash.development.base_component import Component
@@ -11,11 +12,11 @@ from dash import Input, Output, callback, dcc, html
 from omicron.models.stock import Stock
 from collections import OrderedDict
 
-from pandas_datareader import get_recent_iex
 from alpha.web.utils import get_triggerred_controls
 from dateutil import parser
 from alpha.web.components.scaffold import render_with_scaffold
 from alpha.web import session
+from omicron import tf
 
 from alpha.plotting.candlestick import Candlestick
 from alpha.web import routing
@@ -196,12 +197,16 @@ def validate_date(sid: str, date: str):
     Output("stock-input", "invalid"),
     Output("date-input", "invalid"),
     Output("alert", "children"),
-    Input("session_id", "data"),
+    Input("session-id", "data"),
     Input("stock-input", "value"),
     Input("date-input", "value"),
+    Input("fastbackward", "n_clicks"),
+    Input("backward", "n_clicks"),
+    Input("forward", "n_clicks"),
+    Input("fastforward", "n_clicks"),
     prevent_initial_call=True
 )
-def on_params_change(sid: str, code, date):
+def on_params_change(sid: str, code, date, fb, b, f, ff):
     triggered = get_triggerred_controls()
 
     control_state = {}
@@ -216,6 +221,22 @@ def on_params_change(sid: str, code, date):
             return _update_toolbar(date_input_invalid=True)
         else:
             control_state["date_input_invalid"] = False
+
+    dt = session.get(sid, _key("dt")) or arrow.now().date()
+    if "fastbackward" in triggered:
+        # todo: 如何设置正确的最小日期？
+        dt = max(tf.day_shift(dt, -30), datetime.date(2015, 1, 4))
+
+    elif "backward" in triggered:
+        dt = max(tf.day_shift(dt, -1), datetime.date(2015, 1, 4))
+
+    elif "forward" in triggered:
+        dt = min(tf.day_shift(dt, 1), arrow.now().date())
+
+    elif "fastforward" in triggered:
+        dt = min(tf.day_shift(dt, 30), arrow.now().date())
+
+    session.save(sid, _key("dt"), dt)
 
     figure = make_main_figure(sid)
     return _update_toolbar(figure=figure, **control_state)
@@ -263,15 +284,15 @@ def make_main_figure(sid: str, **kwargs):
     cs = Candlestick(bars, title=name)
     cs.mark_bbox(min_size=params["bbox_size"])
 
-    # if stock.security_type == SecurityType.INDEX:
-    #     up_thres = 0.01
-    #     down_thres = -0.01
-    # else:
-    #     up_thres = 0.03
-    #     down_thres = -0.03
+    if stock.security_type == SecurityType.INDEX:
+        up_thres = 0.01
+        down_thres = -0.01
+    else:
+        up_thres = 0.03
+        down_thres = -0.03
 
     cs.mark_peaks_and_valleys()
-    cs.mark_support_resist_lines(use_close=params["use_close"], win=params["sr_win"])
+    cs.mark_support_resist_lines(up_thres, down_thres, use_close=params["use_close"], win=params["sr_win"])
 
     return cs.figure
 
