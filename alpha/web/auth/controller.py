@@ -1,21 +1,21 @@
-from .models import get_current_user, remove_current_user
+from .models import get_user, remove_session
 from .view import render
 from alpha.web import routing
 
 
 @routing.on("/logout")
-def logout(sid: str):
+def logout():
     """
     logout function.
     """
-    if get_current_user():
-        remove_current_user()
+    if get_user():
+        remove_session()
 
     return render()
 
 
 @routing.on("/login")
-def login(sid: str):
+def login():
     """
     login function.
     """

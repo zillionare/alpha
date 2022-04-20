@@ -1,1 +1,1 @@
-from .models import get_current_user
+from .models import get_user

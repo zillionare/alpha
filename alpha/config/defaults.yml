@@ -37,3 +37,6 @@ notify:
   mail_from: aaron_yang@jieyu.ai
   mail_to: aaron_yang@jieyu.ai
   mail_server: smtp.ym.163.com
+
+auth:
+  users_file: ~/zillionare/alpha/config/users.txt

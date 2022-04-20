@@ -3,7 +3,7 @@ import dash_bootstrap_components as dbc
 from dash import callback, dcc, html
 from dash.dependencies import Input, Output, State
 
-from .models import get_current_user, login_user
+from .models import get_user, login_user
 
 form = dbc.Card(
     [
@@ -88,7 +88,7 @@ def update_output(n_clicks, usernameSubmit, passwordSubmit, username, password):
         or (usernameSubmit and usernameSubmit > 0)
         or (passwordSubmit and passwordSubmit > 0)
     ):
-        if get_current_user() is None:
+        if get_user() is None:
             response = dash.callback_context.response
             if login_user(response, username, password):
                 return dash.no_update, dash.no_update

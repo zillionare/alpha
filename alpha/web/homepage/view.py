@@ -1,13 +1,13 @@
 import dash_bootstrap_components as dbc
-from dash import Input, Output, State, callback, dcc, html
+from dash import Input, Output, State, callback, dcc
 from alpha.web.components.scaffold import render_with_scaffold
-from alpha.web.auth import get_current_user
+from alpha.web.auth import get_user
 
 location = dcc.Location(id="homepage", pathname="/research", refresh=False)
 
 
-def render_home_page(sid: str):
-    global location, content
+def render_home_page():
+    global location
     return render_with_scaffold(location)
 
 
@@ -23,7 +23,6 @@ def toggle_navbar_collapse(n, is_open):
     return is_open
 
 
-@callback(Output("accountMenu", "label"), [Input(location, "pathname")])
-def _user(pathname):
-    return "Aaron"
-    # return get_current_user()
+# @callback(Output("accountMenu", "label"), [Input(location, "pathname")])
+# def _user(pathname):
+#     return get_user() or "未登录"
