@@ -31,7 +31,7 @@ def start(port: int = 8050, host="0.0.0.0"):
     app.layout = routing.layout()
     app.title = "Alpha策略分析师"
 
-    #start_background_tasks()
+    # start_background_tasks()
     # dev_tools_hot_reload=True
     app.run_server(
         host, port, dev_tools_hot_reload=True, dev_tools_hot_reload_interval=5

@@ -74,7 +74,7 @@ def _routing(pathname: str):
 
 def build_blueprints():
     """
-    collect all routes by import controller from web/*/controller.py
+    collect all routes by import controller from web/views/*.py
     """
     _dir = os.path.dirname(os.path.abspath(__file__))
     package_prefix = "alpha.web."
