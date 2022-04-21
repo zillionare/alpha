@@ -7,6 +7,7 @@ from dash import Input, Output, callback, html
 
 from alpha.web.auth.models import get_user
 
+
 def make_form(
     idprefix: str,
     labels: List[str],
@@ -81,6 +82,7 @@ def make_form(
 
     return dbc.Container(rows, fluid=True, class_name="small")
 
+
 # account/logout dropdown menu in the navbar
 account_menu = dbc.DropdownMenu(
     [
@@ -134,7 +136,7 @@ header = dbc.Navbar(
                         backtest_menu,
                         dbc.NavItem(dbc.NavLink("股票池", href="/pool")),
                         dbc.NavItem(dbc.NavLink("研究", href="/research", active=True)),
-                        account_menu
+                        account_menu,
                     ],
                     className="ms-auto",
                     navbar=True,

@@ -493,4 +493,4 @@ def render_view(components: Union[Component, List[Component]]):
         fluid=True,
         style={"padding": 0},
     )
-    return with_header_right_sidebar(content, sidebar = "评估", width=3)
+    return with_header_right_sidebar(content, sidebar="评估", width=3)
