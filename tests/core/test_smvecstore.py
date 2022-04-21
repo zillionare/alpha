@@ -15,10 +15,7 @@ class TestSmallSizeVectorStore(unittest.TestCase):
     def test_all_in_one(self):
         store = SmallSizeVectorStore("test", {"desc": "O", "flag": "<i4"})
 
-        rid = store.insert(
-            [1, 2, 3],
-            {"flag": 1, "desc": "one"},
-        )
+        rid = store.insert([1, 2, 3], {"flag": 1, "desc": "one"})
         self.assertEqual(rid, 0)
 
         rids = store.insert(
@@ -60,10 +57,7 @@ class TestSmallSizeVectorStore(unittest.TestCase):
     def test_sorted(self):
         store = SmallSizeVectorStore("test", {"desc": "O", "flag": "<i4"})
 
-        rid = store.insert(
-            [1, 2, 3],
-            {"flag": 1, "desc": "one"},
-        )
+        rid = store.insert([1, 2, 3], {"flag": 1, "desc": "one"})
 
         rids = store.insert(
             [[1, 2, 0], [1, 0, 3]],

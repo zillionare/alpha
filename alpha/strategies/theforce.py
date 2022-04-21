@@ -19,10 +19,9 @@ class TheForceStrategy(MLStrategyBase):
         Returns:
             数据集
         """
-        
 
-    def get_train_data(self, code:str):
-        pass        
+    def get_train_data(self, code: str):
+        pass
 
     def m1_features(
         self, m1bars: np.ndarray, ref_bars: np.ndarray, prevday_m1bars: np.ndarray

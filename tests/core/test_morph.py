@@ -10,14 +10,7 @@ from alpha.core.morph import MorphFeatures
 class TestMorphFeatures(unittest.IsolatedAsyncioTestCase):
     def test_morph_features(self):
         morph = MorphFeatures(
-            FrameType.DAY,
-            flen=20,
-            thresholds={
-                5: 1e-3,
-                10: 1e-3,
-                20: 1e-3,
-                60: 5e-4,
-            },
+            FrameType.DAY, flen=20, thresholds={5: 1e-3, 10: 1e-3, 20: 1e-3, 60: 5e-4}
         )
 
         # fmt: off

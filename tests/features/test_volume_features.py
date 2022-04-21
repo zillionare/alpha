@@ -90,11 +90,7 @@ class TestVolumeFeatures(unittest.IsolatedAsyncioTestCase):
                 (24.84, 24.28, 6.49755080e07),
                 (23.9, 24.2, 7.79400290e07),
             ],
-            dtype=[
-                ("open", "<f4"),
-                ("close", "<f4"),
-                ("volume", "<f8"),
-            ],
+            dtype=[("open", "<f4"), ("close", "<f4"), ("volume", "<f8")],
         )
 
         win = 10

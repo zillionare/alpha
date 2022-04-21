@@ -3,10 +3,10 @@ from typing import List, Tuple
 
 import numpy as np
 from coretypes import FrameType
-from omicron.talib.common import find_runs, top_n_argpos
 from omicron.models.stock import Stock
 from omicron.models.timeframe import TimeFrame
 from omicron.talib import cross, moving_average, polyfit
+from omicron.talib.common import find_runs, top_n_argpos
 
 from alpha.core.features import parallel
 

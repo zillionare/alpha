@@ -16,18 +16,16 @@ from high score to low score, we'll have 5 kinds:
 """
 
 import datetime
+import logging
 import os
 import pickle
 from typing import List, NewType, Union
-from coretypes import Frame
-
-import logging
 
 import numpy as np
-from coretypes import FrameType
+from coretypes import Frame, FrameType
+from omicron.talib.indicators import weighted_moving_average
 
 from alpha.core.smvecstore import SmallSizeVectorStore
-from omicron.talib.indicators import weighted_moving_average
 
 logger = logging.getLogger(__name__)
 

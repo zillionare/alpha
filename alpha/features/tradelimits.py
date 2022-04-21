@@ -1,10 +1,10 @@
 import datetime
+import logging
+
+import arrow
+from coretypes import FrameType
 from omicron.models.stock import Stock
 from omicron.models.timeframe import TimeFrame as tf
-from coretypes import FrameType
-import logging
-import arrow
-
 
 logger = logging.getLogger(__name__)
 

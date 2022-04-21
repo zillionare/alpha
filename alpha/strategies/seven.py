@@ -167,15 +167,7 @@ class Seven(BaseXGBoostStrategy):
         """
         import matplotlib.pyplot as plt
 
-        color_map = {
-            5: "b",
-            10: "c",
-            20: "k",
-            30: "g",
-            60: "m",
-            120: "r",
-            250: "y",
-        }
+        color_map = {5: "b", 10: "c", 20: "k", 30: "g", 60: "m", 120: "r", 250: "y"}
 
         sec = Stock(code)
         xend = tf.shift(arrow.get(xend), 0, ft)

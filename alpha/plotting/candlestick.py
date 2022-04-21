@@ -6,11 +6,10 @@ import numpy as np
 import plotly.graph_objects as go
 import talib
 from coretypes import Frame
-from omicron import moving_average, peaks_and_valleys
+from omicron import moving_average, peaks_and_valleys, support_resist_lines
 from plotly.subplots import make_subplots
 
 from alpha.core.commons import plateaus
-from omicron import support_resist_lines
 
 
 class Candlestick:
@@ -315,7 +314,7 @@ class Candlestick:
             self.main_traces["bbox"] = trace
 
     def add_indicator(self, indicator: str):
-        """"向k线图中增加技术指标"""
+        """ "向k线图中增加技术指标"""
         if indicator == "volume":
             colors = np.repeat(self.RED, len(self.bars))
             colors[self.bars["close"] <= self.bars["open"]] = self.GREEN

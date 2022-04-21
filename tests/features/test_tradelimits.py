@@ -1,7 +1,9 @@
 import unittest
-from tests import init_test_env
+
 import omicron
+
 from alpha.features.tradelimits import trade_limits
+from tests import init_test_env
 
 
 class TradeLimitsTest(unittest.IsolatedAsyncioTestCase):

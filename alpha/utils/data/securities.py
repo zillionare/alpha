@@ -5,10 +5,10 @@ from typing import List
 
 import arrow
 import fire
-import zarr
 import jqdatasdk as jq
 import numpy as np
 import pandas as pd
+import zarr
 from coretypes import FrameType
 from omicron import tf
 

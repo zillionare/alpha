@@ -8,10 +8,10 @@ import talib as ta
 from coretypes import FrameType
 from numpy.typing import ArrayLike
 from omicron.extensions.np import remove_nan
-from omicron.talib.common import find_runs, top_n_argpos
 from omicron.models.stock import Stock
 from omicron.models.timeframe import TimeFrame
 from omicron.talib import moving_average
+from omicron.talib.common import find_runs, top_n_argpos
 from omicron.talib.morph import polyfit
 
 argpos_permutations = {

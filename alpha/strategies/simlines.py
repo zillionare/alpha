@@ -10,7 +10,6 @@ from omicron.models.stock import Stock
 from omicron.models.timeframe import TimeFrame as tf
 from sklearn.metrics.pairwise import paired_euclidean_distances
 
-
 from alpha.core.features import moving_average
 
 Frame = NewType("Frame", (str, datetime.date, datetime.datetime, Arrow))

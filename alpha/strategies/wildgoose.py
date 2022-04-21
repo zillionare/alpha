@@ -11,9 +11,9 @@ import jqdatasdk as jq
 import numpy as np
 import pandas as pd
 from coretypes import FrameType
+from empyrical import max_drawdown
 from jqdatasdk import finance, query
 from omicron.models.timeframe import TimeFrame as tf
-from empyrical import max_drawdown
 from omicron.talib.morph import polyfit
 
 logger = logging.getLogger(__name__)

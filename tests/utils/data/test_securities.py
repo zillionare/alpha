@@ -1,8 +1,10 @@
-from telnetlib import SE
-import unittest
-from alpha.utils.data.securities import Securities
-from omicron import tf
 import datetime
+import unittest
+from telnetlib import SE
+
+from omicron import tf
+
+from alpha.utils.data.securities import Securities
 
 
 class SecuritiesTest(unittest.TestCase):
