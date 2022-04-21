@@ -8,6 +8,8 @@ import talib
 from coretypes import Frame
 from omicron import moving_average, peaks_and_valleys, support_resist_lines
 from plotly.subplots import make_subplots
+from omicron import tf
+import datetime
 
 from alpha.core.commons import plateaus
 
@@ -67,6 +69,8 @@ class Candlestick:
         # 增加均线
         for win in ma_groups:
             name = f"ma{win}"
+            if win > len(bars):
+                continue
             ma = moving_average(bars["close"], win)
             n = len(ma)
             line = go.Scatter(y=ma, x=self.ticks[-n:], name=name, line=dict(width=1))
