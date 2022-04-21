@@ -65,9 +65,9 @@ class GridStrategy(BaseStrategy):
             await self.evaluate(code, bar)
 
         headers = {"Authorization": self.broker.token, "Request-ID": uuid.uuid4().hex}
-        bills = requests.get(cfg.backtest.url + "bills", headers=headers).json()
+        response = requests.get(cfg.backtest.url + "bills", headers=headers).json()
         with open(f"/tmp/{self.name}.bills", "w") as f:
-            json.dump(bills, f)
+            json.dump(response["data"], f)
 
         print(self.broker.metrics())
 

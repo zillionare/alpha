@@ -2,7 +2,10 @@ from typing import Any, List
 
 import dash_bootstrap_components as dbc
 from dash import html
+import dash_bootstrap_components as dbc
+from dash import Input, Output, callback, html
 
+from alpha.web.auth.models import get_user
 
 def make_form(
     idprefix: str,
@@ -77,3 +80,82 @@ def make_form(
         rows.append(row)
 
     return dbc.Container(rows, fluid=True, class_name="small")
+
+# account/logout dropdown menu in the navbar
+account_menu = dbc.DropdownMenu(
+    [
+        dbc.DropdownMenuItem(
+            "Account",
+            header=True,
+            disabled=True,
+            style={"font-weight": "bold"},
+            id="account-menu-header",
+        ),
+        dbc.DropdownMenuItem("Logout", href="/logout"),
+    ],
+    nav=True,
+    in_navbar=True,
+    label="Account",
+    id="accountMenu",
+)
+
+backtest_menu = dbc.DropdownMenu(
+    [
+        dbc.DropdownMenuItem(
+            "网格交易",
+            href="/backtest#gridtrade",
+        )
+    ],
+    nav=True,
+    in_navbar=True,
+    label="回测",
+    id="backtest-menu",
+)
+
+header = dbc.Navbar(
+    dbc.Container(
+        [
+            html.A(
+                # Use row and col to control vertical alignment of logo / brand
+                dbc.Row(
+                    [
+                        dbc.Col(html.Img(src="assets/img/logo.png", height="32px")),
+                        dbc.Col(dbc.NavbarBrand("Alpha", className="ms-2")),
+                    ],
+                    align="center",
+                    className="g-0",
+                ),
+                style={"textDecoration": "none"},
+            ),
+            dbc.NavbarToggler(id="navbar-toggler2", n_clicks=0),
+            dbc.Collapse(
+                dbc.Nav(
+                    [
+                        backtest_menu,
+                        dbc.NavItem(dbc.NavLink("股票池", href="/pool")),
+                        dbc.NavItem(dbc.NavLink("研究", href="/research", active=True)),
+                        account_menu
+                    ],
+                    className="ms-auto",
+                    navbar=True,
+                ),
+                id="navbar-collapse2",
+                navbar=True,
+            ),
+        ],
+    ),
+    color="primary",
+    dark=True,
+    # bootstrap navbar contains 2rem padding, which cause navbar too large
+    style={"padding": 0, "margin-bottom": "20px"},
+)
+
+
+@callback(
+    Output("account-menu-header", "children"),
+    Output("accountMenu", "label"),
+    Input("router", "pathname"),
+)
+def update_user(nclicks):
+    user = get_user() or "未登录"
+    return user, user

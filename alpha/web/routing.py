@@ -9,11 +9,10 @@ import importlib
 import logging
 import os
 
-import dash_bootstrap_components as dbc
 from dash import callback, dcc, html
 from dash.dependencies import Input, Output
 
-from alpha.web.homepage.view import render_home_page
+from alpha.web.views.homepage import render_home_page
 
 logger = logging.getLogger(__name__)
 
@@ -39,7 +38,7 @@ def layout():
     )
 
 
-def on(pathname: str):
+def dispatch(pathname: str):
     """
     dispatch function.
     """
@@ -67,7 +66,8 @@ def _routing(pathname: str):
 
     handler = routes.get(pathname, None)
     if handler is None:
-        return render_home_page()
+        content = html.H1(f"{pathname} is under construction")
+        return render_home_page(content)
 
     return handler()
 
@@ -79,7 +79,7 @@ def build_blueprints():
     _dir = os.path.dirname(os.path.abspath(__file__))
     package_prefix = "alpha.web."
 
-    for pattern in [f"{_dir}/**/controller.py", f"{_dir}/**/view.py"]:
+    for pattern in [f"{_dir}/views/*.py"]:
         for pyfile in glob.glob(pattern):
             sub = pyfile.replace(f"{_dir}/", "").replace(".py", "").replace("/", ".")
             module_name = package_prefix + sub

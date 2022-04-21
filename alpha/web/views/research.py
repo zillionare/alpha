@@ -3,7 +3,7 @@ import logging
 import re
 from collections import OrderedDict
 from typing import List, Union
-
+from alpha.web.views.layout import with_header_right_sidebar
 import arrow
 import dash
 import dash_bootstrap_components as dbc
@@ -31,8 +31,7 @@ from omicron.models.stock import Stock
 from alpha.plotting.candlestick import Candlestick
 from alpha.web import routing
 from alpha.web.auth.models import sessions
-from alpha.web.components.scaffold import render_with_scaffold
-from alpha.web.components.widgets import make_form
+from alpha.web.views.widgets import make_form
 from alpha.web.utils import get_triggerred_controls
 
 logger = logging.getLogger(__name__)
@@ -473,7 +472,7 @@ def on_settings_cancel(nclicks):
         return False
 
 
-@routing.on("/research")
+@routing.dispatch("/research")
 def init_page():
     figure = make_main_figure()
     graph = dcc.Graph(id="main-fig", figure=figure)
@@ -494,5 +493,4 @@ def render_view(components: Union[Component, List[Component]]):
         fluid=True,
         style={"padding": 0},
     )
-    location = dcc.Location("researchUrl", pathname="/research", refresh=False)
-    return render_with_scaffold(location, content)
+    return with_header_right_sidebar(content, sidebar = "评估", width=3)

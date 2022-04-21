@@ -4,7 +4,7 @@ from .models import get_user, remove_session
 from .view import render
 
 
-@routing.on("/logout")
+@routing.dispatch("/logout")
 def logout():
     """
     logout function.
@@ -15,7 +15,7 @@ def logout():
     return render()
 
 
-@routing.on("/login")
+@routing.dispatch("/login")
 def login():
     """
     login function.
