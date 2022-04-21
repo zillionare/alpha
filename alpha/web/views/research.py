@@ -7,7 +7,6 @@ from alpha.web.views.layout import with_header_right_sidebar
 import arrow
 import dash
 import dash_bootstrap_components as dbc
-from asgiref.sync import async_to_sync
 from coretypes import Frame, FrameType, SecurityType
 from dash import Input, Output, callback, dcc, html
 from dash.development.base_component import Component
@@ -32,7 +31,7 @@ from alpha.plotting.candlestick import Candlestick
 from alpha.web import routing
 from alpha.web.auth.models import sessions
 from alpha.web.views.widgets import make_form
-from alpha.web.utils import get_triggerred_controls
+from alpha.web.utils import get_bars, get_triggerred_controls, make_stock_input_hint
 
 logger = logging.getLogger(__name__)
 
@@ -162,26 +161,7 @@ def toolbar():
     [Input(component_id="stock-input", component_property="value")],
 )
 def update_datalist(value):
-    if value is None:
-        return []
-
-    matched = Stock.fuzzy_match(value)
-    #  ('000001.XSHE', '平安银行', 'PAYH'... 'stock')
-
-    options = []
-
-    if re.match(r"\d+", value):  # 用户输入了代码
-        for v in matched.values():
-            code = v[0].split(".")[0]
-            options.append(html.Option(v[0], label=f"{code} {v[1]}"))
-    elif re.match(r"[a-z]+", value.lower()):
-        for v in matched.values():
-            options.append(html.Option(v[0], label=f"{v[2]} {v[1]}"))
-    else:
-        for v in matched.values():
-            options.append(html.Option(v[0], label=f"{v[1]}"))
-
-    return options
+    return make_stock_input_hint(value)
 
 
 def _update_toolbar(**kwargs):
@@ -305,7 +285,7 @@ def on_params_change(code, date, f30, fday, fweek, fb, b, f, ff):
         control_state["frametype_30_active"] = False
         control_state["frametype_day_active"] = True
         control_state["frametype_week_active"] = False
-    else:
+    elif "frametype-week" in triggered:
         control_state["frametype_30_active"] = False
         control_state["frametype_day_active"] = False
         control_state["frametype_week_active"] = True
@@ -315,14 +295,7 @@ def on_params_change(code, date, f30, fday, fweek, fb, b, f, ff):
     return _update_toolbar(figure=figure, **control_state)
 
 
-@async_to_sync
-async def get_bars(
-    stock: str, end: Frame, n: int, frame_type: FrameType, fq=True, unclosed=True
-):
-    return await Stock.get_bars(stock, n, frame_type, end, fq, unclosed)
-
-
-def load_params(**kwargs) -> dict:
+def load_params() -> dict:
     params = {
         "dt": arrow.now().date(),
         "code": "000001.XSHG",
@@ -338,14 +311,14 @@ def load_params(**kwargs) -> dict:
         if v is not None:
             params[field] = v
 
-        if field in kwargs:
-            params[field] = kwargs.get(field)
-
+    if params["frame_type"] == FrameType.MIN30:
+        params["dt"] = tf.combine_time(params["dt"], 15)
+        
     return params
 
 
-def make_main_figure(**kwargs):
-    params = load_params(**kwargs)
+def make_main_figure():
+    params = load_params()
 
     code = params["code"]
     frame_type = params["frame_type"]

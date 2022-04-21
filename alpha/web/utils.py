@@ -1,6 +1,11 @@
 import logging
-from re import L
+import re
 from typing import List
+from asgiref.sync import async_to_sync
+from coretypes import Frame, FrameType
+from omicron.models.stock import Stock
+from dash import html
+from dash.development.base_component import Component
 
 import dash
 
@@ -17,3 +22,33 @@ def get_triggerred_controls() -> List[str]:
             logger.exception(e)
 
     return controls
+
+
+@async_to_sync
+async def get_bars(
+    stock: str, end: Frame, n: int, frame_type: FrameType, fq=True, unclosed=True
+):
+    return await Stock.get_bars(stock, n, frame_type, end, fq, unclosed)
+
+
+def make_stock_input_hint(code: str) -> List[Component]:
+    if code is None:
+        return []
+
+    matched = Stock.fuzzy_match(code)
+    #  ('000001.XSHE', '平安银行', 'PAYH'... 'stock')
+
+    options = []
+
+    if re.match(r"\d+", code):  # 用户输入了代码
+        for v in matched.values():
+            code = v[0].split(".")[0]
+            options.append(html.Option(v[0], label=f"{code} {v[1]}"))
+    elif re.match(r"[a-z]+", code.lower()):
+        for v in matched.values():
+            options.append(html.Option(v[0], label=f"{v[2]} {v[1]}"))
+    else:
+        for v in matched.values():
+            options.append(html.Option(v[0], label=f"{v[1]}"))
+
+    return options
