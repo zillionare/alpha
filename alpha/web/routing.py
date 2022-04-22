@@ -12,7 +12,7 @@ import os
 from dash import callback, dcc, html
 from dash.dependencies import Input, Output
 
-from alpha.web.views.homepage import render_home_page
+from alpha.web.pages.homepage import render_home_page
 
 logger = logging.getLogger(__name__)
 
@@ -74,12 +74,12 @@ def _routing(pathname: str):
 
 def build_blueprints():
     """
-    collect all routes by import controller from web/views/*.py
+    collect all routes by import controller from web/pages/*.py
     """
     _dir = os.path.dirname(os.path.abspath(__file__))
     package_prefix = "alpha.web."
 
-    for pattern in [f"{_dir}/views/*.py"]:
+    for pattern in [f"{_dir}/pages/*.py"]:
         for pyfile in glob.glob(pattern):
             sub = pyfile.replace(f"{_dir}/", "").replace(".py", "").replace("/", ".")
             module_name = package_prefix + sub

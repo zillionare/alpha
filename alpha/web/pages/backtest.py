@@ -1,7 +1,7 @@
 from flask import session
 from alpha.web import routing
-from alpha.web.auth.models import sessions
-from alpha.web.views.layout import with_header
+from alpha.web.models.session import sessions
+from alpha.web.pages.layout import with_header
 import dash_bootstrap_components as dbc
 import dash
 from dash import Input, Output, State, callback, html, dcc

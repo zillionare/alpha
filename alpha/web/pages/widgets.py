@@ -5,7 +5,7 @@ from dash import html
 import dash_bootstrap_components as dbc
 from dash import Input, Output, callback, html
 
-from alpha.web.auth.models import get_user
+from alpha.web.models.session import get_user
 
 
 def make_form(

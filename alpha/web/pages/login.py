@@ -2,8 +2,9 @@ import dash
 import dash_bootstrap_components as dbc
 from dash import callback, dcc, html
 from dash.dependencies import Input, Output, State
+from alpha.web import routing
 
-from .models import get_user, login_user
+from ..models.session import get_user, login_user, remove_session
 
 form = dbc.Card(
     [
@@ -96,3 +97,21 @@ def update_output(n_clicks, usernameSubmit, passwordSubmit, username, password):
         return True, True
     else:
         return dash.no_update, dash.no_update
+
+@routing.dispatch("/logout")
+def logout():
+    """
+    logout function.
+    """
+    if get_user():
+        remove_session()
+
+    return render()
+
+
+@routing.dispatch("/login")
+def login():
+    """
+    login function.
+    """
+    return render()

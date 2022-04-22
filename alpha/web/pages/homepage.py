@@ -1,7 +1,7 @@
 import dash_bootstrap_components as dbc
 from dash import Input, Output, State, callback, dcc
 
-from alpha.web.views.layout import with_header
+from alpha.web.pages.layout import with_header
 
 
 def render_home_page(main):

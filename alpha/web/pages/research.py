@@ -1,9 +1,10 @@
 import datetime
+from enum import auto
 import logging
 import re
 from collections import OrderedDict
 from typing import List, Union
-from alpha.web.views.layout import with_header_right_sidebar
+from alpha.web.pages.layout import with_header_right_sidebar
 import arrow
 import dash
 import dash_bootstrap_components as dbc
@@ -29,8 +30,8 @@ from omicron.models.stock import Stock
 
 from alpha.plotting.candlestick import Candlestick
 from alpha.web import routing
-from alpha.web.auth.models import sessions
-from alpha.web.views.widgets import make_form
+from alpha.web.models.session import sessions
+from alpha.web.pages.widgets import make_form
 from alpha.web.utils import get_bars, get_triggerred_controls, make_stock_input_hint
 
 logger = logging.getLogger(__name__)
@@ -75,6 +76,7 @@ def toolbar():
                 size="sm",
                 n_submit=0,
                 style={"margin-right": "1rem", "width": "8rem", "height": "2rem"},
+                autocomplete="off",
             ),
             html.Datalist(id="stock-hints"),
             dbc.InputGroup(
