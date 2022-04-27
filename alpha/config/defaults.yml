@@ -14,6 +14,8 @@ logging:
       level: INFO
     pyemit:
       level: INFO
+    werkzeug:
+      level: WARNING
   root:
     handlers:
       - console
@@ -33,6 +35,10 @@ postgres:
 alpha:
     data_home: ~/zillionare/alpha/data
     tts_server: http://127.0.0.1:5002/api/tts?
+    strategy:
+      package_prefix: alpha.strategies
+      source_dir: /apps/alpha/alpha/strategies
+      exclude: ["base.py", "__init__.py"]
 notify:
   mail_from: aaron_yang@jieyu.ai
   mail_to: aaron_yang@jieyu.ai
