@@ -6,7 +6,6 @@ import os
 from enum import Enum, IntEnum
 from typing import List
 
-import h5py
 import jqdatasdk as jq
 import numpy as np
 import pandas as pd
@@ -303,18 +302,18 @@ class WildGooseStrategy:
             code (str): [description]
             n (int, optional): [description]. Defaults to 20.
         """
-        from matplotlib import pyplot as plt
+        import plotly.express as px
 
         values = self.fetch_net_value(code, n)
-        plt.plot(values)
-        plt.text(
+        px.plot(values)
+        px.text(
             0.01,
             0.9,
             f"{code}: {self.code2name(code)}",
-            transform=plt.gca().transAxes,
+            transform=px.gca().transAxes,
             fontsize=14,
         )
-        plt.show()
+        px.show()
 
 
 if __name__ == "__main__":

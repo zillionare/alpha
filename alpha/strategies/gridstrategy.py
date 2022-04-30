@@ -10,7 +10,6 @@ import cfg4py
 import fire
 import numpy as np
 import omicron
-import requests
 from coretypes import FrameType
 from omicron import tf
 from omicron.models.stock import Stock
@@ -27,14 +26,10 @@ class GridStrategy(BaseStrategy):
     name = "grid-strategy"
     desc = "网络交易策略。按照最近10天的收盘价格，计算出中枢价格，然后根据中枢价格，在3个标准差以内划分网格，进行交易。"
 
-    def __init__(self):
+    def __init__(self, is_backtest):
+        super().__init__()
         self.name = "grid-strategy-v0"
         self.token = "aaron-grid-token"
-
-        self.cash = 1_000_000
-        self.broker = TradeClient(
-            cfg.backtest.url, self.name, self.token, is_backtest=True, capital=self.cash
-        )
 
         self.mid_price = 0
         self.delta = 0
@@ -48,14 +43,12 @@ class GridStrategy(BaseStrategy):
         # 卖出时最少网格跨度，[1, self.grids)
         self.min_span = 3
 
-    async def backtest(self, code: str, start: datetime.date, end: datetime.date):
+    async def backtest(self, start: datetime.date, end: datetime.date, code: str):
         """
 
         Args:
             window: 回测的天数
         """
-        await omicron.init()
-
         bars = await Stock.get_bars_in_range(code, FrameType.DAY, start, end)
 
         for bar in bars:
@@ -63,13 +56,7 @@ class GridStrategy(BaseStrategy):
             logger.info("回测: %s, 非空令牌: %s", bar["frame"], buckets)
             await self._update_params(code, bar["frame"])
             await self.evaluate(code, bar)
-
-        headers = {"Authorization": self.broker.token, "Request-ID": uuid.uuid4().hex}
-        response = requests.get(cfg.backtest.url + "bills", headers=headers).json()
-        with open(f"/tmp/{self.name}.bills", "w") as f:
-            json.dump(response["data"], f)
-
-        print(self.broker.metrics())
+            await self.update_backtest_progress(bar["frame"])
 
     async def _update_params(self, code: str, dt: datetime.date):
         if (
@@ -121,21 +108,3 @@ class GridStrategy(BaseStrategy):
                         price = self.mid_price + i * self.delta
                         self._sell(code, j, price, bar["frame"])
                         break
-
-    @staticmethod
-    def start_backtest(code: str, start: str, end: str = None):
-        start = arrow.get(start).date()
-        end = arrow.now() if end is None else arrow.get(end).date()
-
-        os.environ[cfg4py.envar] = "PRODUCTION"
-        os.environ["http_proxy"] = ""
-        os.environ["https_proxy"] = ""
-
-        cfg4py.init(get_config_dir())
-
-        s = GridStrategy()
-        asyncio.run(s.backtest(code, start, end))
-
-
-if __name__ == "__main__":
-    fire.Fire({"bt": GridStrategy.start_backtest})

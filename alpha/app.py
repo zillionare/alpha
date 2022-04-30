@@ -9,7 +9,6 @@ from asgiref.sync import AsyncToSync
 from dash import Dash
 
 from alpha.config import get_config_dir
-from alpha.jobs import start_background_tasks
 from alpha.web import routing
 
 app = Dash(

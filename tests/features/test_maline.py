@@ -6,7 +6,6 @@ import omicron
 
 from alpha.core.features import moving_average
 from alpha.features.maline import MaLineFeatures
-from alpha.notebook import get_bars
 from tests import init_test_env, load_bars_from_file
 
 

@@ -21,6 +21,7 @@ from traderclient.client import TradeClient
 from alpha.config import get_config_dir
 from alpha.core.commons import plateaus
 from alpha.utils.data.securities import Securities
+from .base import BaseStrategy
 
 # url = "http://192.168.100.114:7080/backtest/api/trade/v0.2/"
 url = "http://192.168.100.112:3180/backtest/api/trade/v0.2/"
@@ -32,7 +33,7 @@ def price_equal(a, b):
     return math_round(a, 2) == math_round(b, 2)
 
 
-class BreakoutStrategy:
+class BreakoutStrategy(BaseStrategy)
     def __init__(self, url: str):
         # token = uuid.uuid4().hex
         name = "breakout_strategy-v0"

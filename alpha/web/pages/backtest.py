@@ -1,16 +1,20 @@
+import arrow
+import dash
+import dash_bootstrap_components as dbc
+import plotly.graph_objects as go
+from coretypes import Frame, FrameType
+from dash import Input, Output, State, callback, dcc, html
 from flask import session
+from omicron import tf
+from omicron.models.stock import Stock
+
 from alpha.web import routing
 from alpha.web.models.session import sessions
 from alpha.web.pages.layout import with_header
-import dash_bootstrap_components as dbc
-import dash
-from dash import Input, Output, State, callback, html, dcc
-import arrow
-from omicron import tf
-from omicron.models.stock import Stock
 from alpha.web.utils import get_bars, get_triggerred_controls, make_stock_input_hint
-from coretypes import Frame, FrameType
-import plotly.graph_objects as go
+import logging
+
+logger = logging.getLogger(__name__)
 
 param_keys = ("start", "end", "baseline", "capital")
 
@@ -18,7 +22,7 @@ param_keys = ("start", "end", "baseline", "capital")
 def prefix(sub: str):
     assert sub in param_keys
 
-    return f"BACKTEST_{sub.uppper()}"
+    return f"BACKTEST_{sub.upper()}"
 
 
 toolbar_style = {
@@ -112,6 +116,7 @@ def toolbar():
         },
     )
 
+
 def validate_baseline_code(baseline: str):
     try:
         Stock(baseline)
@@ -178,23 +183,36 @@ def draw_backtest_result(_, start, end, baseline):
             return make_response(baseline_input_invalid=True)
 
 
-def draw_baseline():
-    start, end, baseline, capital = get_params()
-
+def draw_baseline(start, end, baseline, capital):
     n = tf.count_day_frames(start, end)
     bars = get_bars(baseline, end, n, FrameType.DAY)
     close = bars["close"]
-    equity = close /close[0] * capital
+    equity = close / close[0] * capital
+
+    name = Stock(baseline).display_name
+
+    fig = go.Figure()
+    fig.add_trace(go.Scatter(x=bars["frame"], y=equity, mode="lines", name=name))
+    return dcc.Graph(id="main-fig", figure=fig)
+
+
+def draw_bt_result(base_line):
+    pass
+
+@routing.dispatch("/backtest#gridtrade")
+def backtest_gridtrade():
+    logger.info("triggerred /backtest#gridtrade")
     
-    ticks = [tf.date2int(x) for x in bars["frame"]]
-    return dcc.Graph(go.Scatter(x=ticks, y=equity, markers="line"))
 
 @routing.dispatch("/backtest")
 def init_page():
+    start, end, baseline, capital = get_params()
+    fig = draw_baseline(start, end, baseline, capital)
+
     main = dbc.Container(
         [
             dbc.Row(toolbar()),
-            dbc.Row(id="canvas-container", style={"height": "100vh"}),
+            dbc.Row(fig, id="canvas-container"),
         ],
         fluid=True,
     )

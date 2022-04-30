@@ -27,7 +27,6 @@ from alpha.core.features import (
 )
 from alpha.features.maline import MaLineFeatures
 from alpha.features.volume import moving_net_volume, top_volume_direction
-from alpha.notebook import get_bars
 
 
 class IndexShPeakValleys:

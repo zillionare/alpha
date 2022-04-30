@@ -5,7 +5,6 @@ import numpy as np
 import omicron
 
 from alpha.features.volume import moving_net_volume, top_volume_direction
-from alpha.notebook import get_bars
 from tests import data_dir, init_test_env
 
 

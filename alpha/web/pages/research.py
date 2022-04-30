@@ -315,7 +315,7 @@ def load_params() -> dict:
 
     if params["frame_type"] == FrameType.MIN30:
         params["dt"] = tf.combine_time(params["dt"], 15)
-        
+
     return params
 
 

@@ -54,9 +54,9 @@ def dispatch(pathname: str):
 
 @callback(
     Output("page-content", "children"),
-    [Input("router", "pathname")],
+    [Input("router", "pathname"), Input("router", "hash")],
 )
-def _routing(pathname: str):
+def _routing(pathname: str, hash_: str):
     # ensure auth
     # from alpha.web import auth
     # if not auth.get_current_user():
@@ -64,7 +64,9 @@ def _routing(pathname: str):
     if pathname == "/":
         pathname = "/research"
 
-    handler = routes.get(pathname, None)
+    route = f"{pathname}{hash_}"
+    logger.info("routing to %s", route)
+    handler = routes.get(route)
     if handler is None:
         content = html.H1(f"{pathname} is under construction")
         return render_home_page(content)

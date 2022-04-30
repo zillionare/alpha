@@ -51,6 +51,6 @@ def make_stock_input_hint(code: str) -> List[Component]:
         for v in matched.values():
             options.append(html.Option(v[0], label=f"{v[1]}"))
 
-    if len(options) < 2: # fix display bug
+    if len(options) < 2:  # fix display bug
         options.append(html.Option("", label=""))
     return options

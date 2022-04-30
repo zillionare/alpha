@@ -8,7 +8,6 @@ import random
 from typing import Callable, List, NewType, Tuple, Union
 
 import numpy as np
-import xgboost
 from coretypes import FrameType
 from numpy.typing import ArrayLike
 from omicron.models.stock import Stock
@@ -26,7 +25,6 @@ from sklearn.model_selection import (
     RandomizedSearchCV,
     RepeatedStratifiedKFold,
 )
-from xgboost import XGBClassifier, XGBModel, XGBRegressor
 
 from alpha.utils.data import DataBunch
 

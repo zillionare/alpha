@@ -10,7 +10,6 @@ from omicron.models.timeframe import TimeFrame as tf
 from sklearn.metrics import mean_absolute_error
 
 from alpha.core.features import (
-    fillna,
     moving_average,
     polyfit,
     predict_by_moving_average,

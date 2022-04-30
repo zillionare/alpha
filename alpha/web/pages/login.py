@@ -98,6 +98,7 @@ def update_output(n_clicks, usernameSubmit, passwordSubmit, username, password):
     else:
         return dash.no_update, dash.no_update
 
+
 @routing.dispatch("/logout")
 def logout():
     """

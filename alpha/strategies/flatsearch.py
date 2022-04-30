@@ -3,7 +3,6 @@ import os
 import pickle
 
 import cfg4py
-from pymilvus import Milvus
 from pymongo import MongoClient
 
 from alpha.config import get_config_dir
