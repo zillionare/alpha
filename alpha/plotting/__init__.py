@@ -1,103 +1,61 @@
-import arrow
+import ckwrap
 import numpy as np
-
-from alpha.core.features import moving_average, predict_by_moving_average
-
-cm = {5: "b", 10: "g", 20: "c", 60: "m", 120: "y", 250: "tab:orange", "raw": "tab:gray"}
+from typing import List, Tuple
 
 
-def format_labels(frames):
-    formatted = []
-    gap = 4 if hasattr(frames[0], "hour") else 2
-    for i, frame in enumerate(frames):
-        if i % gap == 0:
-            formatted.append(format_frame(frame))
-        else:
-            formatted.append("")
+def clustering(numbers: np.ndarray, n: int) -> List[Tuple[int, int]]:
+    """将数组`numbers`划分为`n`个簇
 
-    return formatted
+    Examples:
+        >>> numbers = np.array([1,1,1,2,4,6,8,7,4,5,6])
+        >>> clustering(numbers, 2)
+        [(0, 4), (4, 7)]
+    """
+    result = ckwrap.cksegs(numbers, n)
+
+    clusters = []
+    for pos, size in zip(result.centers, result.sizes):
+        clusters.append((int(pos - size // 2 - 1), int(size)))
+
+    return clusters
 
 
-def format_frame(frame):
-    if hasattr(frame, "hour") and frame.hour != 0:
-        fmt = "MM-DD HH:mm"
+def plateaus(
+    numbers: np.ndarray, min_size: int, fall_in_range_ratio: float = 0.97
+) -> List[Tuple]:
+    """求数组`numbers`中的平台。
+
+    如果一个数组中的多数元素（超过`fall_in_range_ratio`）都落在3个标准差以内，则认为该处有一个平台。
+
+    Args:
+        numbers: 输入数组
+        min_size: 平台的最小长度
+        fall_in_range_ratio: 平台的最小长度
+
+    Returns:
+        平台的起始位置和长度
+    """
+    if numbers.size <= min_size:
+        n = 1
     else:
-        fmt = "YY-MM-DD"
+        n = numbers.size // min_size
 
-    return arrow.get(frame).format(fmt)
+    clusters = clustering(numbers, n)
 
+    plats = []
+    for (start, length) in clusters:
+        if length < min_size:
+            continue
 
-def draw_trendline(
-    bars, ylen, ma_wins=None, canvas_size=60, desc: str = None, save_to: str = None
-):
-    """
-    Draws moving average trendline on a graph.
+        y = numbers[start : start + length]
+        mean = np.mean(y)
 
-    the trendline data is predicted by `predict_by_moving_average`
-    """
-    fig = plt.figure(figsize=(canvas_size // 10, canvas_size // 10), dpi=80)
-    ax = fig.add_subplot(111)
+        delta = np.std(y)
 
-    ma_wins = ma_wins or [5, 10, 20, 60]
+        inrange = len(y[abs(y - mean) <= 3 * delta])
+        ratio = inrange / length
 
-    close = bars["close"]
-    if max(ma_wins) + canvas_size - 1 > len(close):
-        raise ValueError("canvas_size is too big for the data")
+        if ratio >= fall_in_range_ratio:
+            plats.append((start, length))
 
-    xclose = close[:-ylen]
-
-    n = canvas_size
-
-    if desc:
-        ax.set_title(desc)
-
-    # legend
-    for i, win in enumerate(ma_wins):
-        ax.text(0, 0.7 + 0.05 * i, f"ma{win}", color=cm[win], transform=ax.transAxes)
-    # the raw data
-    ax.plot(close[-n:], color=cm["raw"], label="raw")
-    for win in ma_wins:
-        ypred, err = predict_by_moving_average(xclose, win, ylen, err_threshold=1)
-
-        ma = moving_average(xclose, win)[-n:]
-        # moving average line
-        ax.plot(
-            np.arange(n - ylen - len(ma[:-ylen]), n - ylen), ma[:-ylen], color=cm[win]
-        )
-        ax.plot(np.arange(n - ylen, n), ma[-ylen:], color=cm[win])
-
-        # 预测延伸线
-        ax.plot(np.arange(n - ylen, n), ypred, color=cm[win], linestyle="--")
-        ax.text(n, ypred[-1], f"{err:.3f}", color=cm[win])
-
-    minc = min(close)
-    maxc = max(close)
-    splitter_y = np.arange(int(minc * 20), int(maxc * 20)) / 20
-    splitter_x = [n - ylen] * len(splitter_y)
-    ax.plot(splitter_x, splitter_y, "r:")
-
-    labels = format_labels(bars["frame"][-n:])
-    positions = list(np.arange(n))
-
-    ax.set_xticks(positions)
-    ax.set_xticklabels(labels, rotation=45)
-
-    if save_to:
-        fig.savefig(save_to)
-
-
-def draw_ma_lines(bars, ma_wins=None, canvas_size=60, desc: str = None):
-    ma_wins = ma_wins or [5, 10, 20, 60]
-    nbars = max(ma_wins) + canvas_size
-    if len(bars) < nbars:
-        raise ValueError(f"not enough data, {nbars} required.")
-
-    fig = plt.figure(figsize=(canvas_size // 10, canvas_size // 10), dpi=80)
-    ax = fig.add_subplot(111)
-
-    for win in ma_wins:
-        ma = moving_average(bars["close"], win)[-canvas_size:]
-        ax.plot(np.arange(canvas_size), ma, color=cm[win])
-        ax.text(len(ma), ma[-1], f"ma{win}", color=cm[win])
-
-    ax.text(0.5, 0.9, desc, transform=ax.transAxes)
+    return plats

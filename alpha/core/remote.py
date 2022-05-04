@@ -183,6 +183,7 @@ class RemoteService(rpyc.Service):
 
         func既可以是一个普通函数，也可以是awaitable对象。远程服务会判断func类型并且正确调用。
 
+        注意在进行远程调用时，如果func依赖了一些非builtin的模块，需要在`func`中进行导入。
         Args:
             func : 远程调用的函数
             args : 函数的参数

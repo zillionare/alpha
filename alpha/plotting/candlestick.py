@@ -4,14 +4,11 @@ from typing import List, Tuple
 import arrow
 import numpy as np
 import plotly.graph_objects as go
-import talib
 from coretypes import Frame
 from omicron import moving_average, peaks_and_valleys, support_resist_lines
 from plotly.subplots import make_subplots
-from omicron import tf
-import datetime
-
-from alpha.core.commons import plateaus
+from . import plateaus
+import talib
 
 
 class Candlestick:

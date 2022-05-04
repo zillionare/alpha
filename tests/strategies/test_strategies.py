@@ -3,6 +3,7 @@ from alpha.strategies import get_all_strategies
 from alpha.config import get_config_dir
 import cfg4py
 
+
 class StrategiesTest(unittest.TestCase):
     def test_get_all_strategies(self):
         cfg4py.init(get_config_dir())

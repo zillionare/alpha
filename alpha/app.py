@@ -1,44 +1,34 @@
-import asyncio
-import os
-
-import cfg4py
-import dash_bootstrap_components as dbc
+from h2o_wave import main, app, Q, ui, on, handle_on, data
+from typing import Optional, List
+from alpha.web.layout import meta, add_card, clear_cards
+from alpha.web.pages.research import research_view
 import omicron
-from apscheduler.schedulers.asyncio import AsyncIOScheduler
-from asgiref.sync import AsyncToSync
-from dash import Dash
-
+import cfg4py
 from alpha.config import get_config_dir
-from alpha.web import routing
-
-app = Dash(
-    __name__,
-    external_stylesheets=[dbc.themes.MATERIA, dbc.icons.FONT_AWESOME],
-    suppress_callback_exceptions=True,
-    assets_folder=os.path.join(
-        os.path.dirname(os.path.abspath(__file__)), "web/assets"
-    ),
-)
 
 
-def start(port: int = 8050, host="0.0.0.0"):
+async def on_client_connected(q: Q) -> None:
+    q.user.theme = q.user.theme or "ember"
+    # If no active hash present, render research.
+    if q.args["#"] is None:
+        await research_view(q)
+
+
+async def on_startup():
     cfg4py.init(get_config_dir())
-
-    AsyncToSync(omicron.init)()
-
-    routing.build_blueprints()
-    app.layout = routing.layout()
-    app.title = "Alpha策略分析师"
-
-    # start_background_tasks()
-    # dev_tools_hot_reload=True
-    app.run_server(
-        host, port, dev_tools_hot_reload=True, dev_tools_hot_reload_interval=5
-    )
+    await omicron.init()
 
 
-if __name__ == "__main__":
-    # fire.Fire({
-    #     "start": start
-    # })
-    start()
+async def on_shutdown():
+    await omicron.stop()
+
+
+@app("/", on_startup=on_startup, on_shutdown=on_shutdown)
+async def serve(q: Q):
+    if not q.client.initialized:
+        await on_client_connected(q)
+        q.client.initialized = True
+
+    # Handle routing.
+    await handle_on(q)
+    await q.page.save()
