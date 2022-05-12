@@ -18,7 +18,7 @@ def header(active: str) -> ui.HeaderCard:
                     ui.tab(name=f"#{key}", label=f"{value}")
                     for key, value in tabs.items()
                 ],
-            ),
+            )
         ],
         items=[
             ui.persona(
@@ -26,6 +26,6 @@ def header(active: str) -> ui.HeaderCard:
                 subtitle="Developer",
                 size="xs",
                 image="https://images.pexels.com/photos/220453/pexels-photo-220453.jpeg?auto=compress&h=750&w=1260",
-            ),
+            )
         ],
     )

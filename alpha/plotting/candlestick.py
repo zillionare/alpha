@@ -1,5 +1,6 @@
 from collections import defaultdict
 from typing import List, Tuple
+import datetime
 
 import arrow
 import numpy as np
@@ -35,7 +36,7 @@ class Candlestick:
         # traces for indicator area
         self.ind_traces = {}
 
-        self.ticks = np.array([self._format_tick(x) for x in bars["frame"]])
+        self.ticks = self._format_tick(bars["frame"])
 
         # for every candlestick, it must contain a candlestick plot
         cs = go.Candlestick(
@@ -106,8 +107,14 @@ class Candlestick:
 
         return fig
 
-    def _format_tick(self, tm: Frame) -> str:
-        return f"{tm.year:02}-{tm.month:02}-{tm.day:02}"
+    def _format_tick(self, tm: np.array) -> str:
+        frame = tm[0]
+        if type(frame) == datetime.date:
+            formatter = lambda x: f"{x.year:02}-{x.month:02}-{x.day:02}"
+        else:
+            formatter = lambda x: f"{x.month:02}-{x.day:02} {x.hour:02}:{x.minute:02}"
+
+        return np.array([formatter(x) for x in tm])
 
     def add_main_trace(self, trace_name: str, **kwargs):
         """add trace to main plot
@@ -275,11 +282,7 @@ class Candlestick:
         y_down = bars["low"][flags == -1] * 0.97
 
         trace = go.Scatter(
-            mode="markers",
-            x=ticks_up,
-            y=y_up,
-            marker_symbol="triangle-down",
-            name="峰",
+            mode="markers", x=ticks_up, y=y_up, marker_symbol="triangle-down", name="峰"
         )
         self.main_traces["peaks"] = trace
 

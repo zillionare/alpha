@@ -1,13 +1,20 @@
-from h2o_wave import main, app, Q, ui, on, handle_on, data
-from typing import Optional, List
-from alpha.web.layout import meta, add_card, clear_cards
-from alpha.web.pages.research import research_view
-import omicron
+import logging
+from typing import List, Optional
+
 import cfg4py
+import omicron
+from h2o_wave import Q, app, data, handle_on, main, on, ui
+
 from alpha.config import get_config_dir
+from alpha.web.layout import add_card, clear_cards, meta
+from alpha.web.pages.research import research_view
+from alpha.web.utils import inject_util_js
+
+logger = logging.getLogger(__name__)
 
 
 async def on_client_connected(q: Q) -> None:
+    inject_util_js(q)
     q.user.theme = q.user.theme or "ember"
     # If no active hash present, render research.
     if q.args["#"] is None:
@@ -31,4 +38,3 @@ async def serve(q: Q):
 
     # Handle routing.
     await handle_on(q)
-    await q.page.save()
