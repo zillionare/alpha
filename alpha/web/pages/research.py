@@ -10,10 +10,20 @@ from plotly import graph_objects as go
 from plotly import io as pio
 
 from alpha.plotting.candlestick import Candlestick
-from alpha.web.utils import make_stock_input_hint
+from alpha.web.utils import inlinejs, make_stock_input_hint
 from alpha.web.widgets import header
 
 logger = logging.getLogger(__name__)
+
+symbol_input_selector = "[data-test=change_symbol] input"
+page_script = f"""
+    var selector = "{symbol_input_selector}";
+    var event = "input";
+    var callback = wave_emit("change_symbol", "on_symbol_hint", "value");
+    
+    bind_event(selector, event, callback);
+    console.info("bind event to:", selector, event);
+"""
 
 
 def left_panel(q: Q):
@@ -26,12 +36,12 @@ def left_panel(q: Q):
                         name="change_symbol",
                         choices=q.client.research.symbol_list,
                         width="80%",
-                        trigger=True
+                        trigger=True,
                     ),
                     ui.button("add_favorite", icon="circleplus"),
                 ],
                 justify="between",
-                inset=True
+                inset=True,
             ),
             ui.table(
                 name="favorites",
@@ -187,6 +197,7 @@ def set_layout(q: Q):
         title="Alpha",
         theme=q.user.theme,
         scripts=[ui.script("https://cdn.plot.ly/plotly-2.11.1.min.js")],
+        script=inlinejs(page_script, targets=[symbol_input_selector]),
         layouts=[
             ui.layout(
                 breakpoint="xs",
@@ -263,6 +274,7 @@ async def render_view(q: Q):
 async def change_symbol(q: Q):
     options = make_stock_input_hint(q.args["change_symbol"])
     q.client.research.symbol_list = options
+
 
 @on()
 async def set_frame_type_1d(q: Q):
