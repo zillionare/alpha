@@ -3,18 +3,20 @@ import logging
 
 import arrow
 from coretypes import Frame, FrameType
-from h2o_wave import Expando, Q, handle_on, on, ui
+from h2o_wave import Expando, Q, ui
 from omicron import tf
 from omicron.models.stock import Stock
-from plotly import graph_objects as go
 from plotly import io as pio
 
 from alpha.plotting.candlestick import Candlestick
 from alpha.web.utils import inlinejs, make_stock_input_hint
 from alpha.web.widgets import header
 
+from ..routing import StopPropagation, handle_on, on
+
 logger = logging.getLogger(__name__)
 
+# todo: remove this
 symbol_input_selector = "[data-test=change_symbol] input"
 page_script = f"""
     var selector = "{symbol_input_selector}";
@@ -27,6 +29,13 @@ page_script = f"""
 
 
 def left_panel(q: Q):
+    rows = []
+    for code in q.user.research.favorites:
+        rows.append(
+            ui.table_row(
+                name=code, cells=[Stock(code).display_name, code.split(".")[0]]
+            )
+        )
     return ui.form_card(
         "left",
         items=[
@@ -34,7 +43,8 @@ def left_panel(q: Q):
                 items=[
                     ui.combobox(
                         name="change_symbol",
-                        choices=q.client.research.symbol_list,
+                        choices=["000001.XSHG 上证综指", "399001.XSHE 深证成指", "399006.XSHE 创业板指"],
+                        value=q.client.research.choosed_symbol,
                         width="80%",
                         trigger=True,
                     ),
@@ -49,11 +59,7 @@ def left_panel(q: Q):
                     ui.table_column(name="name", label="Name"),
                     ui.table_column(name="symbol", label="Symbol"),
                 ],
-                rows=[
-                    ui.table_row(name="row1", cells=["上证综指", "000001"]),
-                    ui.table_row(name="row2", cells=["深证成指", "399001"]),
-                    ui.table_row(name="row3", cells=["创业板指", "399006"]),
-                ],
+                rows=rows
             ),
         ],
     )
@@ -65,7 +71,7 @@ def right_panel():
 
 
 async def content(q: Q):
-    code = q.args["choose_symbol"] or q.user.research.code
+    code = q.client.research.symbol_choosed or q.user.research.code
     n = q.user.research.nbars
     frame_type = q.user.research.frame_type
     end = q.client.research.end
@@ -197,7 +203,6 @@ def set_layout(q: Q):
         title="Alpha",
         theme=q.user.theme,
         scripts=[ui.script("https://cdn.plot.ly/plotly-2.11.1.min.js")],
-        script=inlinejs(page_script, targets=[symbol_input_selector]),
         layouts=[
             ui.layout(
                 breakpoint="xs",
@@ -231,6 +236,7 @@ def init(q: Q):
             "end": tf.day_shift(arrow.now(), 0),
             "start": tf.day_shift(arrow.now(), -120),
             "symbol_list": ["000001 - 上证综指", "399001 - 深证成指", "399006 - 创业板指"],
+            "symbol_choosed": "",
         }
     )
 
@@ -244,14 +250,18 @@ def init(q: Q):
                 "display_trendline": False,
                 "display_bbox": False,
                 "frame_type": FrameType.DAY,
+                "favorites": {"000001.XSHG", "399001.XSHE", "399006.XSHE"},
             }
         )
+
+    q.client.research.symbo_choosed = q.user.research.code
 
 
 async def render_view(q: Q):
     if not q.client.initialized:
         init(q)
 
+    # todo: this will drop all cards thus degrade performance, could be just update different cards
     q.page.drop()
 
     logger.info(
@@ -272,8 +282,17 @@ async def render_view(q: Q):
 
 @on()
 async def change_symbol(q: Q):
-    options = make_stock_input_hint(q.args["change_symbol"])
-    q.client.research.symbol_list = options
+    code = q.args.change_symbol.split(" ")[0]
+    logger.info("change symbol to %s", q.args.change_symbol)
+    matched = Stock.fuzzy_match(code)
+    if len(matched) == 1:
+        code = list(matched.keys())[0]
+        q.client.research.choosed_symbol = code
+    else:
+        return
+
+    q.client.research.symbol_choosed = code
+    await render_view(q)
 
 
 @on()
@@ -336,22 +355,22 @@ async def set_frame_type_1m(q: Q):
 
 @on()
 async def fastbackward(q: Q):
-    return await on_forward_backward(q, -30)
+    await on_forward_backward(q, -30)
 
 
 @on()
 async def backward(q: Q):
-    return await on_forward_backward(q, -1)
+    await on_forward_backward(q, -1)
 
 
 @on()
 async def forward(q: Q):
-    return await on_forward_backward(q, 1)
+    await on_forward_backward(q, 1)
 
 
 @on()
 async def fastforward(q: Q):
-    return await on_forward_backward(q, 30)
+    await on_forward_backward(q, 30)
 
 
 async def on_forward_backward(q: Q, span: int):
@@ -376,19 +395,19 @@ async def set_start(q: Q):
         start = arrow.get(q.args.set_start)
     except Exception:
         # user input is not a date/datetime
-        return False
+        return
 
     if frame_type in tf.minute_level_frames:
         if start.hour == 0:
             # for minute level frame, we need hour and minute
-            return False
+            return
         else:
             start = start.naive
     else:
         start = start.date()
 
     if start == q.client.research.start:
-        return False
+        return
 
     q.client.research.start = start
 
@@ -402,19 +421,19 @@ async def set_end(q: Q):
     try:
         end = arrow.get(q.args.set_end)
     except Exception:
-        return False
+        return
 
     if frame_type in tf.minute_level_frames:
         if end.hour == 0:
             # for minute level frame, we need hour and minute
-            return False
+            return
         else:
             end = end.naive
     else:
         end = end.date()
 
     if end == q.client.research.end:
-        return False
+        return
 
     q.client.research.end = end
     await render_view(q)
@@ -435,4 +454,17 @@ async def save_settings(q: Q):
         logger.info("invalid settings: %s, %s", q.args.bbox_win, q.args.pv_thresh)
         logger.exception(e)
 
+    await render_view(q)
+
+@on()
+async def add_favorite(q: Q):
+    code = q.client.research.symbol_choosed
+
+    if code not in q.user.research.favorites:
+        q.user.research.favorites.add(code)
+        await render_view(q)
+
+@on("favorites")
+async def on_click_favorite(q: Q):
+    q.client.research.symbol_choosed = q.args.favorites[0]
     await render_view(q)

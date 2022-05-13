@@ -1,14 +1,13 @@
 import logging
-from typing import List, Optional
 
 import cfg4py
 import omicron
-from h2o_wave import Q, app, data, handle_on, main, on, ui
+from h2o_wave import Q, app
+from alpha.web.routing import handle_on
 
 from alpha.config import get_config_dir
-from alpha.web.layout import add_card, clear_cards, meta
 from alpha.web.pages.research import research_view
-from h2o_wave import main, app, Q, ui
+from h2o_wave import app, Q
 
 
 logger = logging.getLogger(__name__)
@@ -37,7 +36,4 @@ async def serve(q: Q):
         await on_client_connected(q)
         q.client.initialized = True
 
-    if q.events.change_symbol:
-        print("js events:", q.events.change_symbol.on_symbol_hint)
-    # Handle routing.
     await handle_on(q)
