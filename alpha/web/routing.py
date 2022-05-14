@@ -26,8 +26,10 @@ _event_handlers = {}  # dictionary of event_source => [(event_type, predicate, h
 _arg_handlers = {}  # dictionary of arg_name => [(predicate, handler)]
 _path_handlers = []
 
+
 class StopPropagation(Exception):
     pass
+
 
 def _get_arity(func: Callable) -> int:
     return len(signature(func).parameters)
@@ -41,7 +43,9 @@ def _add_handler(arg: str, func: Callable, predicate: Optional[Callable]):
     handlers.append((predicate, func, _get_arity(func)))
 
 
-def _add_event_handler(source: str, event: str, func: Callable, predicate: Optional[Callable]):
+def _add_event_handler(
+    source: str, event: str, func: Callable, predicate: Optional[Callable]
+):
     if source not in _event_handlers:
         _event_handlers[source] = handlers = []
     else:
@@ -92,21 +96,25 @@ def on(arg: str = None, predicate: Optional[Callable] = None):
             if not callable(predicate):
                 raise ValueError(f"@on predicate must be callable for '{func_name}'")
         if isinstance(arg, str) and len(arg):
-            if arg.startswith('#'):  # location hash
+            if arg.startswith("#"):  # location hash
                 rx, _, conv = compile_path(arg[1:])
                 _path_handlers.append((rx, conv, func, _get_arity(func)))
-            elif '.' in arg:  # event
-                source, event = arg.split('.', 1)
+            elif "." in arg:  # event
+                source, event = arg.split(".", 1)
                 if not len(source):
-                    raise ValueError(f"@on event source cannot be empty in '{arg}' for '{func_name}'")
+                    raise ValueError(
+                        f"@on event source cannot be empty in '{arg}' for '{func_name}'"
+                    )
                 if not len(event):
-                    raise ValueError(f"@on event type cannot be empty in '{arg}' for '{func_name}'")
+                    raise ValueError(
+                        f"@on event type cannot be empty in '{arg}' for '{func_name}'"
+                    )
                 _add_event_handler(source, event, func, predicate)
             else:
                 _add_handler(arg, func, predicate)
         else:
             _add_handler(func_name, func, predicate)
-        logger.debug(f'Registered event handler for {func_name}')
+        logger.debug(f"Registered event handler for {func_name}")
         return func
 
     return wrap
@@ -121,7 +129,9 @@ async def _invoke_handler(func: Callable, arity: int, q: Q, arg: any):
         await func(q, arg)
 
 
-async def _match_predicate(predicate: Callable, func: Callable, arity: int, q: Q, arg: any) -> bool:
+async def _match_predicate(
+    predicate: Callable, func: Callable, arity: int, q: Q, arg: any
+) -> bool:
     if predicate:
         if predicate(arg):
             await _invoke_handler(func, arity, q, arg)
@@ -154,7 +164,12 @@ async def handle_on(q: Q) -> bool:
                 if event_type in event:
                     arg_value = event[event_type]
                     try:
-                        logger.info("routing events: %s, %s, %s", event_source, event_type, arg_value)
+                        logger.info(
+                            "routing events: %s, %s, %s",
+                            event_source,
+                            event_type,
+                            arg_value,
+                        )
                         if await _match_predicate(predicate, func, arity, q, arg_value):
                             handled = True
                     except StopPropagation:
@@ -163,7 +178,7 @@ async def handle_on(q: Q) -> bool:
     args = expando_to_dict(q.args)
     for arg in args:
         arg_value = q.args[arg]
-        if arg == '#':
+        if arg == "#":
             for rx, conv, func, arity in _path_handlers:
                 match = rx.match(arg_value)
                 if match:
@@ -171,7 +186,7 @@ async def handle_on(q: Q) -> bool:
                         params = match.groupdict()
                         for key, value in params.items():
                             params[key] = conv[key].convert(value)
-                        
+
                         logger.info("routing path: %s, %s", arg, arg_value)
                         if len(params):
                             if arity <= 1:

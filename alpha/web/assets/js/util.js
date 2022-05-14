@@ -9,10 +9,16 @@ function xpath(xp) {
     ;
 }
 
-function wave_emit(event_source, event_name) {
+function wave_emit(event_source, event_name, data_prop) {
     return function(e){
-        console.info("wave_emit", event_source, event_name, e.data);
-        wave.emit(event_source, event_name, e.data);
+        if (data_prop){
+            data = e.target[data_prop];
+        }
+        else{
+            data = e.data
+        }
+        console.info("wave_emit", event_source, event_name, data);
+        wave.emit(event_source, event_name, data);
     }
 }
 

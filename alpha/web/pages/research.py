@@ -2,6 +2,7 @@ import datetime
 import logging
 from functools import partial
 from typing import List
+import re
 
 import arrow
 from coretypes import Frame, FrameType
@@ -38,6 +39,7 @@ async def left_panel(q: Q):
                 name=code, cells=[Stock(code).display_name, code.split(".")[0]]
             )
         )
+
     return ui.form_card(
         "left",
         items=[
@@ -45,12 +47,8 @@ async def left_panel(q: Q):
                 items=[
                     ui.combobox(
                         name="change_symbol",
-                        choices=[
-                            "000001.XSHG 上证综指",
-                            "399001.XSHE 深证成指",
-                            "399006.XSHE 创业板指",
-                        ],
-                        value=q.client.research.choosed_symbol,
+                        choices=[],
+                        value=q.client.research.symbol_choosed,
                         width="80%",
                         trigger=True,
                     ),
@@ -209,6 +207,7 @@ def set_layout(q: Q):
         title="Alpha",
         theme=q.user.theme,
         scripts=[ui.script("https://cdn.plot.ly/plotly-2.11.1.min.js")],
+        script=inlinejs(page_script, targets=[symbol_input_selector]),
         layouts=[
             ui.layout(
                 breakpoint="xs",
@@ -270,7 +269,7 @@ async def render_view(q: Q, cards: List[str] = None):
 
     if isinstance(cards, str):
         cards = [cards]
-        
+
     cards = cards or ["header", "left", "right", "content"]
     for card in cards:
         render = {
@@ -284,19 +283,31 @@ async def render_view(q: Q, cards: List[str] = None):
 
     await q.page.save()
 
+def _find_code_by_choice(choice:str):
+    # second part of choice is diaplay_name
+    if " " in choice:
+        code_or_name, alias = choice.split(" ")
+        matched = Stock.fuzzy_match(alias)
+
+        if len(matched) > 0:
+            for code, v in matched.items():
+                if v[1] == alias and (v[0] == code_or_name or v[2] == code_or_name):
+                    return code
+    else:
+        matched = Stock.fuzzy_match(choice)
+
+        if len(matched) > 0:
+            for code, v in matched.items():
+                if choice.upper() in (v[0], v[1], v[2]):
+                    return code
+    
 
 @on()
 async def change_symbol(q: Q):
-    code = q.args.change_symbol.split(" ")[0]
-    logger.info("change symbol to %s", q.args.change_symbol)
-    matched = Stock.fuzzy_match(code)
-    if len(matched) == 1:
-        code = list(matched.keys())[0]
-        q.client.research.choosed_symbol = code
-    else:
-        return
+    choice = q.args.change_symbol
+    logger.info("change symbol to %s", choice)
 
-    q.client.research.symbol_choosed = code
+    q.client.research.symbol_choosed = _find_code_by_choice(choice)
     await render_view(q)
 
 
@@ -309,13 +320,13 @@ async def set_frame_type_1d(q: Q):
 @on()
 async def set_frame_type_1w(q: Q):
     q.user.research.frame_type = FrameType("1w")
-    await render_view(q,["content", "right"])
+    await render_view(q, ["content", "right"])
 
 
 @on()
 async def set_frame_type_1M(q: Q):
     q.user.research.frame_type = FrameType("1M")
-    await render_view(q,["content", "right"])
+    await render_view(q, ["content", "right"])
 
 
 @on()
@@ -337,7 +348,7 @@ async def set_frame_type_30m(q: Q):
     q.client.research.end = end
     q.client.research.start = start
 
-    await render_view(q,["content", "right"])
+    await render_view(q, ["content", "right"])
 
 
 @on()
@@ -475,3 +486,13 @@ async def add_favorite(q: Q):
 async def on_click_favorite(q: Q):
     q.client.research.symbol_choosed = q.args.favorites[0]
     await render_view(q)
+
+
+@on("change_symbol.on_symbol_hint")
+async def prompt_symbol(q: Q):
+    user_input = q.events.change_symbol.on_symbol_hint
+    
+    options = make_stock_input_hint(user_input)
+    # the reference can be get from debug log
+    q.page["left"].items[0].inline.items[0].combobox.choices=options
+    await q.page.save()

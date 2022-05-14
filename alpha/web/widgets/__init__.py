@@ -3,7 +3,7 @@ from h2o_wave import ui, Q
 tabs = {"home": "研究", "bt": "回测", "stockpool": "股票池"}
 
 
-async def header(active: str, q:Q) -> ui.HeaderCard:
+async def header(active: str, q: Q) -> ui.HeaderCard:
     return ui.header_card(
         box="header",
         title="Alpha",
