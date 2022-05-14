@@ -2,13 +2,11 @@ import logging
 
 import cfg4py
 import omicron
-from h2o_wave import Q, app
-from alpha.web.routing import handle_on
+from h2o_wave import Q, app, main
 
 from alpha.config import get_config_dir
 from alpha.web.pages.research import research_view
-from h2o_wave import app, Q
-
+from alpha.web.routing import handle_on
 
 logger = logging.getLogger(__name__)
 
@@ -27,7 +25,6 @@ async def on_startup():
 
 async def on_shutdown():
     await omicron.stop()
-
 
 
 @app("/", on_startup=on_startup, on_shutdown=on_shutdown)

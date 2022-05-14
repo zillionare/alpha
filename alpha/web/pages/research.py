@@ -1,5 +1,7 @@
 import datetime
 import logging
+from functools import partial
+from typing import List
 
 import arrow
 from coretypes import Frame, FrameType
@@ -28,7 +30,7 @@ page_script = f"""
 """
 
 
-def left_panel(q: Q):
+async def left_panel(q: Q):
     rows = []
     for code in q.user.research.favorites:
         rows.append(
@@ -43,7 +45,11 @@ def left_panel(q: Q):
                 items=[
                     ui.combobox(
                         name="change_symbol",
-                        choices=["000001.XSHG 上证综指", "399001.XSHE 深证成指", "399006.XSHE 创业板指"],
+                        choices=[
+                            "000001.XSHG 上证综指",
+                            "399001.XSHE 深证成指",
+                            "399006.XSHE 创业板指",
+                        ],
                         value=q.client.research.choosed_symbol,
                         width="80%",
                         trigger=True,
@@ -59,13 +65,13 @@ def left_panel(q: Q):
                     ui.table_column(name="name", label="Name"),
                     ui.table_column(name="symbol", label="Symbol"),
                 ],
-                rows=rows
+                rows=rows,
             ),
         ],
     )
 
 
-def right_panel():
+async def right_panel(q: Q):
     # Render the plot as an HTML.
     return ui.MarkdownCard("right", title="诊股", content="right panel")
 
@@ -257,25 +263,24 @@ def init(q: Q):
     q.client.research.symbo_choosed = q.user.research.code
 
 
-async def render_view(q: Q):
+async def render_view(q: Q, cards: List[str] = None):
     if not q.client.initialized:
         init(q)
+        set_layout(q)
 
-    # todo: this will drop all cards thus degrade performance, could be just update different cards
-    q.page.drop()
+    if isinstance(cards, str):
+        cards = [cards]
+        
+    cards = cards or ["header", "left", "right", "content"]
+    for card in cards:
+        render = {
+            "header": partial(header, "research"),
+            "left": left_panel,
+            "right": right_panel,
+            "content": content,
+        }.get(card)
 
-    logger.info(
-        "render candlestick for %s, from %s to %s, %s",
-        q.user.research.code,
-        q.client.research.start,
-        q.client.research.end,
-        q.user.research.frame_type,
-    )
-    set_layout(q)
-    q.page["header"] = header("research")
-    q.page["left"] = left_panel(q)
-    q.page["right"] = right_panel()
-    q.page["content"] = await content(q)
+        q.page[card] = await render(q)
 
     await q.page.save()
 
@@ -298,19 +303,19 @@ async def change_symbol(q: Q):
 @on()
 async def set_frame_type_1d(q: Q):
     q.user.research.frame_type = FrameType("1d")
-    await render_view(q)
+    await render_view(q, ["content", "right"])
 
 
 @on()
 async def set_frame_type_1w(q: Q):
     q.user.research.frame_type = FrameType("1w")
-    await render_view(q)
+    await render_view(q,["content", "right"])
 
 
 @on()
 async def set_frame_type_1M(q: Q):
     q.user.research.frame_type = FrameType("1M")
-    await render_view(q)
+    await render_view(q,["content", "right"])
 
 
 @on()
@@ -332,7 +337,7 @@ async def set_frame_type_30m(q: Q):
     q.client.research.end = end
     q.client.research.start = start
 
-    await render_view(q)
+    await render_view(q,["content", "right"])
 
 
 @on()
@@ -350,7 +355,7 @@ async def set_frame_type_1m(q: Q):
     q.client.research.end = end
     q.client.research.start = start
 
-    await render_view(q)
+    await render_view(q, ["content", "right"])
 
 
 @on()
@@ -384,7 +389,7 @@ async def on_forward_backward(q: Q, span: int):
     q.client.research.end = tf.shift(end, span, frame_type)
     q.client.research.start = tf.shift(end, -q.user.research.nbars, frame_type)
 
-    await render_view(q)
+    await render_view(q, ["content", "right"])
 
 
 @on()
@@ -411,7 +416,7 @@ async def set_start(q: Q):
 
     q.client.research.start = start
 
-    await render_view(q)
+    await render_view(q, ["content", "right"])
 
 
 @on()
@@ -436,7 +441,7 @@ async def set_end(q: Q):
         return
 
     q.client.research.end = end
-    await render_view(q)
+    await render_view(q, ["content", "right"])
 
 
 @on()
@@ -456,6 +461,7 @@ async def save_settings(q: Q):
 
     await render_view(q)
 
+
 @on()
 async def add_favorite(q: Q):
     code = q.client.research.symbol_choosed
@@ -463,6 +469,7 @@ async def add_favorite(q: Q):
     if code not in q.user.research.favorites:
         q.user.research.favorites.add(code)
         await render_view(q)
+
 
 @on("favorites")
 async def on_click_favorite(q: Q):
