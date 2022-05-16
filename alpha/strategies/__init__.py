@@ -11,15 +11,15 @@ logger = logging.getLogger(__name__)
 def get_all_strategies():
     cfg = cfg4py.get_instance()
 
-    prefix = cfg.alpha.strategy.package_prefix
+    prefix = cfg.strategy.package_prefix
     if not prefix.endswith("."):
         prefix += "."
 
-    source_dir = cfg.alpha.strategy.source_dir
+    source_dir = cfg.strategy.source_dir
 
     strategies = []
 
-    exclude = cfg.alpha.strategy.exclude
+    exclude = cfg.strategy.exclude
 
     for file in os.listdir(source_dir):
         if file.endswith(".py") and file not in exclude:

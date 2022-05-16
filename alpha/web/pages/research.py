@@ -12,14 +12,13 @@ from omicron.models.stock import Stock
 from plotly import io as pio
 
 from alpha.plotting.candlestick import Candlestick
-from alpha.web.utils import inlinejs, make_stock_input_hint
-from alpha.web.widgets import header
+from alpha.web.utils import make_stock_input_hint
+from alpha.web.widgets import render_header, inlinejs
 
 from ..routing import StopPropagation, handle_on, on
 
 logger = logging.getLogger(__name__)
 
-# todo: remove this
 symbol_input_selector = "[data-test=change_symbol] input"
 page_script = f"""
     var selector = "{symbol_input_selector}";
@@ -40,7 +39,7 @@ async def left_panel(q: Q):
             )
         )
 
-    return ui.form_card(
+    q.page["left"] = ui.form_card(
         "left",
         items=[
             ui.inline(
@@ -71,7 +70,7 @@ async def left_panel(q: Q):
 
 async def right_panel(q: Q):
     # Render the plot as an HTML.
-    return ui.MarkdownCard("right", title="诊股", content="right panel")
+    q.page["right"] = ui.MarkdownCard("right", title="诊股", content="right panel")
 
 
 async def content(q: Q):
@@ -105,7 +104,7 @@ async def content(q: Q):
     html = pio.to_html(cs.figure, validate=False, include_plotlyjs="cdn")
     graph = ui.frame(content=html, height="90vh", width="100%")
 
-    return ui.form_card("content", items=[toolbar(q), graph])
+    q.page["content"] = ui.form_card("content", items=[toolbar(q), graph])
 
 
 def _format_time_textbox(time: Frame):
@@ -227,6 +226,7 @@ def set_layout(q: Q):
             )
         ],
     )
+    q.client.layout = "#research"
 
 
 @on("#research")
@@ -263,7 +263,7 @@ def init(q: Q):
 
 
 async def render_view(q: Q, cards: List[str] = None):
-    if not q.client.initialized:
+    if q.client.layout != "#research":
         init(q)
         set_layout(q)
 
@@ -273,17 +273,18 @@ async def render_view(q: Q, cards: List[str] = None):
     cards = cards or ["header", "left", "right", "content"]
     for card in cards:
         render = {
-            "header": partial(header, "research"),
+            "header": partial(render_header, "research"),
             "left": left_panel,
             "right": right_panel,
             "content": content,
         }.get(card)
 
-        q.page[card] = await render(q)
+        await render(q)
 
     await q.page.save()
 
-def _find_code_by_choice(choice:str):
+
+def _find_code_by_choice(choice: str):
     # second part of choice is diaplay_name
     if " " in choice:
         code_or_name, alias = choice.split(" ")
@@ -300,7 +301,7 @@ def _find_code_by_choice(choice:str):
             for code, v in matched.items():
                 if choice.upper() in (v[0], v[1], v[2]):
                     return code
-    
+
 
 @on()
 async def change_symbol(q: Q):
@@ -491,8 +492,8 @@ async def on_click_favorite(q: Q):
 @on("change_symbol.on_symbol_hint")
 async def prompt_symbol(q: Q):
     user_input = q.events.change_symbol.on_symbol_hint
-    
+
     options = make_stock_input_hint(user_input)
     # the reference can be get from debug log
-    q.page["left"].items[0].inline.items[0].combobox.choices=options
+    q.page["left"].items[0].inline.items[0].combobox.choices = options
     await q.page.save()

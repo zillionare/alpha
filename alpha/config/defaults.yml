@@ -35,15 +35,13 @@ postgres:
 alpha:
     data_home: ~/zillionare/alpha/data
     tts_server: http://127.0.0.1:5002/api/tts?
-    strategy:
-      package_prefix: alpha.strategies
-      source_dir: /apps/alpha/alpha/strategies
-      exclude: ["base.py", "__init__.py"]
 notify:
   mail_from: aaron_yang@jieyu.ai
   mail_to: aaron_yang@jieyu.ai
   mail_server: smtp.ym.163.com
 backtest:
   url: http://192.168.100.114:7080/backtest/api/trade/v0.2/
-auth:
-  users_file: ~/zillionare/alpha/config/users.txt
+strategy:
+    package_prefix: alpha.strategies
+    source_dir: /apps/alpha/alpha/strategies
+    exclude: ["base.py", "__init__.py"]

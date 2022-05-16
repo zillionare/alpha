@@ -7,6 +7,7 @@ from h2o_wave import Q, app, main
 from alpha.config import get_config_dir
 from alpha.web.pages.research import research_view
 from alpha.web.routing import handle_on
+from alpha.web.pages import *
 
 logger = logging.getLogger(__name__)
 
