@@ -155,8 +155,10 @@ async def handle_on(q: Q) -> bool:
     """
     event_sources = expando_to_dict(q.events)
     handled = False
+
     for event_source in event_sources:
         event = q.events[event_source]
+
         entries = _event_handlers.get(event_source)
         if entries:
             for entry in entries:
@@ -209,4 +211,17 @@ async def handle_on(q: Q) -> bool:
                             handled = True
                     except StopPropagation:
                         return True
+
+
+    if not handled:
+        triggerred = [e for e in expando_to_dict(q.events) if q.events[e]]
+        for k, v in expando_to_dict(q.args).items():
+            if k == "#":
+                triggerred.append(f"#{v}")
+            elif v:
+                triggerred.append(f"{k}={v}")
+
+        if triggerred:
+            logger.warning("no matching handler found: %s", triggerred)
+    
     return handled
