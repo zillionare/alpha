@@ -28,6 +28,8 @@ _path_handlers = []
 
 
 class StopPropagation(Exception):
+    """raise this exception if you want by pass thre rest event handlers"""
+
     pass
 
 
@@ -212,7 +214,6 @@ async def handle_on(q: Q) -> bool:
                     except StopPropagation:
                         return True
 
-
     if not handled:
         triggerred = [e for e in expando_to_dict(q.events) if q.events[e]]
         for k, v in expando_to_dict(q.args).items():
@@ -223,5 +224,5 @@ async def handle_on(q: Q) -> bool:
 
         if triggerred:
             logger.warning("no matching handler found: %s", triggerred)
-    
+
     return handled

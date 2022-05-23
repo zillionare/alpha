@@ -8,7 +8,6 @@ from email.message import EmailMessage
 
 import aiohttp
 import cfg4py
-from IPython.display import Audio, display
 
 from alpha.config import get_config_dir
 
@@ -80,26 +79,6 @@ async def text_to_speech(text):
                     return file
 
     return None
-
-
-async def nb_say(text):
-    file = await text_to_speech(text)
-
-    display(_InvisibleAudio(filename=file, autoplay=True))
-
-
-class _InvisibleAudio(Audio):
-    """
-    An invisible (`display: none`) `Audio` element which removes itself when finished playing.
-    Taken from https://stackoverflow.com/a/50648266.
-    """
-
-    def _repr_html_(self) -> str:
-        audio = super()._repr_html_()
-        audio = audio.replace(
-            "<audio", '<audio onended="this.parentNode.removeChild(this)"'
-        )
-        return f'<div style="display:none">{audio}</div>'
 
 
 if __name__ == "__main__":

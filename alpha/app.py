@@ -3,6 +3,7 @@ import logging
 import cfg4py
 import omicron
 from h2o_wave import Q, app, main
+from pyemit import emit
 
 from alpha.config import get_config_dir
 from alpha.web.pages.research import research_view
@@ -20,8 +21,9 @@ async def on_client_connected(q: Q) -> None:
 
 
 async def on_startup():
-    cfg4py.init(get_config_dir())
+    cfg = cfg4py.init(get_config_dir())
     await omicron.init()
+    await emit.start(emit.Engine.REDIS, dsn=cfg.redis.dsn)
 
 
 async def on_shutdown():

@@ -188,8 +188,8 @@ async def settings_dialog(q: Q):
             ),
             ui.buttons(
                 items=[
-                    ui.button("save_settings", caption="确定", primary=True),
-                    ui.button("cancel_dialog", caption="取消"),
+                    ui.button("save_settings", label="确定", primary=True),
+                    ui.button("cancel_dialog", label="取消"),
                 ],
                 justify="end",
             ),

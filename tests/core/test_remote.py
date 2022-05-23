@@ -1,17 +1,20 @@
 import logging
 import unittest
 from tests import init_test_env
-from alpha.core.remote import RemoteService, remote_call
+from alpha.core.remote import RemoteService
+from alpha.strategies import run_backtest
+import datetime
+from pyemit import emit
 
 logger = logging.getLogger(__name__)
 
 
 class TestRemote(unittest.TestCase):
-    def setUp(self) -> None:
+    async def asyncSetUp(self) -> None:
         init_test_env()
-        return super().setUp()
+        return super().asyncSetUp()
 
-    def test_remote_call(self):
+    async def test_remote_call(self):
         async def init():
             import cfg4py
             import omicron
@@ -29,8 +32,8 @@ class TestRemote(unittest.TestCase):
             logger.info("close is called.")
             await omicron.close()
 
-        RemoteService.add_event_listener("on_connect", init)
-        RemoteService.add_event_listener("on_disconnect", close)
+        rs = RemoteService(on_connect=init, on_disconnect=close)
+        remote_call = rs.remote_call
 
         def no_args():
             return "no_args"
@@ -62,19 +65,26 @@ class TestRemote(unittest.TestCase):
         async def async_foo(*args, **kwarg):
             return args, kwarg
 
-        args, kwargs = remote_call(async_foo, "args", kwargs="kwargs")
+        future = remote_call(async_foo, "args", kwargs="kwargs")
+        args, kwargs = future.result()
         self.assertEqual(("args",), args)
         self.assertSetEqual(set(["kwargs"]), set(kwargs.values()))
 
         # disable this test in unit test, as it will take too long
-        # async def long_call(msg):
-        #     import asyncio
+        async def long_call(msg):
+            import asyncio
 
-        #     await asyncio.sleep(240)
-        #     return msg
+            await asyncio.sleep(10)
+            return msg
 
-        # actual = remote_call(long_call, "long_call")
-        # self.assertEqual("long_call", actual)
+        logger.info("execute and wait a long async call, it will cost 10 seconds")
+        future = remote_call(long_call, "long_call")
+        import time
+        t0 = time.time()
+        actual = future.result()
+        cost = time.time() - t0
+        self.assertTrue(abs(cost - 10) < 1)
+        self.assertEqual("long_call", actual)
 
         async def test_cache():
             # this is for checking if omicron is init as required
@@ -83,5 +93,41 @@ class TestRemote(unittest.TestCase):
 
             return await cache.sys.get("__meta__.database")
 
-        actual = remote_call(test_cache)
+        future = remote_call(test_cache)
+        actual = future.result()
         self.assertEqual("_sys_", actual)
+
+    async def test_remote_strategy(self):
+        async def init():
+            import cfg4py
+            import omicron
+
+            from alpha.config import get_config_dir
+
+            logger.info("init is called")
+            cfg4py.init(get_config_dir())
+
+            await omicron.init()
+
+        async def close():
+            import omicron
+
+            logger.info("close is called.")
+            await omicron.close()
+
+        async def on_notify(msg):
+            print(msg)
+
+        emit.register
+        rs = RemoteService(on_connect=init, on_disconnect=close)
+        remote_call = rs.remote_call
+
+        start = datetime.date(2022, 3, 1)
+        end = datetime.date(2022, 3, 30)
+        params = {
+            "frame_type": "1d",
+            "code": "000001.XSHE"
+        }
+        future = remote_call(run_backtest, "sma", start, end, params = params)
+        actual = future.result()
+        pass

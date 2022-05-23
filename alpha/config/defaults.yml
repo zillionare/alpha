@@ -41,6 +41,8 @@ notify:
   mail_server: smtp.ym.163.com
 backtest:
   url: http://192.168.100.114:7080/backtest/api/trade/v0.2/
+  admin_token: bGZJGEZ
+  commission: 1.5e-4
 strategy:
     package_prefix: alpha.strategies
     source_dir: /apps/alpha/alpha/strategies
