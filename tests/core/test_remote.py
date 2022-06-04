@@ -1,5 +1,8 @@
 import logging
 import unittest
+
+import cfg4py
+from alpha.core.const import E_BACKTEST
 from tests import init_test_env
 from alpha.core.remote import RemoteService
 from alpha.strategies import run_backtest
@@ -9,7 +12,7 @@ from pyemit import emit
 logger = logging.getLogger(__name__)
 
 
-class TestRemote(unittest.TestCase):
+class TestRemote(unittest.IsolatedAsyncioTestCase):
     async def asyncSetUp(self) -> None:
         init_test_env()
         return super().asyncSetUp()
@@ -80,6 +83,7 @@ class TestRemote(unittest.TestCase):
         logger.info("execute and wait a long async call, it will cost 10 seconds")
         future = remote_call(long_call, "long_call")
         import time
+
         t0 = time.time()
         actual = future.result()
         cost = time.time() - t0
@@ -101,33 +105,36 @@ class TestRemote(unittest.TestCase):
         async def init():
             import cfg4py
             import omicron
+            from pyemit import emit
 
             from alpha.config import get_config_dir
 
             logger.info("init is called")
-            cfg4py.init(get_config_dir())
+            cfg = cfg4py.init(get_config_dir())
 
             await omicron.init()
+            await emit.start(emit.Engine.REDIS, dsn=cfg.redis.dsn)
 
         async def close():
             import omicron
 
             logger.info("close is called.")
             await omicron.close()
+            await emit.stop()
 
         async def on_notify(msg):
             print(msg)
 
-        emit.register
+        cfg = cfg4py.get_instance()
+        emit.register(E_BACKTEST, on_notify)
+        # await emit.start(engine=emit.Engine.REDIS, start_server=True, dsn=cfg.redis.dsn)
+
         rs = RemoteService(on_connect=init, on_disconnect=close)
         remote_call = rs.remote_call
 
         start = datetime.date(2022, 3, 1)
         end = datetime.date(2022, 3, 30)
-        params = {
-            "frame_type": "1d",
-            "code": "000001.XSHE"
-        }
-        future = remote_call(run_backtest, "sma", start, end, params = params)
+        params = {"frame_type": "1d", "code": "000001.XSHE"}
+        future = remote_call(run_backtest, "sma", start, end, params=params)
         actual = future.result()
         pass

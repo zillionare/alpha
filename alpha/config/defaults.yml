@@ -9,6 +9,12 @@ logging:
     console:
       class: logging.StreamHandler
       formatter: default
+    redis:
+      class: rlog.RedisHandler
+      formatter: default
+      host: localhost
+      port: 6379
+      channel: omega.log
   loggers:
     apscheduler:
       level: INFO
@@ -19,7 +25,15 @@ logging:
   root:
     handlers:
       - console
+      - redis
     level: INFO
+logreceiver:
+  klass: omega.logging.receiver.redis.RedisLogReceiver
+  dsn: redis://localhost:6379
+  channel: omega.log
+  filename: /var/log/zillionare/omega.log
+  backup_count: 7
+  max_bytes: 10M
 redis:
   #dsn: redis://172.17.0.1:6379
   dsn: redis://192.168.100.101:56379
@@ -40,7 +54,8 @@ notify:
   mail_to: aaron_yang@jieyu.ai
   mail_server: smtp.ym.163.com
 backtest:
-  url: http://192.168.100.114:7080/backtest/api/trade/v0.2/
+  url: http://192.168.100.114:7080/backtest/api/trade/v0.3/
+  #url: http://localhost:3180/backtest/api/trade/v0.3
   admin_token: bGZJGEZ
   commission: 1.5e-4
 strategy:

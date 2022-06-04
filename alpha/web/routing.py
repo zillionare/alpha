@@ -12,13 +12,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from typing import Optional, Callable
-from inspect import signature
 import asyncio
 import logging
-from starlette.routing import compile_path
+from inspect import signature
+from typing import Callable, Optional
+
 from h2o_wave.core import expando_to_dict
 from h2o_wave.server import Q
+from starlette.routing import compile_path
 
 logger = logging.getLogger(__name__)
 

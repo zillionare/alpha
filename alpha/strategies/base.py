@@ -2,18 +2,18 @@ import asyncio
 import datetime
 import json
 import logging
-from types import FrameType
 import uuid
 from abc import ABCMeta, abstractmethod
 from collections import defaultdict
+from types import FrameType
 from typing import Optional
 
 import cfg4py
 from coretypes import Frame
-from h2o_wave.core import Expando, copy_expando
-from omicron import cache, tf
+from h2o_wave.core import Expando
+from omicron import tf
 from pyemit import emit
-from traderclient import OrderType, TradeClient
+from traderclient import TraderClient
 
 from alpha.core.const import E_BACKTEST, E_STRATEGY
 from alpha.core.errors import TaskIsRunningError
@@ -40,12 +40,13 @@ class BaseStrategy(object, metaclass=ABCMeta):
         TaskIsRunningError: _description_
         NotImplementedError: _description_
     """
+
     name = "base-strategy"
     alias = "base for all strategies"
     desc = "Base Strategy Class"
     version = "NA"
 
-    def __init__(self, broker: TradeClient = None, mdd: float = 0.1, sl: float = 0.05):
+    def __init__(self, broker: TraderClient = None, mdd: float = 0.1, sl: float = 0.05):
         """
 
         Args:
@@ -71,37 +72,46 @@ class BaseStrategy(object, metaclass=ABCMeta):
 
         self._bt = None
 
-    async def notify(self, msg: dict):
+    async def notify(self, event: str, msg: dict):
         """通知事件。
+
+        在发送消息之前，总是添加账号信息，以便区分。
 
         Args:
             msg: dict
-
-        Returns:
-
         """
-        if self._bt is not None:
-            msg.update(
-                {
-                    "account": self._bt._account,
-                    "token": self._bt._token,
-                }
-            )
-            await emit.emit(E_BACKTEST, msg)
-        else:
-            await emit.emit(E_STRATEGY, msg)
+        assert event in (
+            "started",
+            "progress",
+            "failed",
+            "finished",
+        ), f"Unknown event: {event}, event must be one of ('started', 'progress', 'failed', 'finished')"
 
-    async def update_progress(self, current_frame: Frame, frame_type: FrameType):
+        broker = self._bt._broker if self._bt is not None else self.broker
+        msg.update(
+            {
+                "event": event,
+                "account": broker._account,
+                "token": broker._token,
+            }
+        )
+
+        channel = E_BACKTEST if self._bt is not None else E_STRATEGY
+        await emit.emit(channel, msg)
+
+    async def update_progress(self, current_frame: Frame):
         """更新回测进度
 
+        此函数只在日线级别上触发进度更新。
+
         Args:
-            frame : 最新的回测时间
+            current_frame : 最新的回测时间
         """
         if self._bt is None:
             logger.warning("Backtest is not running, can't update progress")
             return
-        
-        last_frame = tf.shift(current_frame, -1, frame_type)
+
+        last_frame = tf.day_shift(current_frame, -1)
         if self._bt._last_frame is None:
             self._bt._last_frame = last_frame
         else:
@@ -109,35 +119,51 @@ class BaseStrategy(object, metaclass=ABCMeta):
             assert last_frame >= self._bt._last_frame, msg
             self._bt._last_frame = last_frame
 
-        response = self._bt._broker.balance(last_frame)
-        balance = response.get("data")
+        info = self._bt._broker.info()
 
-        await self.notify({
-            "event": "progress",
-            "frame": last_frame,
-            "balance": balance,
-        })
-        
+        await self.notify(
+            "progress",
+            {
+                "frame": last_frame,
+                "info": info,
+            },
+        )
+
     async def start_backtest(
         self,
         start: datetime.date,
         end: datetime.date,
         principal: float = 1_000_000,
         params: dict = None,
+        account: str = None,
+        token: str = None,
     ):
-        """运行策略回测"""
+        """启动策略回测
+
+        回测时会构建新的交易客户端，如果传入了`account`和`token`，则会使用传入的值构建客户端。否则，将使用随机生成的token，并使用“策略名-策略版本-token后4位”作为客户端名称。如果传入`accountthth`和`token`，需要保证两个值都始终惟一。
+
+        Args:
+            start: 回测开始时间
+            end: 回测结束时间
+            principal: 回测起始资金
+            params: 策略参数
+            account: 策略名称,如果提供的话，会作为交易客户端的账户
+            token: 交易客户端的token
+        """
         if self._bt is not None:
             raise TaskIsRunningError(
                 f"A backtest task of {self.name} is running: {self._bt._token}"
             )
 
+        self.check_required_params(params)
+
         self._bt = Expando(params)
 
-        token = uuid.uuid4().hex
-        account = f"{self.name}-{self.version}-{token[-4:]}"
+        token = token or uuid.uuid4().hex
+        account = account or f"{self.name}-{self.version}-{token[-4:]}"
         cfg = cfg4py.get_instance()
         url = cfg.backtest.url
-        self._bt._broker = TradeClient(
+        self._bt._broker = TraderClient(
             url,
             account,
             token,
@@ -154,13 +180,13 @@ class BaseStrategy(object, metaclass=ABCMeta):
 
         try:
             await self.notify(
+                "started",
                 msg={
-                    "event": "started",
                     "principal": principal,
                     "commission": cfg.backtest.commission,
                     "start": start,
                     "end": end,
-                }
+                },
             )
 
             await self.backtest(start, end)
@@ -168,20 +194,16 @@ class BaseStrategy(object, metaclass=ABCMeta):
             # 回测已经结束，获取回测评估分析
             metrics = self._bt._broker.metrics(start, end)
             await self.notify(
-                {"event": "finished", "metrics": metrics, "start": start, "end": end}
+                "finished", {"metrics": metrics, "start": start, "end": end}
             )
         except Exception as e:
             logger.exception(e)
             await self.notify(
+                "failed",
                 {
-                    "strategy": self.name,
-                    "event": "failed",
-                    "account": self._bt._account,
-                    "token": self._bt._token,
                     "msg": str(e),
-                }
+                },
             )
-            raise
         finally:
             self._bt = None
 
@@ -196,7 +218,7 @@ class BaseStrategy(object, metaclass=ABCMeta):
 
         Args:
             code: 股票代码
-            shares: 买入数量。如果在(0, 1]之间，则认为是按可用资金比率买入；否则认为是买入股数，此时必须为100的倍数
+            shares: 买入数量。应该为100的倍数。如果不为100的倍数，会被取整到100的倍数。
             price: 买入价格,如果为None，则以市价买入
             order_time: 下单时间,仅在回测时需要，实盘时，即使传入也会被忽略
         """
@@ -204,24 +226,14 @@ class BaseStrategy(object, metaclass=ABCMeta):
             broker = self._bt._broker
             if type(order_time) == datetime.date:
                 order_time = tf.combine_time(order_time, 14, 56)
-
-            cash = self._bt._cash
         else:
             broker = self.broker
-            cash = self.cash
 
-        if price is not None and 0 < shares <= 1:
-            volume = 100 * ((cash * shares / price) // 100)
-        else:
-            assert shares > 100
-            volume = shares
-
-        logger.info("buy: %s %s %s", code, volume, order_time)
+        logger.info("buy: %s %s %s", code, shares, order_time)
         if price is None:
-            response = broker.market_buy(code, volume, order_time=order_time)
-
-        # 更新持仓、可用资金
-        self.update_portifolio()
+            broker.market_buy(code, shares, order_time=order_time)
+        else:
+            broker.buy(code, price, shares, order_time=order_time)
 
     async def sell(
         self,
@@ -238,48 +250,32 @@ class BaseStrategy(object, metaclass=ABCMeta):
             order_time : 委卖时间，在实盘时不必要传入
             price : 卖出价。如果为None，则为市价卖出
         """
+        assert (
+            shares >= 100 or 0 < shares <= 1
+        ), f"shares should be in (0, 1] or multiple of 100, get {shares}"
         if self._bt is not None:
             broker = self._bt._broker
             if type(order_time) == datetime.date:
                 order_time = tf.combine_time(order_time, 14, 56)
-            positions = self._bt._positions
         else:
             broker = self.broker
-            positions = self.positions
 
-        if 0 < shares <= 1:
-            volume = positions.get(code).get("sellable", 0) * shares
-        else:
-            volume = shares
-
-        sellable = positions.get(code, {}).get("sellable", 0)
+        sellable = broker.available_shares(code)
         if sellable == 0:
             logger.warning("%s has no sellable shares", code)
             return
 
+        if 0 < shares <= 1:
+            volume = sellable * shares
+        else:
+            volume = min(sellable, shares)
+
         logger.info("sell: %s %s %s", code, volume, order_time)
 
         if price is None:
-            result = broker.market_sell(code, volume, order_time=order_time.isoformat())
+            broker.market_sell(code, volume, order_time=order_time)
         else:
-            result = broker.sell(code, price, volume, order_time=order_time.isoformat())
-
-        # 更新持仓、可用资金。如果是回测，更新回测进度
-        self.update_portifolio()
-
-    def update_portifolio(self):
-        """更新当前可用现金和持仓"""
-        if self._bt is not None:
-            broker = self._bt._broker
-            self._bt._positions = broker.positions()["data"]
-            balance = broker.balance()["data"]
-            self._bt._cash = balance["available"]
-
-        else:
-            broker = self.broker
-            self.positions = broker.positions()["data"]
-            balance = broker.balance()["data"]
-            self.cash = balance["available"]
+            broker.sell(code, price, volume, order_time=order_time)
 
     @abstractmethod
     async def backtest(self, start: datetime.date, end: datetime.date):
@@ -288,5 +284,25 @@ class BaseStrategy(object, metaclass=ABCMeta):
         Args:
             start: 回测起始时间
             end: 回测结束时间
+        """
+        raise NotImplementedError
+
+    @staticmethod
+    def create_instance(name: str):
+        """创建策略实例
+
+        Args:
+            name: 策略名称
+        """
+        from alpha.strategies import create_strategy_by_name
+
+        return create_strategy_by_name(name)
+
+    def check_required_params(self, params: dict):
+        """检查策略参数是否完整
+
+        一些策略在回测时往往需要传入特别的参数。派生类应该实现这个方法，以确保在回测启动前，参数都已经传入。
+        Args:
+            params: 策略参数
         """
         raise NotImplementedError

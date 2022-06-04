@@ -25,16 +25,16 @@ packages = [
 python = ">3.8,<3.9"
 fire = "0.4.0"
 Backtesting = "^0.3.1"
-cfg4py = "^0.9.1"
+cfg4py = "^0.9.3"
 psutil = "^5.8.0"
-zillionare-trader-client = "^0.3.1"
-zillionare-omicron = {version = "^2.0.0a27", allow-prereleases = true}
+zillionare-trader-client = "^0.3.7"
+zillionare-omicron = {version = "^2.0.0.a30", allow-prereleases = true}
 plotly = "^5.6.0"
 asgiref = "^3.5.0"
 APScheduler = "^3.9.1"
 rpyc = "^5.1.0"
 dill = "^0.3.4"
-h2o-wave = "^0.21.0"
+h2o-wave = "^0.22.0"
 ckwrap = "^0.1.9"
 TA-Lib = "^0.4.24"
 jqdatasdk = "^1.8.10"
@@ -62,6 +62,7 @@ toml = {version = "^0.10.2", optional = true}
 "ruamel.yaml" = {version ="^0.17.4", optional = true}
 mkdocs-autorefs = {version="^0.4.1", optional = true}
 mkdocstrings-python = "^0.6.6"
+rlog = "^0.3"
 
 [tool.poetry.extras]
 test = [

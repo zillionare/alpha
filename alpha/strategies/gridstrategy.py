@@ -12,7 +12,7 @@ import omicron
 from coretypes import FrameType
 from omicron import tf
 from omicron.models.stock import Stock
-from traderclient.client import TradeClient
+from traderclient import TraderClient
 
 from alpha.config import get_config_dir
 from alpha.strategies.base import BaseStrategy

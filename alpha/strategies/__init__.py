@@ -1,10 +1,21 @@
-import os
-import cfg4py
+import asyncio
+import datetime
+import functools
 import importlib
 import inspect
 import logging
+import os
+import uuid
+from functools import partial
+
+import cfg4py
+from pyemit import emit
+
+from alpha.core.commons import DataEvent
+from alpha.core.const import E_BACKTEST, E_EXECUTOR_BACKTEST
+from alpha.core.remote import RemoteService
+
 from .base import BaseStrategy
-import datetime
 
 logger = logging.getLogger(__name__)
 
@@ -32,7 +43,9 @@ def get_all_strategies():
                 classes = inspect.getmembers(module, inspect.isclass)
                 for _, klz in classes:
                     if issubclass(klz, BaseStrategy) and klz.__module__ == module_name:
-                        strategies.append((klz.name, klz.alias, klz.desc, klz.version, klz))
+                        strategies.append(
+                            (klz.name, klz.alias, klz.desc, klz.version, klz)
+                        )
             except Exception as e:
                 pass
                 # logger.exception(e)
@@ -40,40 +53,89 @@ def get_all_strategies():
     return strategies
 
 
+def find_file_by_strategy(name: str):
+    cfg = cfg4py.get_instance()
+
+    prefix = cfg.strategy.package_prefix
+    if not prefix.endswith("."):
+        prefix += "."
+
+    source_dir = cfg.strategy.source_dir
+
+    exclude = cfg.strategy.exclude
+
+    for file in os.listdir(source_dir):
+        if file.endswith(".py") and file not in exclude:
+            stem = file.replace(".py", "")
+            module_name = prefix + stem
+
+            try:
+                module = importlib.import_module(module_name)
+                classes = inspect.getmembers(module, inspect.isclass)
+                for _, klz in classes:
+                    if getattr(klz, "name", None) and name == klz.name:
+                        return os.path.join(source_dir, file)
+            except Exception as e:
+                pass
+                # logger.exception(e)
+
+    return None
+
+
+def create_strategy_by_name(name: str):
+    strategies = get_all_strategies()
+
+    for _, *_, klz in strategies:
+        if name == klz.name:
+            return klz()
+
+    logger.warning("strategy %s not found", name)
+    return None
+
+
 async def run_backtest(
-    strategy_name: str,
+    strategy: str,
     start: datetime.date,
     end: datetime.date,
     principal: float = 1_000_000,
     params: dict = None,
+    account: str = None,
+    token: str = None,
 ):
-    strategies = get_all_strategies()
+    s = create_strategy_by_name(strategy)
+    if s is None:
+        logger.warning("strategy %s not found", strategy)
 
-    for name, *_, klz in strategies:
-        if name == strategy_name:
-            strategy = klz()
-            await strategy.start_backtest(start, end, principal, params)
-    return None
+    return await s.start_backtest(start, end, principal, params, account, token)
 
-async def on_remote_service_start():
-    """the init function for strategy remote service
-    """
-    import cfg4py
-    import omicron
-    from pyemit import emit
 
-    from alpha.config import get_config_dir
+async def on_backtest_progress(event, msg):
+    event.set(msg)
 
-    logger.info("initializing process %s", os.getpid())
-    cfg = cfg4py.init(get_config_dir())
-    await omicron.init()
-    await emit.start(emit.Engine.REDIS, start_server=True, dsn=cfg.redis.dsn)
 
-async def on_remote_service_stop():
-    """the cleanup function for strategy remote service"""
-    import omicron
-    from pyemit import emit
+async def run_backtest_remote(
+    strategy: str,
+    start: datetime.date,
+    end: datetime.date,
+    principal: float = 1_000_000,
+    params: dict = None,
+    account: str = None,
+    token: str = None,
+):
+    event = DataEvent()
 
-    logger.info("shutdown process %s", os.getpid())
-    await omicron.close()
-    await emit.stop()
+    emit.register(E_BACKTEST, partial(on_backtest_progress, event))
+    await emit.emit(
+        E_EXECUTOR_BACKTEST,
+        {
+            "strategy": strategy,
+            "start": start,
+            "end": end,
+            "principal": principal,
+            "params": params,
+            "account": account,
+            "token": token,
+        },
+    )
+
+    return event

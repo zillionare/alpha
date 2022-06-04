@@ -33,6 +33,7 @@ class RemoteService(rpyc.Service):
     ```
     5. 一组service使用一个RemoteService对象，但可以有多个执行进程。
     """
+
     def __init__(self, timeout=30, on_connect=None, on_disconnect=None):
         self.loop = asyncio.new_event_loop()
 
@@ -44,10 +45,7 @@ class RemoteService(rpyc.Service):
         self.conns = []
         self.cur = 0
         self.instance = None
-        self.listeners = {
-            "on_connect": on_connect,
-            "on_disconnect": on_disconnect
-        }
+        self.listeners = {"on_connect": on_connect, "on_disconnect": on_disconnect}
 
         self.timeout = timeout
 

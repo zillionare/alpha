@@ -67,3 +67,11 @@ def inlinejs(
         requires=requires,
         targets=targets,
     )
+
+
+def in_app_notify(q: Q, text: str, _type: str = "success"):
+    q.page["meta"].notification_bar = ui.notification_bar(text=text, type=_type)
+
+
+def notify(q: Q, text: str):
+    q.page["meta"].notification = text

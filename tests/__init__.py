@@ -13,6 +13,7 @@ import cfg4py
 import numpy as np
 import pandas as pd
 from omicron.models.stock import Stock
+from alpha.config import get_config_dir
 
 cfg = cfg4py.get_instance()
 logger = logging.getLogger()
@@ -20,17 +21,8 @@ logger = logging.getLogger()
 
 def init_test_env():
     os.environ[cfg4py.envar] = "DEV"
-    src_dir = os.path.dirname(__file__)
-    config_path = os.path.normpath(os.path.join(src_dir, "../alpha/config"))
 
-    handler = logging.StreamHandler()
-    fmt = "%(asctime)s %(levelname)-1.1s %(name)s:%(funcName)s:%(lineno)s | %(message)s"
-    formatter = logging.Formatter(fmt=fmt)
-    handler.setFormatter(formatter)
-    logger = logging.getLogger()
-    logger.addHandler(handler)
-
-    return cfg4py.init(config_path, False)
+    return cfg4py.init(get_config_dir(), False)
 
 
 def data_dir():

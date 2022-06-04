@@ -1,7 +1,7 @@
 import unittest
 
 from async_timeout import asyncio
-from alpha.strategies import get_all_strategies, run_backtest
+from alpha.strategies import get_all_strategies, run_backtest, find_file_by_strategy
 from alpha.config import get_config_dir
 import cfg4py
 import datetime
@@ -34,6 +34,10 @@ class StrategiesTest(unittest.IsolatedAsyncioTestCase):
                 break
         else:
             self.fail("GridStrategy not found.")
+
+    def test_find_file_by_strategy(self):
+        file = find_file_by_strategy("sma")
+        print(file)
 
     async def test_run_backtest(self):
         strategy = "SMA strategy"
