@@ -4,9 +4,7 @@ import json
 import logging
 import uuid
 from abc import ABCMeta, abstractmethod
-from collections import defaultdict
-from types import FrameType
-from typing import Optional
+from typing import Optional, Union
 
 import cfg4py
 from coretypes import Frame
@@ -46,7 +44,7 @@ class BaseStrategy(object, metaclass=ABCMeta):
     desc = "Base Strategy Class"
     version = "NA"
 
-    def __init__(self, broker: TraderClient = None, mdd: float = 0.1, sl: float = 0.05):
+    def __init__(self, broker: Optional[TraderClient] = None, mdd: float = 0.1, sl: float = 0.05):
         """
 
         Args:
@@ -64,7 +62,7 @@ class BaseStrategy(object, metaclass=ABCMeta):
 
         if broker:
             self.broker = broker
-            cash = self.broker.available_money()
+            cash = self.broker.available_money
             if cash is None:
                 raise ValueError("Failed to get available money from server")
 
@@ -134,9 +132,9 @@ class BaseStrategy(object, metaclass=ABCMeta):
         start: datetime.date,
         end: datetime.date,
         principal: float = 1_000_000,
-        params: dict = None,
-        account: str = None,
-        token: str = None,
+        params: Optional[dict] = None,
+        account: Optional[str] = None,
+        token: Optional[str] = None,
     ):
         """启动策略回测
 
@@ -211,7 +209,7 @@ class BaseStrategy(object, metaclass=ABCMeta):
     async def buy(
         self,
         code: str,
-        shares: float,
+        shares: int,
         order_time: Optional[Frame] = None,
         price: Optional[float] = None,
     ):
@@ -299,7 +297,7 @@ class BaseStrategy(object, metaclass=ABCMeta):
 
         return create_strategy_by_name(name)
 
-    def check_required_params(self, params: dict):
+    def check_required_params(self, params: Union[None, dict]):
         """检查策略参数是否完整
 
         一些策略在回测时往往需要传入特别的参数。派生类应该实现这个方法，以确保在回测启动前，参数都已经传入。
