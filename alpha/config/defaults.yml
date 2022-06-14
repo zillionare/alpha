@@ -29,7 +29,7 @@ logging:
     level: INFO
 logreceiver:
   klass: omega.logging.receiver.redis.RedisLogReceiver
-  dsn: redis://localhost:6379
+  dsn: redis://192.168.100.101:56379
   channel: omega.log
   filename: /var/log/zillionare/omega.log
   backup_count: 7
@@ -54,7 +54,7 @@ notify:
   mail_to: aaron_yang@jieyu.ai
   mail_server: smtp.ym.163.com
 backtest:
-  url: http://192.168.100.114:7080/backtest/api/trade/v0.3/
+  url: http://192.168.100.114:7080/backtest/api/trade/v0.4/
   #url: http://localhost:3180/backtest/api/trade/v0.3
   admin_token: bGZJGEZ
   commission: 1.5e-4

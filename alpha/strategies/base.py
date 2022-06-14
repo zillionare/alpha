@@ -176,6 +176,7 @@ class BaseStrategy(object, metaclass=ABCMeta):
 
         self._bt._account = account
         self._bt._token = token
+        self._bt._principal = principal
         self._bt._positions = {}
 
         try:

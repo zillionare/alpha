@@ -35,9 +35,9 @@ class SMAStrategy(BaseStrategy):
 
     def check_required_params(self, params: dict):
         if "code" not in params:
-            raise ValueError("code is required")
+            params["code"] = "000001.XSHE"
         if "frame_type" not in params:
-            raise ValueError("frame_type is required")
+            params["frame_type"] = "1d"
 
         try:
             ft = FrameType(params.get("frame_type"))
@@ -54,7 +54,6 @@ class SMAStrategy(BaseStrategy):
 
         for i in range(1, len(bars) - 1):
             await self.update_progress(bars[i]["frame"])
-            await asyncio.sleep(1)
             if ma10[i] is None:
                 continue
 
@@ -66,10 +65,12 @@ class SMAStrategy(BaseStrategy):
 
             try:
                 if p5 <= p10 and n5 > n10:
-                    await self.buy(code, 100, bars["frame"][i])
+                    shares = self._bt._principal / bars[i]["close"]
+                    await self.buy(code, shares, bars["frame"][i])
                     continue
 
                 if p5 >= p10 and n5 < n10:
-                    await self.sell(code, 100, bars["frame"][i])
-            except traderclient.errors as e:
+                    await self.sell(code, 1, bars["frame"][i])
+            except traderclient.errors.TradeError as e:
+                logger.exception("backtest error")
                 logger.exception(e)
