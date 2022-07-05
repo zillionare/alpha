@@ -44,7 +44,9 @@ class BaseStrategy(object, metaclass=ABCMeta):
     desc = "Base Strategy Class"
     version = "NA"
 
-    def __init__(self, broker: Optional[TraderClient] = None, mdd: float = 0.1, sl: float = 0.05):
+    def __init__(
+        self, broker: Optional[TraderClient] = None, mdd: float = 0.1, sl: float = 0.05
+    ):
         """
 
         Args:
@@ -53,9 +55,10 @@ class BaseStrategy(object, metaclass=ABCMeta):
             sl : 止损前允许的最大亏损
         """
         # 当前持仓 code -> {security: , shares: , sellable: sl: }
-        self.positions = {}
-        self.balance = None
-        self.cash = None
+        self._positions = {}
+        self._principal = 0
+        self._cash = None
+        self._broker = None
 
         # 用于策略止损的参数
         self.thresholds = {"mdd": mdd, "sl": sl}
@@ -66,9 +69,37 @@ class BaseStrategy(object, metaclass=ABCMeta):
             if cash is None:
                 raise ValueError("Failed to get available money from server")
 
-            self.cash = cash
+            self._cash = cash
 
         self._bt = None
+
+    @property
+    def broker(self)->TraderClient:
+        """交易代理"""
+        if self._bt is None:
+            return self._broker
+        else:
+            return self._bt._broker
+
+    @property
+    def cash(self)->float:
+        """可用资金"""
+        if self._bt is None:
+            return self._cash
+        else:
+            return self._bt._broker.available_money
+
+    @property
+    def principal(self)->float:
+        """本金"""
+        return self._principal if self._bt is None else self._bt._broker._principal
+
+    @property
+    def positions(self):
+        if self._bt is None:
+            return self._positions
+        else:
+            return self._bt._borker.positions
 
     async def notify(self, event: str, msg: dict):
         """通知事件。
@@ -85,12 +116,11 @@ class BaseStrategy(object, metaclass=ABCMeta):
             "finished",
         ), f"Unknown event: {event}, event must be one of ('started', 'progress', 'failed', 'finished')"
 
-        broker = self._bt._broker if self._bt is not None else self.broker
         msg.update(
             {
                 "event": event,
-                "account": broker._account,
-                "token": broker._token,
+                "account": self.broker._account,
+                "token": self.broker._token,
             }
         )
 
@@ -117,7 +147,7 @@ class BaseStrategy(object, metaclass=ABCMeta):
             assert last_frame >= self._bt._last_frame, msg
             self._bt._last_frame = last_frame
 
-        info = self._bt._broker.info()
+        info = self.broker.info()
 
         await self.notify(
             "progress",
@@ -172,11 +202,6 @@ class BaseStrategy(object, metaclass=ABCMeta):
             end=end,
         )
 
-        self._bt._account = account
-        self._bt._token = token
-        self._bt._principal = principal
-        self._bt._positions = {}
-
         try:
             await self.notify(
                 "started",
@@ -191,7 +216,7 @@ class BaseStrategy(object, metaclass=ABCMeta):
             await self.backtest(start, end)
 
             # 回测已经结束，获取回测评估分析
-            metrics = self._bt._broker.metrics(start, end)
+            metrics = self.broker.metrics(start, end)
             await self.notify(
                 "finished", {"metrics": metrics, "start": start, "end": end}
             )
@@ -221,18 +246,11 @@ class BaseStrategy(object, metaclass=ABCMeta):
             price: 买入价格,如果为None，则以市价买入
             order_time: 下单时间,仅在回测时需要，实盘时，即使传入也会被忽略
         """
-        if self._bt is not None:
-            broker = self._bt._broker
-            if type(order_time) == datetime.date:
-                order_time = tf.combine_time(order_time, 14, 56)
-        else:
-            broker = self.broker
-
         logger.info("buy: %s %s %s", code, shares, order_time)
         if price is None:
-            broker.market_buy(code, shares, order_time=order_time)
+            self.broker.market_buy(code, shares, order_time=order_time)
         else:
-            broker.buy(code, price, shares, order_time=order_time)
+            self.broker.buy(code, price, shares, order_time=order_time)
 
     async def sell(
         self,

@@ -8,7 +8,7 @@ import plotly.graph_objects as go
 from coretypes import Frame
 from omicron import moving_average, peaks_and_valleys, support_resist_lines
 from plotly.subplots import make_subplots
-from . import plateaus
+from alpha.core.algo import plateaus
 import talib
 
 
@@ -302,7 +302,7 @@ class Candlestick:
             boxes : 每个元素(start, width)表示各个bbox的起点和宽度。
         """
         x, y = [], []
-        for box in boxes:
+        for j, box in enumerate(boxes):
             i, width = box
             if len(x):
                 x.append(None)
@@ -315,7 +315,7 @@ class Candlestick:
 
             hover = f"宽度: {width}<br> 振幅: {(h - l) / l:.2%}"
             trace = go.Scatter(x=x, y=y, fill="toself", name="平台整理", text=hover)
-            self.main_traces["bbox"] = trace
+            self.main_traces[f"bbox-{j}"] = trace
 
     def add_indicator(self, indicator: str):
         """ "向k线图中增加技术指标"""
@@ -336,6 +336,11 @@ class Candlestick:
             raise ValueError(f"{indicator} not supported")
 
         self.ind_traces[indicator] = trace
+
+    def add_marks(self, x: List[int]):
+        """向k线图中增加标记点"""
+        trace = go.Scatter(x=x, y=self.bars["high"][x], mode="markers", marker_symbol="cross")
+        self.main_traces["marks"] = trace
 
     def plot(self):
         """绘制图表"""

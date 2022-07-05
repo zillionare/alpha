@@ -1,16 +1,17 @@
 import logging
+from typing import Callable, Optional
 
 from h2o_wave import Expando, Q, app, main
 from h2o_wave.server import _App
+from pyemit import emit
 
 from alpha.web.pages import *
-from alpha.web.pages.research import research_view
 from alpha.web.routing import handle_on
-from typing import Callable, Optional
 
 logger = logging.getLogger(__name__)
 
 _on_client_connected = None
+
 
 async def serve(q: Q):
     global _on_client_connected
@@ -20,7 +21,14 @@ async def serve(q: Q):
 
     await handle_on(q)
 
-def start(route: str, mode=None, on_app_startup: Optional[Callable] = None, on_app_shutdown: Optional[Callable] = None, on_client_connected: Optional[Callable] = None):
+
+def start(
+    route: str,
+    mode=None,
+    on_app_startup: Optional[Callable] = None,
+    on_app_shutdown: Optional[Callable] = None,
+    on_client_connected: Optional[Callable] = None,
+):
     """
     Start the application.
 
@@ -33,4 +41,7 @@ def start(route: str, mode=None, on_app_startup: Optional[Callable] = None, on_a
     global _on_client_connected
 
     _on_client_connected = on_client_connected
-    main._app = _App(route, serve, mode, on_app_startup, on_app_startup)
+    on_app_startup = on_app_startup or on_app_startup
+    on_app_shutdown = on_app_shutdown
+
+    main._app = _App(route, serve, mode, on_app_startup, on_app_shutdown)
