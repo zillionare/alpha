@@ -57,7 +57,6 @@ class BaseStrategy(object, metaclass=ABCMeta):
         # 当前持仓 code -> {security: , shares: , sellable: sl: }
         self._positions = {}
         self._principal = 0
-        self._cash = None
         self._broker = None
 
         # 用于策略止损的参数
@@ -68,8 +67,6 @@ class BaseStrategy(object, metaclass=ABCMeta):
             cash = self.broker.available_money
             if cash is None:
                 raise ValueError("Failed to get available money from server")
-
-            self._cash = cash
 
         self._bt = None
 
@@ -84,22 +81,16 @@ class BaseStrategy(object, metaclass=ABCMeta):
     @property
     def cash(self)->float:
         """可用资金"""
-        if self._bt is None:
-            return self._cash
-        else:
-            return self._bt._broker.available_money
+        return self.broker.available_money
 
     @property
     def principal(self)->float:
         """本金"""
-        return self._principal if self._bt is None else self._bt._broker._principal
+        return self.broker.principal
 
     @property
     def positions(self):
-        if self._bt is None:
-            return self._positions
-        else:
-            return self._bt._borker.positions
+        return self.broker.positions
 
     async def notify(self, event: str, msg: dict):
         """通知事件。
