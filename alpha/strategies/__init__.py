@@ -122,6 +122,11 @@ async def run_backtest_remote(
     account: str = None,
     token: str = None,
 ):
+    from alpha.core.executor import create_process_pool, process_pool
+
+    if len(process_pool) == 0:
+        await create_process_pool()
+
     event = DataEvent()
 
     emit.register(E_BACKTEST, partial(on_backtest_progress, event))

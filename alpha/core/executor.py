@@ -28,7 +28,7 @@ from alpha.core.const import (
 from alpha.strategies import create_strategy_by_name
 
 logger = logging.getLogger(__name__)
-procs = set()
+process_pool = set()
 
 
 async def init():
@@ -115,6 +115,7 @@ async def create_process_pool(n: int = 2):
 
     for _ in range(n):
         proc = subprocess.Popen(cmd)
+        process_pool.add(proc)
         wait_start.add(proc.pid)
 
     logger.info("waiting for executors starting: %s", wait_start)

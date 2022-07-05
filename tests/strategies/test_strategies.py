@@ -30,7 +30,7 @@ class StrategiesTest(unittest.IsolatedAsyncioTestCase):
         actual = get_all_strategies()
 
         for item in actual:
-            if item[2].__name__ == "GridStrategy":
+            if item[0] == "grid-strategy":
                 break
         else:
             self.fail("GridStrategy not found.")
@@ -40,7 +40,7 @@ class StrategiesTest(unittest.IsolatedAsyncioTestCase):
         print(file)
 
     async def test_run_backtest(self):
-        strategy = "SMA strategy"
+        strategy = "sma"
         start = datetime.date(2022, 1, 1)
         end = datetime.date(2022, 1, 20)
         params = {"code": "000001.XSHE", "frame_type": "1d"}

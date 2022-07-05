@@ -65,7 +65,7 @@ class SMAStrategy(BaseStrategy):
 
             try:
                 if p5 <= p10 and n5 > n10:
-                    shares = self._bt._principal / bars[i]["close"]
+                    shares = self.principal / bars[i]["close"]
                     await self.buy(code, shares, bars["frame"][i])
                     continue
 
