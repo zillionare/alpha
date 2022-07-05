@@ -2,7 +2,7 @@
 
 [tool.poetry]
 name = "alpha"
-version = "0.2.0"
+version = "0.2.1"
 homepage = "https://github.com/zillionare/alpha"
 description = "Skeleton project created by Python Project Wizard (ppw)."
 authors = ["Aaron Yang <code@jieyu.ai>"]
