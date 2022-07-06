@@ -66,7 +66,8 @@ class SMAStrategy(BaseStrategy):
             try:
                 if p5 <= p10 and n5 > n10:
                     shares = self.principal / bars[i]["close"]
-                    await self.buy(code, shares, bars["frame"][i])
+                    order_time = tf.combine_time(bars[i]["frame"], 15)
+                    await self.buy(code, shares, order_time = order_time)
                     continue
 
                 if p5 >= p10 and n5 < n10:
