@@ -74,18 +74,18 @@ async def start_backtest(params: dict):
     start = params.get("start")
     end = params.get("end")
     principal = params.get("principal", 1_000_000)
-    params = params.get("params", {})
     account = params.get("account")
     token = params.get("token")
+    kwargs = params.get("params", {})
 
-    assert all([strategy, start, end]), "strategy, start, end are required"
+    assert all([strategy, start, end, account, token]), "strategy, start, end, account, token are required"
 
     try:
         s = create_strategy_by_name(strategy)
         if s is None:
             logger.warning("strategy %s not found", strategy)
 
-        return await s.start_backtest(start, end, principal, params, account, token)
+        return await s.start_backtest(start, end, principal, kwargs, account, token)
     except Exception as e:
         await emit.emit(
             E_BACKTEST,
