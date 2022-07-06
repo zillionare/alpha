@@ -25,7 +25,7 @@ class GridStrategy(BaseStrategy):
     name = "grid-strategy"
     desc = "网络交易策略。按照最近10天的收盘价格，计算出中枢价格，然后根据中枢价格，在3个标准差以内划分网格，进行交易。"
 
-    def __init__(self):
+    def __init__(self, **kwargs):
         super().__init__()
         self.name = "grid-strategy-v0"
         self.token = "aaron-grid-token"
@@ -35,10 +35,11 @@ class GridStrategy(BaseStrategy):
         self.mid_price_date = None
 
         self.buckets = {-6: 0, -5: 0, -4: 0, -3: 0, -2: 0, -1: 0}
+        self._principal = kwargs.get("principal", 100000)
 
         # 划分的网格数
         self.grids = len(self.buckets)
-        self.cash_per_grid = self.cash / self.grids
+        self.cash_per_grid = self.principal / self.grids
         # 卖出时最少网格跨度，[1, self.grids)
         self.min_span = 3
         self.code = ""
