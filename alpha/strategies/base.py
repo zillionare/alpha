@@ -86,7 +86,7 @@ class BaseStrategy(object, metaclass=ABCMeta):
     @property
     def principal(self)->float:
         """本金"""
-        return self.broker.principal
+        return self._principal if self._bt is None else self._bt._principal
 
     @property
     def positions(self):
@@ -177,6 +177,7 @@ class BaseStrategy(object, metaclass=ABCMeta):
         self.check_required_params(params)
 
         self._bt = Expando(params)
+        self._bt._principal = principal
 
         token = token or uuid.uuid4().hex
         account = account or f"{self.name}-{self.version}-{token[-4:]}"
