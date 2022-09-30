@@ -29,7 +29,7 @@ requirements = [
     'arrow==0.15.5',
     'aiohttp==3.6.2',
     'scikit-learn==0.23.1',
-    'joblib==0.16.0',
+    'joblib==1.2.0',
     'zillionare-omicron>=0.1.2',
     'websocket-client==0.57.0', 'pandas'
 ]
