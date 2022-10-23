@@ -5,8 +5,7 @@ import datetime
 import arrow
 import numpy as np
 import plotly.graph_objects as go
-from coretypes import Frame
-from omicron import moving_average, peaks_and_valleys, support_resist_lines
+from omicron.talib import moving_average, peaks_and_valleys, support_resist_lines
 from plotly.subplots import make_subplots
 from alpha.core.algo import plateaus
 import talib
@@ -314,7 +313,7 @@ class Candlestick:
             y.extend((h, h, l, l, h))
 
             hover = f"宽度: {width}<br> 振幅: {(h - l) / l:.2%}"
-            trace = go.Scatter(x=x, y=y, fill="toself", name="平台整理", text=hover)
+            trace = go.Scatter(x=x, y=y, fill="toself", name=f"平台整理{j}", text=hover)
             self.main_traces[f"bbox-{j}"] = trace
 
     def add_indicator(self, indicator: str):
